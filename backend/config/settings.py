@@ -12,6 +12,8 @@ DEBUG = os.getenv("DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = []
 
+AUTH_USER_MODEL = "accounts.User"
+
 
 INSTALLED_APPS = [
     "corsheaders",
