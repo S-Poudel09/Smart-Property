@@ -2,40 +2,60 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Q
-from .models import Message
-from .serializers import MessageSerializer
+from .models import Message, ChatRoom
+from .serializers import MessageSerializer, ChatRoomSerializer
+from properties.models import Property
+
+class ChatRoomViewSet(viewsets.ModelViewSet):
+    serializer_class = ChatRoomSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return ChatRoom.objects.filter(participants=self.request.user).order_by('-updated_at')
+
+    @action(detail=False, methods=['post'])
+    def get_or_create_room(self, request):
+        property_id = request.data.get('property_id')
+        recipient_id = request.data.get('recipient_id')
+        
+        if not recipient_id:
+            return Response({"error": "recipient_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Find existing room for this property and participants
+        rooms = ChatRoom.objects.filter(participants=request.user).filter(participants=recipient_id)
+        if property_id:
+            rooms = rooms.filter(property_id=property_id)
+        else:
+            rooms = rooms.filter(property__isnull=True)
+
+        if rooms.exists():
+            room = rooms.first()
+        else:
+            room = ChatRoom.objects.create(property_id=property_id)
+            room.participants.add(request.user, recipient_id)
+        
+        return Response(ChatRoomSerializer(room).data)
 
 class MessageViewSet(viewsets.ModelViewSet):
-    """
-    Chat System: Send DM and Get Chat History.
-    """
-    queryset = Message.objects.all()
     serializer_class = MessageSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def perform_create(self, serializer):
-        serializer.save(sender=self.request.user)
-
     def get_queryset(self):
-        # Users should only see messages they sent or received
-        user = self.request.user
-        if user.role == 'admin':
-            return Message.objects.all()
-        return Message.objects.filter(Q(sender=user) | Q(receiver=user))
+        room_id = self.request.query_params.get('room_id')
+        if room_id:
+            return Message.objects.filter(room_id=room_id, room__participants=self.request.user)
+        return Message.objects.filter(room__participants=self.request.user)
 
-    @action(detail=False, methods=['get'], url_path='history/(?P<user_id>[^/.]+)')
-    def history(self, request, user_id=None):
-        """
-        Get chat history with a specific user.
-        """
-        user = request.user
-        messages = Message.objects.filter(
-            (Q(sender=user) & Q(receiver_id=user_id)) |
-            (Q(sender_id=user_id) & Q(receiver=user))
-        ).order_by('timestamp')
-        
-        # Mark received messages as READ
-        messages.filter(receiver=user, status="SENT").update(status="READ")
-        
-        serializer = self.get_serializer(messages, many=True)
-        return Response(serializer.data)
+    def perform_create(self, serializer):
+        room = serializer.validated_data.get('room')
+        if self.request.user not in room.participants.all():
+            return Response({"error": "You are not a participant in this room"}, status=status.HTTP_403_FORBIDDEN)
+        serializer.save(sender=self.request.user)
+        room.save() # Update room's updated_at timestamp
+
+    @action(detail=False, methods=['get'], url_path='room/(?P<room_id>[^/.]+)')
+    def room_messages(self, request, room_id=None):
+        messages = Message.objects.filter(room_id=room_id, room__participants=request.user).order_by('timestamp')
+        # Mark as read
+        messages.exclude(sender=request.user).update(status="READ")
+        return Response(self.get_serializer(messages, many=True).data)

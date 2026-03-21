@@ -13,11 +13,16 @@ class LoanSerializer(serializers.ModelSerializer):
     ApplicationDate = serializers.DateTimeField(source='application_date', read_only=True)
     ApprovalDate = serializers.DateTimeField(source='approval_date', read_only=True)
 
+    Age = serializers.IntegerField(source='age', required=False)
+    CreditScore = serializers.IntegerField(source='credit_score', required=False)
+    LoanTerm = serializers.IntegerField(source='loan_term_months', required=False)
+
     class Meta:
         model = Loan
         fields = (
             'LoanID', 'UserID', 'PropertyID', 'LoanAmount', 
-            'InterestRate', 'LoanStatus', 'ApplicationDate', 'ApprovalDate'
+            'InterestRate', 'LoanStatus', 'ApplicationDate', 'ApprovalDate',
+            'Age', 'CreditScore', 'LoanTerm'
         )
 
     def create(self, validated_data):

@@ -43,6 +43,12 @@ class Loan(models.Model):
     income = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
     employment_status = models.CharField(max_length=100, blank=True, null=True)
     rejection_reason = models.TextField(blank=True, null=True)
+    
+    # Dataset Fields
+    age = models.IntegerField(null=True, blank=True)
+    credit_score = models.IntegerField(null=True, blank=True)
+    loan_term_months = models.IntegerField(null=True, blank=True)
+    
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):

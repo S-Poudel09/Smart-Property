@@ -1,28 +1,45 @@
 from rest_framework import serializers
-from .models import Transaction
-from loans.models import Loan
-from properties.models import Property
+from .models import Transaction, PaymentProof
+from properties.serializers import PropertySerializer
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+class UserSimpleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'first_name', 'last_name', 'email')
+
+class PaymentProofSerializer(serializers.ModelSerializer):
+    ProofID = serializers.UUIDField(source='id', read_only=True)
+    class Meta:
+        model = PaymentProof
+        fields = ('ProofID', 'proof_file', 'amount', 'is_verified', 'notes', 'created_at')
 
 class TransactionSerializer(serializers.ModelSerializer):
     TransactionID = serializers.UUIDField(source='id', read_only=True)
-    UserID = serializers.PrimaryKeyRelatedField(source='user', read_only=True)
-    LoanID = serializers.PrimaryKeyRelatedField(source='loan', queryset=Loan.objects.all(), required=False, allow_null=True)
-    Amount = serializers.DecimalField(source='amount', max_digits=15, decimal_places=2)
-    PaymentMethod = serializers.CharField(source='payment_method')
-    PaymentDate = serializers.DateTimeField(source='payment_date', read_only=True)
-    Status = serializers.CharField(source='status', read_only=True)
+    Buyer = UserSimpleSerializer(source='buyer', read_only=True)
+    Seller = UserSimpleSerializer(source='seller', read_only=True)
+    Property = PropertySerializer(source='property', read_only=True)
+    Proofs = PaymentProofSerializer(source='proofs', many=True, read_only=True)
+    
+    Progress = serializers.SerializerMethodField()
+    
+    def get_Progress(self, obj):
+        if obj.total_amount > 0:
+            return float((obj.amount_paid / obj.total_amount) * 100)
+        return 0
 
     class Meta:
         model = Transaction
         fields = (
-            'TransactionID', 'UserID', 'LoanID', 'Amount', 
-            'PaymentMethod', 'PaymentDate', 'Status', 'payment_proof_url'
+            'TransactionID', 'Buyer', 'Seller', 'Property', 'Proofs', 
+            'total_amount', 'amount_paid', 'payment_method', 
+            'status', 'Progress', 'created_at', 'updated_at',
+            'property', 'seller',
+            'card_brand', 'card_type', 'card_on_dark_web', 'has_chip'
         )
-
-    def create(self, validated_data):
-        validated_data['user'] = self.context['request'].user
-        # Optionally link to the property from the loan if available
-        loan = validated_data.get('loan')
-        if loan:
-            validated_data['property'] = loan.property
-        return super().create(validated_data)
+        extra_kwargs = {
+            'property': {'write_only': True},
+            'seller': {'write_only': True},
+        }
