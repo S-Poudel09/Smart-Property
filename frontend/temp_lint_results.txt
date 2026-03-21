@@ -1,0 +1,327 @@
+
+> frontend@0.1.0 lint
+> eslint
+
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/auth/register/page.tsx
+  90:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/dashboard/admin/kyc/page.tsx
+  3:20  warning  'useEffect' is defined but never used    @typescript-eslint/no-unused-vars
+  9:23  warning  'ShieldAlert' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/dashboard/admin/listings/[id]/page.tsx
+   12:5   warning  'Calendar' is defined but never used                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   16:5   warning  'Send' is defined but never used                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+   59:18  warning  'e' is defined but never used                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+   77:18  warning  'e' is defined but never used                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+  167:45  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  168:94  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/dashboard/admin/loans/page.tsx
+   3:20  warning  'useEffect' is defined but never used  @typescript-eslint/no-unused-vars
+  13:26  warning  'Eye' is defined but never used        @typescript-eslint/no-unused-vars
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/dashboard/admin/properties/page.tsx
+  21:18  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+  37:18  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+  50:18  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/dashboard/buyer/chats/[id]/page.tsx
+  27:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/dashboard/buyer/chats/[id]/page.tsx:27:13
+  25 |         if (user) {
+  26 |             const buyerThreads = getThreadsForBuyer(user.id);
+> 27 |             setThreads(buyerThreads.sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()));
+     |             ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  28 |         }
+  29 |         setIsLoading(false);
+  30 |     }, [id, user]);  react-hooks/set-state-in-effect
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/dashboard/buyer/loans/[id]/page.tsx
+  26:17  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/dashboard/buyer/loans/[id]/page.tsx:26:17
+  24 |             const data = getLoanById(id);
+  25 |             if (data && data.buyerId === user.id) {
+> 26 |                 setLoan(data);
+     |                 ^^^^^^^ Avoid calling setState() directly within an effect
+  27 |             }
+  28 |         }
+  29 |         setIsLoading(false);  react-hooks/set-state-in-effect
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/dashboard/buyer/loans/apply/[id]/page.tsx
+   3:25  warning  'useEffect' is defined but never used        @typescript-eslint/no-unused-vars
+   6:10  warning  'getPropertyById' is defined but never used  @typescript-eslint/no-unused-vars
+  48:18  warning  'e' is defined but never used                @typescript-eslint/no-unused-vars
+  61:18  warning  'e' is defined but never used                @typescript-eslint/no-unused-vars
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/dashboard/buyer/services/page.tsx
+   6:10   warning  'getCurrentUser' is defined but never used  @typescript-eslint/no-unused-vars
+   9:10   warning  'MapPin' is defined but never used          @typescript-eslint/no-unused-vars
+   9:46   warning  'ExternalLink' is defined but never used    @typescript-eslint/no-unused-vars
+  77:103  error    Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/dashboard/buyer/transactions/[id]/page.tsx
+    7:10  warning  'getCurrentUser' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+   15:32  warning  'Calendar' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   15:42  warning  'DollarSign' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+   21:11  warning  'router' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+   22:52  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+   39:9   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/dashboard/buyer/transactions/[id]/page.tsx:39:9
+  37 |
+  38 |     useEffect(() => {
+> 39 |         fetchData();
+     |         ^^^^^^^^^ Avoid calling setState() directly within an effect
+  40 |     }, [id]);
+  41 |
+  42 |     const handleUploadProof = (fileMeta: any) => {  react-hooks/set-state-in-effect
+   40:8   warning  React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             react-hooks/exhaustive-deps
+   42:42  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  136:49  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @next/next/no-img-element
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/dashboard/notifications/page.tsx
+    6:10  warning  'Bell' is defined but never used                                 @typescript-eslint/no-unused-vars
+   11:11  warning  'user' is assigned a value but never used                        @typescript-eslint/no-unused-vars
+   12:56  error    Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+   24:22  warning  'err' is defined but never used                                  @typescript-eslint/no-unused-vars
+   38:18  warning  'err' is defined but never used                                  @typescript-eslint/no-unused-vars
+   47:18  warning  'err' is defined but never used                                  @typescript-eslint/no-unused-vars
+  162:44  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/dashboard/page.tsx
+  6:8  warning  'ProtectedRoute' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/dashboard/seller/add-listing/page.tsx
+  36:18  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/dashboard/seller/chats/[id]/page.tsx
+  27:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/dashboard/seller/chats/[id]/page.tsx:27:13
+  25 |         if (user) {
+  26 |             const sellerThreads = getThreadsForSeller(user.id);
+> 27 |             setThreads(sellerThreads.sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()));
+     |             ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  28 |         }
+  29 |         setIsLoading(false);
+  30 |     }, [id, user]);  react-hooks/set-state-in-effect
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/dashboard/seller/listings/[id]/edit/page.tsx
+   13:5   warning  'FileText' is defined but never used          @typescript-eslint/no-unused-vars
+   30:20  warning  'ListingType' is defined but never used       @typescript-eslint/no-unused-vars
+   30:33  warning  'PropertyCategory' is defined but never used  @typescript-eslint/no-unused-vars
+   62:42  error    Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+   63:48  error    Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+   76:49  error    Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  154:18  warning  'e' is defined but never used                 @typescript-eslint/no-unused-vars
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/dashboard/seller/listings/[id]/page.tsx
+   12:5   warning  'Building2' is defined but never used                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+   13:5   warning  'Calendar' is defined but never used                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   67:18  warning  'e' is defined but never used                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+  156:45  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  157:94  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/dashboard/seller/listings/page.tsx
+  13:16  warning  'Edit' is defined but never used  @typescript-eslint/no-unused-vars
+  24:18  warning  'e' is defined but never used     @typescript-eslint/no-unused-vars
+  40:18  warning  'e' is defined but never used     @typescript-eslint/no-unused-vars
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/dashboard/seller/loans/page.tsx
+  23:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/dashboard/seller/loans/page.tsx:23:13
+  21 |         if (user) {
+  22 |             const sellerLoans = getLoansBySeller(user.id);
+> 23 |             setLoans(sellerLoans.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+     |             ^^^^^^^^ Avoid calling setState() directly within an effect
+  24 |         }
+  25 |         setIsLoading(false);
+  26 |     }, []);  react-hooks/set-state-in-effect
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/dashboard/seller/transactions/[id]/page.tsx
+   13:38  warning  'DollarSign' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+   19:11  warning  'router' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+   20:52  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-explicit-any
+   37:9   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/dashboard/seller/transactions/[id]/page.tsx:37:9
+  35 |
+  36 |     useEffect(() => {
+> 37 |         fetchData();
+     |         ^^^^^^^^^ Avoid calling setState() directly within an effect
+  38 |     }, [id]);
+  39 |
+  40 |     const handleConfirmTransfer = () => {  react-hooks/set-state-in-effect
+   38:8   warning  React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     react-hooks/exhaustive-deps
+  115:53  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @next/next/no-img-element
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/dashboard/seller/transactions/page.tsx
+  20:18  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+  36:18  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/properties/[id]/page.tsx
+   39:17   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/properties/[id]/page.tsx:39:17
+  37 |             const isPubliclyVisible = ['PUBLISHED', 'available', 'pending'].includes(foundProperty.status);
+  38 |             if (isPubliclyVisible) {
+> 39 |                 setProperty(foundProperty);
+     |                 ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  40 |             } else {
+  41 |                 setProperty(null); // Treat non-published as Not Found for public
+  42 |             }  react-hooks/set-state-in-effect
+   90:18   warning  'e' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+  121:18   warning  'e' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+  169:117  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-explicit-any
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/properties/page.tsx
+   9:10  warning  'getProperties' is defined but never used  @typescript-eslint/no-unused-vars
+  18:50  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/services/[id]/page.tsx
+   6:10  warning  'zodResolver' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+  30:7   warning  'bookingSchema' is assigned a value but only used as a type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+  43:50  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-explicit-any
+  50:13  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/services/[id]/page.tsx:50:13
+  48 |         const found = getProviderById(id);
+  49 |         if (found) {
+> 50 |             setProvider(found);
+     |             ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  51 |         } else {
+  52 |             toast.error('Provider not found');
+  53 |             router.push('/services');  react-hooks/set-state-in-effect
+  85:18  warning  'error' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/app/services/page.tsx
+   3:20  warning  'useEffect' is defined but never used              @typescript-eslint/no-unused-vars
+  12:23  warning  'setProviders' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/components/chat/ChatThreadList.tsx
+  4:10  warning  'Property' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/components/chat/ChatWindow.tsx
+  11:10  warning  'MessageSquare' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+  36:9   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/components/chat/ChatWindow.tsx:36:9
+  34 |
+  35 |     useEffect(() => {
+> 36 |         fetchMessages();
+     |         ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  37 |         // Simple polling for "real-time" experience in mock storage
+  38 |         const interval = setInterval(fetchMessages, 2000);
+  39 |         return () => clearInterval(interval);  react-hooks/set-state-in-effect
+  40:8   warning  React Hook useEffect has a missing dependency: 'fetchMessages'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              react-hooks/exhaustive-deps
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/components/common/FileUploader.tsx
+   3:20  warning  'useCallback' is defined but never used                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+   4:40  warning  'ImageIcon' is defined but never used                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+   5:10  warning  'Button' is defined but never used                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+  11:28  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  12:21  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  16:46  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  78:37  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/components/common/StatusBadge.tsx
+  10:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/components/layout/DashboardShell.tsx
+  10:5   warning  'CreditCard' is defined but never used    @typescript-eslint/no-unused-vars
+  11:5   warning  'Banknote' is defined but never used      @typescript-eslint/no-unused-vars
+  13:5   warning  'User' is defined but never used          @typescript-eslint/no-unused-vars
+  14:5   warning  'LogOut' is defined but never used        @typescript-eslint/no-unused-vars
+  20:5   warning  'Menu' is defined but never used          @typescript-eslint/no-unused-vars
+  21:5   warning  'X' is defined but never used             @typescript-eslint/no-unused-vars
+  22:5   warning  'Settings' is defined but never used      @typescript-eslint/no-unused-vars
+  25:10  warning  'Button' is defined but never used        @typescript-eslint/no-unused-vars
+  39:22  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  77:50  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/components/layout/Navbar.tsx
+   5:24  warning  'LogIn' is defined but never used            @typescript-eslint/no-unused-vars
+   5:31  warning  'UserPlus' is defined but never used         @typescript-eslint/no-unused-vars
+   5:94  warning  'UserIcon' is defined but never used         @typescript-eslint/no-unused-vars
+   8:10  warning  'getCurrentUser' is defined but never used   @typescript-eslint/no-unused-vars
+   8:34  warning  'isAuthenticated' is defined but never used  @typescript-eslint/no-unused-vars
+  10:10  warning  'User' is defined but never used             @typescript-eslint/no-unused-vars
+  17:11  warning  'router' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/components/property/PropertyCard.tsx
+  16:111  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/components/property/PropertyFilters.tsx
+  25:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/components/services/ServiceCard.tsx
+  10:10  warning  'cn' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/components/services/ServiceFilters.tsx
+  3:18  warning  'Filter' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/princesspoudel/Final_Project/Smartproperty/frontend/src/components/transaction/PaymentProofUploader.tsx
+  10:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  15:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 115 problems (34 errors, 81 warnings)
+

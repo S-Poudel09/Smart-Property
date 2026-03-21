@@ -1,0 +1,33 @@
+'use client';
+
+import { BookingStatus } from '@/types/service';
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+function cn(...inputs: ClassValue[]) {
+    return twMerge(clsx(inputs));
+}
+
+interface BookingStatusBadgeProps {
+    status: BookingStatus;
+}
+
+export const BookingStatusBadge = ({ status }: BookingStatusBadgeProps) => {
+    const config = {
+        REQUESTED: { label: 'Requested', color: 'bg-blue-100 text-blue-700 border-blue-200' },
+        CONFIRMED: { label: 'Confirmed', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+        COMPLETED: { label: 'Completed', color: 'bg-gray-100 text-gray-700 border-gray-200' },
+        CANCELLED: { label: 'Cancelled', color: 'bg-rose-100 text-rose-700 border-rose-200' },
+    };
+
+    const { label, color } = config[status];
+
+    return (
+        <span className={cn(
+            "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border",
+            color
+        )}>
+            {label}
+        </span>
+    );
+};

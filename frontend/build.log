@@ -1,0 +1,24 @@
+
+> frontend@0.1.0 build
+> next build
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 2.8s
+  Running TypeScript ...
+Failed to compile.
+
+./src/lib/auth/mockAuth.ts:16:23
+Type error: Argument of type '{ accessToken: string; user: User; }' is not assignable to parameter of type 'AuthState'.
+  Property 'userRole' is missing in type '{ accessToken: string; user: User; }' but required in type 'AuthState'.
+
+[0m [90m 14 |[39m     }[33m;[39m
+ [90m 15 |[39m
+[31m[1m>[22m[39m[90m 16 |[39m     saveAuthToStorage({
+ [90m    |[39m                       [31m[1m^[22m[39m
+ [90m 17 |[39m         accessToken[33m:[39m [32m'mock-jwt-token-'[39m [33m+[39m [33mMath[39m[33m.[39mrandom()[33m.[39mtoString([35m36[39m)[33m.[39msubstring([35m7[39m)[33m,[39m
+ [90m 18 |[39m         user[33m:[39m mockUser[33m,[39m
+ [90m 19 |[39m     })[33m;[39m[0m
+Next.js build worker exited with code: 1 and signal: null
