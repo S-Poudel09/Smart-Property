@@ -79,7 +79,7 @@ export const ListingTable = ({ listings, onDelete, onSubmit }: ListingTableProps
                                             </Button>
                                         </Link>
 
-                                        {p.status === 'DRAFT' && (
+                                        {p.status === 'draft' && (
                                             <>
                                                 <Link href={`/dashboard/seller/listings/${p.id}/edit`}>
                                                     <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Edit">

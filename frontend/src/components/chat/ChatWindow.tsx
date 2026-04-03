@@ -22,6 +22,7 @@ export const ChatWindow = ({ threadId, propertyTitle, otherUserLabel }: ChatWind
         return getMessages(threadId);
     });
     const [isLoading, setIsLoading] = useState(false);
+    const prevMessageCountRef = useRef(0);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const currentUser = getUser();
 
@@ -31,18 +32,28 @@ export const ChatWindow = ({ threadId, propertyTitle, otherUserLabel }: ChatWind
 
     const fetchMessages = useCallback(() => {
         const msgs = getMessages(threadId);
-        setMessages(msgs);
+        setMessages(prev => {
+            if (msgs.length !== prev.length || (msgs.length > 0 && prev.length > 0 && msgs[msgs.length - 1].id !== prev[prev.length - 1].id)) {
+                return msgs;
+            }
+            return prev;
+        });
         setIsLoading(false);
     }, [threadId]);
 
     useEffect(() => {
-        // Simple polling for "real-time" experience in mock storage
-        const interval = setInterval(fetchMessages, 2000);
+        const interval = setInterval(fetchMessages, 3000);
         return () => clearInterval(interval);
     }, [fetchMessages]);
 
     useEffect(() => {
-        scrollToBottom();
+        const container = messagesEndRef.current?.parentElement;
+        const isNearBottom = container ? (container.scrollHeight - container.scrollTop - container.clientHeight < 150) : true;
+        
+        if (isNearBottom && (messages.length > prevMessageCountRef.current || (messages.length > 0 && prevMessageCountRef.current === 0))) {
+            scrollToBottom();
+        }
+        prevMessageCountRef.current = messages.length;
     }, [messages]);
 
     const handleSendMessage = (text: string) => {
