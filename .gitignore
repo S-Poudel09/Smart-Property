@@ -39,3 +39,5 @@ backend/media/
 backend/static/
 backend/datasets/Image/
 backend/datasets/Images/
+frontend/.env.local
+*.tsbuildinfo
