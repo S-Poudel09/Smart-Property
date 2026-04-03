@@ -10,14 +10,9 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "SmartProperty | Royal Real Estate",
-  description: "Experience the elegance of premium living. The most trusted platform for real estate in Nepal.",
+  title: "SmartProperty | Premium Real Estate Network",
+  description: "Connect with verified properties and professional agents. The most trusted real estate platform in Nepal.",
 };
 
 export default function RootLayout({
@@ -28,7 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${playfair.variable} antialiased flex flex-col min-h-screen bg-[#fffdf9] text-[#1a1a2e]`}
+        className={`${inter.variable} antialiased flex flex-col min-h-screen bg-background text-foreground`}
       >
         <Toaster position="top-right" />
         <Navbar />

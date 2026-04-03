@@ -1,23 +1,23 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
+
 import { ChevronLeft, ChevronRight, Maximize } from 'lucide-react';
+import { getFullImageUrl } from '@/lib/utils/images';
 
 interface PropertyGalleryProps {
-    images: string[];
+    images: (string | { previewUrl: string; image?: string })[];
 }
 
 const PropertyGallery = ({ images }: PropertyGalleryProps) => {
     const [currentIndex, setCurrentIndex] = useState(0);
 
-    // Filter out invalid images or use placeholders if empty
-    const galleryImages = images.length > 0 ? images : [
-        'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&q=80&w=1200',
-        'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=800',
-        'https://images.unsplash.com/photo-1480074568708-e7b720bb3f09?auto=format&fit=crop&q=80&w=800',
-        'https://images.unsplash.com/photo-1448630360428-65456885c650?auto=format&fit=crop&q=80&w=800',
-    ];
+    const galleryImages = Array.isArray(images) && images.length > 0 
+        ? images.map(img => {
+            const url = typeof img === 'string' ? img : (img?.image || img?.previewUrl || '');
+            return getFullImageUrl(url);
+        }).filter(url => url !== '')
+        : ['https://placehold.co/800x600/FDFBF8/1A1A1A?font=inter&text=Property+Image+Unavailable'];
 
     const next = () => setCurrentIndex((prev) => (prev + 1) % galleryImages.length);
     const prev = () => setCurrentIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
@@ -25,12 +25,11 @@ const PropertyGallery = ({ images }: PropertyGalleryProps) => {
     return (
         <div className="space-y-4">
             <div className="group relative aspect-video overflow-hidden rounded-2xl bg-gray-100">
-                <Image
+                <img
                     src={galleryImages[currentIndex]}
                     alt={`Property image ${currentIndex + 1}`}
-                    fill
-                    className="object-cover transition-all duration-500"
-                    priority
+                    className="w-full h-full object-cover transition-all duration-500"
+                    loading="eager"
                 />
 
                 <div className="absolute inset-0 flex items-center justify-between px-4 opacity-0 transition-opacity group-hover:opacity-100">
@@ -59,10 +58,11 @@ const PropertyGallery = ({ images }: PropertyGalleryProps) => {
                     <button
                         key={idx}
                         onClick={() => setCurrentIndex(idx)}
-                        className={`relative aspect-video overflow-hidden rounded-lg transition-all ${currentIndex === idx ? 'ring-2 ring-blue-600' : 'opacity-70 hover:opacity-100'
-                            }`}
+                        className={`relative aspect-video overflow-hidden rounded-lg transition-all border-2 ${
+                            currentIndex === idx ? 'border-primary ring-2 ring-primary/20 shadow-md' : 'border-transparent opacity-60 hover:opacity-100'
+                        }`}
                     >
-                        <Image src={img} alt={`Thumbnail ${idx + 1}`} fill className="object-cover" />
+                        <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
                     </button>
                 ))}
             </div>

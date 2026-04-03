@@ -26,12 +26,12 @@ export interface ChatRoom {
 }
 
 export const getRooms = async (): Promise<ChatRoom[]> => {
-    const response = await api.get('/chat/rooms/');
+    const response = await api.get('chat/rooms/');
     return response.data;
 };
 
 export const getOrCreateRoom = async (recipientId: string, propertyId?: string): Promise<ChatRoom> => {
-    const response = await api.post('/chat/rooms/get_or_create_room/', { 
+    const response = await api.post('chat/rooms/get_or_create_room/', { 
         recipient_id: recipientId, 
         property_id: propertyId 
     });
@@ -39,11 +39,14 @@ export const getOrCreateRoom = async (recipientId: string, propertyId?: string):
 };
 
 export const getRoomMessages = async (roomId: string): Promise<ChatMessage[]> => {
-    const response = await api.get(`/chat/messages/room/${roomId}/`);
+    const response = await api.get(`chat/messages/room/${roomId}/`);
     return response.data;
 };
 
 export const sendMessage = async (roomId: string, text: string): Promise<ChatMessage> => {
-    const response = await api.post('/chat/messages/', { room: roomId, text });
+    const response = await api.post('chat/messages/', { 
+        RoomID: roomId, 
+        MessageText: text 
+    });
     return response.data;
 };

@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Search, LayoutDashboard, Menu, X, Building2, LogOut, Crown, Sparkles, User, Briefcase, Bell } from 'lucide-react';
+import { Home, Search, LayoutDashboard, Menu, X, Building2, LogOut, User, Briefcase, Bell } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Button } from '../common/Button';
-import { logout } from '@/lib/auth/mockAuth';
+import { logout } from '@/lib/auth/getUser';
 import { getUser, DecodedUser } from '@/lib/auth/getUser';
 import { toast } from 'react-hot-toast';
 import { NotificationBell } from './NotificationBell';
@@ -48,7 +48,7 @@ const Navbar = () => {
 
     const handleLogout = () => {
         logout();
-        toast.success('Safely exited the sovereign realm');
+        toast.success('Signed out successfully');
         setIsMenuOpen(false);
         router.push('/');
     };
@@ -56,144 +56,113 @@ const Navbar = () => {
     const isActive = (path: string) => pathname === path;
 
     return (
-        <nav className={`fixed top-0 z-[100] w-full transition-all duration-500 ${
-            scrolled ? 'py-4 bg-white/70 backdrop-blur-2xl border-b border-accent/20 shadow-xl' : 'py-8 bg-transparent'
-        }`}>
-            <Container className="max-w-7xl">
+        <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${scrolled ? 'bg-white/80 backdrop-blur-xl border-b border-border/40 py-4 shadow-sm' : 'bg-transparent py-6'}`}>
+            <Container>
                 <div className="flex items-center justify-between">
-                    {/* Brand Identifier */}
-                    <Link href="/" className="group flex items-center gap-4 relative z-10 transition-transform active:scale-95">
-                        <motion.div 
-                            whileHover={{ rotate: 5, scale: 1.1 }}
-                            className="h-12 w-12 bg-primary rounded-2xl flex items-center justify-center text-accent shadow-gold-glow border border-accent/30"
-                        >
-                            <Crown className="h-7 w-7" />
-                        </motion.div>
-                        <div className="flex flex-col">
-                            <span className="text-xl font-serif text-primary leading-none tracking-tight">SmartProperty</span>
-                            <span className="text-[9px] font-black uppercase tracking-[0.4em] text-accent mt-1">Universal Registry</span>
+                    <Link href="/" className="flex items-center gap-3.5 group">
+                        <div className="h-10 w-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20 transition-transform group-hover:scale-105">
+                            <Building2 className="h-5 w-5" />
                         </div>
+                        <span className={`text-xl font-bold tracking-tight font-outfit ${!scrolled && !isMenuOpen ? 'text-gray-900 lg:text-white' : 'text-gray-900'}`}>
+                            SmartProperty
+                        </span>
                     </Link>
 
-                    {/* Desktop Command Center */}
-                    <div className="hidden lg:flex items-center gap-12 bg-primary/5 backdrop-blur-md px-10 py-3 rounded-full border border-accent/5">
+                    {/* Desktop Menu */}
+                    <div className="hidden lg:flex items-center gap-10">
                         {navLinks.map((link) => (
-                            <Link
-                                key={link.name}
-                                href={link.href}
-                                className={`group relative text-[10px] font-black uppercase tracking-[0.25em] transition-all hover:text-accent ${
-                                    isActive(link.href) ? 'text-accent' : 'text-primary/60'
-                                }`}
+                            <Link 
+                                key={link.name} 
+                                href={link.href} 
+                                className={`text-[11px] font-bold uppercase tracking-[0.15em] transition-all hover:text-primary ${!scrolled ? 'text-white/80 hover:text-white' : 'text-muted'}`}
                             >
                                 {link.name}
-                                <motion.div 
-                                    initial={false}
-                                    animate={isActive(link.href) ? { width: '100%', opacity: 1 } : { width: '0%', opacity: 0 }}
-                                    className="absolute -bottom-2 left-0 h-0.5 bg-accent shadow-gold-glow"
-                                />
                             </Link>
                         ))}
                     </div>
 
-                    {/* Sovereign Actions */}
-                    <div className="hidden lg:flex items-center gap-6">
+                    <div className="hidden lg:flex items-center gap-4">
                         {isAuth ? (
-                            <div className="flex items-center gap-4 bg-white/40 backdrop-blur-xl p-2 pl-6 rounded-full border border-accent/10 shadow-lg">
+                            <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md p-1.5 pl-4 rounded-xl border border-white/10 shadow-sm transition-all hover:bg-white/20">
                                 <NotificationBell />
-                                <div className="h-6 w-px bg-accent/20" />
-                                
-                                <Link
-                                    href={`/dashboard/${user?.role?.toLowerCase() || 'buyer'}`}
-                                    className="px-6 py-2.5 bg-primary text-accent rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-accent hover:text-primary transition-all duration-300 shadow-xl flex items-center gap-3 group"
-                                >
-                                    <LayoutDashboard className="h-4 w-4 group-hover:rotate-12 transition-transform" />
-                                    <span>Dashboard</span>
+                                <div className="h-4 w-px bg-white/20" />
+                                <Link href={user?.role?.toLowerCase() === 'admin' ? '/dashboard/admin' : user?.role?.toLowerCase() === 'seller' ? '/dashboard/seller' : '/dashboard/buyer'}>
+                                    <Button variant="secondary" className="rounded-lg h-10 px-5 text-[10px] font-bold uppercase tracking-widest shadow-sm">
+                                        Dashboard
+                                    </Button>
                                 </Link>
-
                                 <button 
                                     onClick={handleLogout}
-                                    className="h-10 w-10 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors"
-                                    title="Exit the Realm"
+                                    className="h-10 w-10 flex items-center justify-center text-white/60 hover:text-white transition-colors"
                                 >
-                                    <LogOut className="h-5 w-5" />
+                                    <LogOut className="h-4 w-4" />
                                 </button>
                             </div>
                         ) : (
-                            <div className="flex items-center gap-4">
+                            <>
                                 <Link href="/auth/login">
-                                    <Button variant="ghost" className="text-[10px] font-black uppercase tracking-widest text-primary">Sign In</Button>
+                                    <span className={`text-sm font-bold mr-6 transition-colors ${!scrolled ? 'text-white hover:text-white/80' : 'text-muted hover:text-primary'}`}>
+                                        Sign In
+                                    </span>
                                 </Link>
                                 <Link href="/auth/register">
-                                    <Button className="h-12 px-8 bg-primary text-accent rounded-full text-[10px] font-black uppercase tracking-widest border border-accent/30 hover:bg-accent hover:text-primary shadow-xl transition-all flex items-center gap-2 group">
-                                        Request Access <Sparkles className="h-3 w-3 group-hover:scale-125 transition-transform" />
+                                    <Button className="rounded-xl h-11 px-8 font-bold shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5">
+                                        Join Platform
                                     </Button>
                                 </Link>
-                            </div>
+                            </>
                         )}
                     </div>
 
-                    {/* Mobile Menu Trigger */}
-                    <button
+                    {/* Mobile Toggle */}
+                    <button 
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        className="lg:hidden h-12 w-12 bg-white rounded-2xl flex items-center justify-center border border-accent/20 shadow-lg text-primary"
+                        className={`lg:hidden p-2 rounded-xl transition-colors ${!scrolled && !isMenuOpen ? 'text-white hover:bg-white/10' : 'text-gray-900 hover:bg-gray-100'}`}
                     >
-                        {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                        {isMenuOpen ? <X /> : <Menu />}
                     </button>
                 </div>
             </Container>
 
-            {/* Mobile Navigation Portal */}
+            {/* Mobile Menu */}
             <AnimatePresence>
                 {isMenuOpen && (
                     <motion.div 
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className="lg:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-3xl border-b border-accent/20 shadow-2xl p-8"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="lg:hidden bg-white border-b border-border/40 overflow-hidden"
                     >
-                        <div className="space-y-6">
+                        <div className="px-6 py-10 space-y-6">
                             {navLinks.map((link) => (
-                                <Link
-                                    key={link.name}
-                                    href={link.href}
+                                <Link 
+                                    key={link.name} 
+                                    href={link.href} 
+                                    className="block text-xl font-bold text-foreground hover:text-primary transition-colors"
                                     onClick={() => setIsMenuOpen(false)}
-                                    className={`flex items-center gap-4 p-4 rounded-2xl text-sm font-black uppercase tracking-widest ${
-                                        isActive(link.href) ? 'bg-accent text-white' : 'text-primary hover:bg-gray-50'
-                                    }`}
                                 >
-                                    <link.icon className="h-5 w-5" />
                                     {link.name}
                                 </Link>
                             ))}
-                            
-                            <div className="h-px w-full bg-gray-100" />
-                            
-                            {isAuth ? (
-                                <div className="space-y-4">
-                                    <Link
-                                        href={`/dashboard/${user?.role?.toLowerCase() || 'buyer'}`}
-                                        onClick={() => setIsMenuOpen(false)}
-                                        className="flex items-center gap-4 p-4 rounded-2xl text-sm font-black uppercase tracking-widest bg-primary text-accent"
-                                    >
-                                        <LayoutDashboard className="h-5 w-5" /> Imperial Dashboard
-                                    </Link>
-                                    <button
-                                        onClick={handleLogout}
-                                        className="w-full flex items-center gap-4 p-4 rounded-2xl text-sm font-black uppercase tracking-widest bg-red-50 text-red-600"
-                                    >
-                                        <LogOut className="h-5 w-5" /> Exit Realm
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-2 gap-4">
-                                    <Link href="/auth/login" onClick={() => setIsMenuOpen(false)}>
-                                        <div className="flex h-12 items-center justify-center rounded-2xl border border-gray-200 text-sm font-black uppercase tracking-widest text-primary">Sign In</div>
-                                    </Link>
-                                    <Link href="/auth/register" onClick={() => setIsMenuOpen(false)}>
-                                        <div className="flex h-12 items-center justify-center rounded-2xl bg-primary text-accent text-sm font-black uppercase tracking-widest border border-accent/30">Join Us</div>
-                                    </Link>
-                                </div>
-                            )}
+                            <div className="pt-6 border-t border-gray-50 flex flex-col gap-4">
+                                {isAuth ? (
+                                    <>
+                                        <Link href={user?.role?.toLowerCase() === 'admin' ? '/dashboard/admin' : user?.role?.toLowerCase() === 'seller' ? '/dashboard/seller' : '/dashboard/buyer'} onClick={() => setIsMenuOpen(false)}>
+                                            <Button className="w-full h-12 rounded-xl font-bold">My Dashboard</Button>
+                                        </Link>
+                                        <Button variant="outline" onClick={handleLogout} className="w-full h-12 rounded-xl font-bold text-danger hover:bg-danger/5">Sign Out</Button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Link href="/auth/login" className="w-full" onClick={() => setIsMenuOpen(false)}>
+                                            <Button variant="outline" className="w-full h-12 rounded-xl font-bold">Sign In</Button>
+                                        </Link>
+                                        <Link href="/auth/register" className="w-full" onClick={() => setIsMenuOpen(false)}>
+                                            <Button className="w-full h-12 rounded-xl font-bold">Join Platform</Button>
+                                        </Link>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </motion.div>
                 )}
@@ -203,7 +172,7 @@ const Navbar = () => {
 };
 
 const Container = ({ children, className }: { children: React.ReactNode, className?: string }) => (
-    <div className={`mx-auto w-full px-6 sm:px-12 ${className}`}>
+    <div className={`mx-auto w-full max-w-7xl px-6 sm:px-12 ${className}`}>
         {children}
     </div>
 );

@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.http import JsonResponse
+from django.views.generic import RedirectView
 
 from django.conf import settings
 from django.conf.urls.static import static
@@ -11,9 +12,13 @@ def api_root(request):
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 from .analytics_views import SystemAnalyticsView, FraudDetectionView, ActivityLogsView
 
+from two_factor.urls import urlpatterns as tf_urls
+
 urlpatterns = [
+    path("", api_root, name="api-root"),
+    path("", include(tf_urls)),
     path("admin/", admin.site.urls),
-    path("", api_root),
+    path("favicon.ico", RedirectView.as_view(url="/static/favicon.ico")),
 
     path("api/auth/", include("accounts.urls")),
     path("api/properties/", include("properties.urls")),

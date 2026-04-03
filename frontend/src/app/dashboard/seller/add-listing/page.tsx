@@ -6,9 +6,18 @@ import { createProperty } from '@/lib/api/properties';
 import { Button } from '@/components/common/Button';
 import { FileUploader, FilePreview } from '@/components/common/FileUploader';
 import { toast } from 'react-hot-toast';
-import { ArrowLeft, ArrowRight, Save, FileText, Upload, Plus, X, Play, MapPin, Home } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Home, MapPin, Upload, FileText, CheckCircle2, ChevronRight, ChevronLeft, ShieldCheck } from 'lucide-react';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 export default function SellerAddListingPage() {
+    return (
+        <ProtectedRoute allowedRoles={['seller', 'admin']}>
+            <AddListingContent />
+        </ProtectedRoute>
+    );
+}
+
+function AddListingContent() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [step, setStep] = useState(1);
@@ -20,40 +29,65 @@ export default function SellerAddListingPage() {
         price: '',
         address: '',
         city: '',
+        district: '',
+        municipality: '',
+        ward: '',
         listing_type: 'sale',
         property_type: 'house',
         beds: '0',
         baths: '0',
         area_sqft: '',
+        area_ropani: '',
+        area_anna: '',
         virtual_tour_url: '',
         boundary_coordinates: ''
     });
 
     const [images, setImages] = useState<FilePreview[]>([]);
     const [documents, setDocuments] = useState<FilePreview[]>([]);
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        const { name, value } = e.target;
+        setForm(prev => ({ ...prev, [name]: value }));
+        if (fieldErrors[name]) {
+            setFieldErrors(prev => {
+                const updated = { ...prev };
+                delete updated[name];
+                return updated;
+            });
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setFieldErrors({});
+
+        if (step < 2) {
+            setStep(step + 1);
+            return;
+        }
+
         setLoading(true);
 
         const formData = new FormData();
-        // Append basic fields
         Object.entries(form).forEach(([key, value]) => {
-            formData.append(key, value);
+            if (value !== '') {
+                formData.append(key, value);
+            }
         });
 
-        // Append images
+        // Ensure newly listed properties are automatically submitted for review
+        formData.append('status', 'submitted');
+
+        formData.append('location', `${form.address}, ${form.municipality}, ${form.district}`);
+
         images.forEach((filePreview) => {
             if (filePreview.file) {
                 formData.append('uploaded_images', filePreview.file);
             }
         });
 
-        // Append documents
         documents.forEach((filePreview) => {
             if (filePreview.file) {
                 formData.append('uploaded_documents', filePreview.file);
@@ -62,208 +96,183 @@ export default function SellerAddListingPage() {
 
         try {
             await createProperty(formData);
-            toast.success("Listing created successfully. It is saved as DRAFT.");
+            toast.success("Property created successfully!");
             router.push('/dashboard/seller/listings');
         } catch (error: any) {
-            toast.error(error.response?.data?.message || "Failed to create listing");
+            if (error.response?.data && typeof error.response.data === 'object') {
+                setFieldErrors(error.response.data);
+                toast.error("Please fix the errors in the form.");
+                
+                const step1Fields = ['title', 'price', 'district', 'municipality', 'ward', 'address'];
+                if (step1Fields.some(f => error.response.data[f])) {
+                    setStep(1);
+                }
+            } else {
+                toast.error("Failed to create property.");
+            }
         } finally {
             setLoading(false);
         }
     };
 
+    const InputField = ({ label, name, type = "text", required = false, placeholder = "" }: any) => (
+        <div className="space-y-1.5">
+            <label className="text-sm font-semibold text-gray-700">{label} {required && <span className="text-red-500">*</span>}</label>
+            <input 
+                type={type}
+                name={name}
+                value={(form as any)[name]}
+                onChange={handleChange}
+                placeholder={placeholder}
+                className={`w-full px-4 py-2.5 bg-white border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ${
+                    fieldErrors[name] ? 'border-red-500 bg-red-50/10' : 'border-border'
+                }`}
+            />
+            {fieldErrors[name] && <p className="text-[11px] text-red-500 font-medium italic">{fieldErrors[name][0]}</p>}
+        </div>
+    );
+
     return (
-        <div className="max-w-4xl mx-auto space-y-8 py-8">
-            <div className="flex items-center justify-between">
+        <div className="max-w-4xl mx-auto py-8 px-4">
+            <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Add New Listing</h1>
-                    <p className="text-gray-500 mt-2">Fill in the details to list your property on Smart Property.</p>
+                    <h1 className="text-2xl font-bold text-gray-900">Add New Property</h1>
+                    <p className="text-gray-500 mt-1">List your property on the most trusted marketplace in Nepal.</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    {[1, 2].map((s) => (
-                        <div 
-                            key={s} 
-                            className={`h-2 w-12 rounded-full transition-colors ${step >= s ? 'bg-blue-600' : 'bg-gray-200'}`}
-                        />
+                    {[1, 2].map((i) => (
+                        <div key={i} className={`h-1.5 w-12 rounded-full ${step >= i ? 'bg-primary' : 'bg-gray-200'}`} />
                     ))}
                 </div>
-            </div>
+            </header>
 
-            <div className="bg-white rounded-2xl border p-8 shadow-sm">
-                <form onSubmit={handleSubmit} className="space-y-8">
+            <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
+                <div className="p-8">
                     {step === 1 ? (
-                        <div className="space-y-6">
-                            <div className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4 border-b pb-2">
-                                <Home className="h-5 w-5 text-blue-600" />
-                                Basic Information
-                            </div>
-                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                <div className="sm:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Listing Title</label>
-                                    <input 
-                                        name="title" 
-                                        required 
-                                        value={form.title} 
-                                        onChange={handleChange} 
-                                        className="w-full rounded-lg border-gray-300 border p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                                        placeholder="e.g. Luxurious 4-Bedroom Villa with Ocean View" 
-                                    />
+                        <div className="space-y-8 animate-fade-in">
+                            <section>
+                                <div className="flex items-center gap-2 mb-6 pb-2 border-b border-gray-100">
+                                    <Home className="h-5 w-5 text-primary" />
+                                    <h2 className="font-bold text-gray-900">Basic Information</h2>
                                 </div>
-                                
-                                <div className="sm:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                                    <textarea 
-                                        name="description" 
-                                        rows={4} 
-                                        value={form.description} 
-                                        onChange={handleChange} 
-                                        className="w-full rounded-lg border-gray-300 border p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                                        placeholder="Provide a detailed description of the property features, amenities, and surroundings..." 
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Price ($)</label>
-                                    <input name="price" type="number" required value={form.price} onChange={handleChange} className="w-full rounded-lg border-gray-300 border p-3" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Area (sqft)</label>
-                                    <input name="area_sqft" type="number" value={form.area_sqft} onChange={handleChange} className="w-full rounded-lg border-gray-300 border p-3" />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Bedrooms</label>
-                                        <input name="beds" type="number" value={form.beds} onChange={handleChange} className="w-full rounded-lg border-gray-300 border p-3" />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="md:col-span-2">
+                                        <InputField label="Listing Title" name="title" required placeholder="e.g. Modern Villa in Bhaisepati" />
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Bathrooms</label>
-                                        <input name="baths" type="number" value={form.baths} onChange={handleChange} className="w-full rounded-lg border-gray-300 border p-3" />
+                                    <div className="md:col-span-2">
+                                        <label className="text-sm font-semibold text-gray-700 block mb-1.5">Description</label>
+                                        <textarea 
+                                            name="description" 
+                                            rows={4} 
+                                            value={form.description} 
+                                            onChange={handleChange} 
+                                            className="w-full px-4 py-2.5 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                            placeholder="Tell us more about the property..."
+                                        />
                                     </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Listing Type</label>
-                                        <select name="listing_type" value={form.listing_type} onChange={handleChange} className="w-full rounded-lg border-gray-300 border p-3">
-                                            <option value="sale">For Sale</option>
-                                            <option value="rent">For Rent</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Property Type</label>
-                                        <select name="property_type" value={form.property_type} onChange={handleChange} className="w-full rounded-lg border-gray-300 border p-3">
-                                            <option value="house">House</option>
-                                            <option value="apartment">Apartment</option>
-                                            <option value="condo">Condo</option>
-                                            <option value="villa">Villa</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div className="sm:col-span-2 space-y-4">
-                                    <div className="flex items-center gap-2 text-lg font-semibold text-gray-900 border-b pb-2">
-                                        <MapPin className="h-5 w-5 text-red-500" />
-                                        Location
-                                    </div>
+                                    <InputField label="Price (Rs)" name="price" type="number" required />
+                                    <InputField label="Total Area (sqft)" name="area_sqft" type="number" required />
+                                    
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="col-span-2">
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Street Address</label>
-                                            <input name="address" required value={form.address} onChange={handleChange} className="w-full rounded-lg border-gray-300 border p-3" />
+                                        <InputField label="Bedrooms" name="beds" type="number" />
+                                        <InputField label="Bathrooms" name="baths" type="number" />
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1.5">
+                                            <label className="text-sm font-semibold text-gray-700">Listing Type</label>
+                                            <select name="listing_type" value={form.listing_type} onChange={handleChange} className="w-full px-4 py-2.5 bg-white border border-border rounded-lg text-sm outline-none">
+                                                <option value="sale">For Sale</option>
+                                                <option value="rent">For Rent</option>
+                                            </select>
                                         </div>
-                                        <div className="col-span-2">
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
-                                            <input name="city" required value={form.city} onChange={handleChange} className="w-full rounded-lg border-gray-300 border p-3" />
+                                        <div className="space-y-1.5">
+                                            <label className="text-sm font-semibold text-gray-700">Property Type</label>
+                                            <select name="property_type" value={form.property_type} onChange={handleChange} className="w-full px-4 py-2.5 bg-white border border-border rounded-lg text-sm outline-none">
+                                                <option value="house">House</option>
+                                                <option value="apartment">Apartment</option>
+                                                <option value="land">Land</option>
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <div className="pt-6 border-t flex justify-end">
-                                <Button type="button" onClick={() => setStep(2)} className="flex items-center gap-2">
-                                    Continue to Media <ArrowRight className="h-4 w-4" />
-                                </Button>
-                            </div>
+                            </section>
+
+                            <section>
+                                <div className="flex items-center gap-2 mb-6 pb-2 border-b border-gray-100">
+                                    <MapPin className="h-5 w-5 text-red-500" />
+                                    <h2 className="font-bold text-gray-900">Location Details</h2>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-semibold text-gray-700">District <span className="text-red-500">*</span></label>
+                                        <select name="district" required value={form.district} onChange={handleChange} className="w-full px-4 py-2.5 bg-white border border-border rounded-lg text-sm outline-none">
+                                            <option value="">Select District</option>
+                                            <option value="Kathmandu">Kathmandu</option>
+                                            <option value="Lalitpur">Lalitpur</option>
+                                            <option value="Bhaktapur">Bhaktapur</option>
+                                            <option value="Pokhara">Pokhara</option>
+                                        </select>
+                                    </div>
+                                    <InputField label="Municipality" name="municipality" required />
+                                    <InputField label="Ward No." name="ward" required />
+                                    <InputField label="Street Address / Tol" name="address" required />
+                                </div>
+                            </section>
                         </div>
                     ) : (
-                        <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
-                            <div className="flex items-center gap-2 text-lg font-semibold text-gray-900 border-b pb-2">
-                                <Upload className="h-5 w-5 text-blue-600" />
-                                Media & Documents
-                            </div>
-                            
-                            <div className="space-y-6">
+                        <div className="space-y-8 animate-fade-in">
+                            <section>
+                                <div className="flex items-center gap-2 mb-6 pb-2 border-b border-gray-100">
+                                    <Upload className="h-5 w-5 text-primary" />
+                                    <h2 className="font-bold text-gray-900">Property Media</h2>
+                                </div>
                                 <FileUploader
-                                    label="Property Images"
+                                    label="Upload Property Images"
                                     accept="image/*"
                                     multiple
                                     onFilesChange={(newFiles) => setImages(newFiles)}
                                 />
+                                <p className="text-[11px] text-gray-500 mt-2 italic">* Upload at least 3 clear images of the property.</p>
+                            </section>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-4">
-                                    <div className="space-y-4">
-                                        <div className="flex items-center gap-2 text-lg font-semibold text-gray-900 border-b pb-2">
-                                            <Play className="h-5 w-5 text-blue-600" />
-                                            Virtual Tour
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">360° Tour URL (e.g. Matterport/Pannellum)</label>
-                                            <input 
-                                                name="virtual_tour_url" 
-                                                value={form.virtual_tour_url} 
-                                                onChange={handleChange} 
-                                                className="w-full rounded-lg border-gray-300 border p-3 focus:ring-2 focus:ring-blue-500" 
-                                                placeholder="https://my.matterport.com/show/?m=..."
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <div className="flex items-center gap-2 text-lg font-semibold text-gray-900 border-b pb-2">
-                                            <MapPin className="h-5 w-5 text-red-500" />
-                                            GIS Boundary
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Polygon Coordinates (JSON Array)</label>
-                                            <textarea 
-                                                name="boundary_coordinates" 
-                                                value={form.boundary_coordinates} 
-                                                onChange={handleChange} 
-                                                rows={1}
-                                                className="w-full rounded-lg border-gray-300 border p-3 focus:ring-2 focus:ring-blue-500" 
-                                                placeholder="[[lat, lng], [lat, lng], ...]"
-                                            />
-                                        </div>
-                                    </div>
+                            <section>
+                                <div className="flex items-center gap-2 mb-6 pb-2 border-b border-gray-100">
+                                    <FileText className="h-5 w-5 text-emerald-500" />
+                                    <h2 className="font-bold text-gray-900">Verification Documents</h2>
                                 </div>
-
-                                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-3">
-                                    <FileText className="h-5 w-5 text-blue-500 shrink-0" />
-                                    <div>
-                                        <h4 className="text-sm font-semibold text-blue-900">Legal Documents</h4>
-                                        <p className="text-xs text-blue-700 mt-1">Upload title deeds, ownership certificates, or tax receipts. This helps in faster property verification.</p>
-                                    </div>
+                                <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-lg mb-6 flex gap-3 italic">
+                                    <ShieldCheck className="h-5 w-5 text-emerald-600 shrink-0" />
+                                    <p className="text-xs text-emerald-800 leading-relaxed">
+                                        Uploading clear scans of your Lalpurja and citizenship certificate will speed up the approval process significantly.
+                                    </p>
                                 </div>
-
                                 <FileUploader
-                                    label="Legal Documents (PDF/JPG)"
+                                    label="Title Deed / Lalpurja (PDF or Image)"
                                     accept=".pdf,.jpg,.jpeg,.png"
                                     multiple
                                     onFilesChange={(newFiles) => setDocuments(newFiles)}
                                 />
-                            </div>
-
-                            <div className="pt-6 border-t flex justify-between">
-                                <Button type="button" variant="outline" onClick={() => setStep(1)}>
-                                    Back to Info
-                                </Button>
-                                <Button type="submit" variant="primary" disabled={loading} className="px-8">
-                                    {loading ? 'Processing...' : 'Submit Listing for Review'}
-                                </Button>
-                            </div>
+                            </section>
                         </div>
                     )}
-                </form>
-            </div>
+                </div>
+
+                <div className="p-6 bg-gray-50 border-t border-border flex justify-between items-center">
+                    <button 
+                        type="button"
+                        onClick={() => step > 1 && setStep(step - 1)}
+                        className={`flex items-center gap-2 text-sm font-bold transition-all ${step === 1 ? 'opacity-0 cursor-default' : 'text-gray-500 hover:text-gray-900'}`}
+                    >
+                        <ChevronLeft className="h-4 w-4" /> Back
+                    </button>
+                    
+                    <Button type="submit" disabled={loading} className="px-8 h-12 rounded-lg font-bold min-w-[140px]">
+                        {loading ? 'Processing...' : step === 1 ? 'Continue' : 'Submit Listing'}
+                    </Button>
+                </div>
+            </form>
         </div>
     );
 }
+

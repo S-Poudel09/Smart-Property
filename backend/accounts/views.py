@@ -9,6 +9,9 @@ from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from datetime import timedelta
 import random
+import logging
+
+logger = logging.getLogger(__name__)
 
 from .serializers import (
     RegisterSerializer, LoginSerializer, UserSerializer, 
@@ -35,7 +38,7 @@ from .models import User, OTP
 #         print(f"OTP email sent successfully to {user.email}")
 #     except Exception as e:
 #         print(f"Error sending OTP email to {user.email}: {str(e)}")
-def generate_and_send_otp(user):
+def generate_and_send_otp(user, reason="verification"):
     # delete old OTPs
     OTP.objects.filter(user=user).delete()
 
@@ -48,18 +51,31 @@ def generate_and_send_otp(user):
         expires_at=expires_at
     )
 
-    print("DEBUG OTP:", otp_code)
+    # Use check for DEBUG/DEVELOPMENT if legacy prints are needed, 
+    # but the user requested real email only.
+    # print(f"DEBUG OTP ({reason}):", otp_code)
 
     try:
-        subject = "SmartProperty - Verification Rite | इमेल प्रमाणीकरण"
-        message = (
-            f"Dear {user.full_name},\n\n"
-            f"Your Imperial OTP for SmartProperty is: {otp_code}\n"
-            f"Expires in 10 minutes.\n\n"
-            f"नमस्ते {user.full_name},\n"
-            f"स्मार्ट प्रोपर्टीका लागि तपाईंको OTP कोड {otp_code} हो।\n\n"
-            f"— SmartProperty Team"
-        )
+        if reason == "admin_login":
+            subject = "SmartProperty - Admin Login Alert | एडमिन लगइन सुरक्षा"
+            message = (
+                f"Security Alert: A login attempt for an Admin account has been detected.\n\n"
+                f"Your Login OTP code is: {otp_code}\n"
+                f"Expires in 10 minutes.\n\n"
+                f"सुरक्षा चेतावनी: तपाइँको एडमिन खातामा लगइन प्रयास गरिएको छ।\n"
+                f"तपाइँको लगइनको लागि OTP कोड {otp_code} हो।\n\n"
+                f"— SmartProperty System Security"
+            )
+        else:
+            subject = "SmartProperty - Verification Rite | इमेल प्रमाणीकरण"
+            message = (
+                f"Dear {user.full_name},\n\n"
+                f"Your Imperial OTP for SmartProperty is: {otp_code}\n"
+                f"Expires in 10 minutes.\n\n"
+                f"नमस्ते {user.full_name},\n"
+                f"स्मार्ट प्रोपर्टीका लागि तपाईंको OTP कोड {otp_code} हो।\n\n"
+                f"— SmartProperty Team"
+            )
         
         sent = send_mail(
             subject=subject,
@@ -68,10 +84,34 @@ def generate_and_send_otp(user):
             recipient_list=[user.email],
             fail_silently=False,
         )
-        return sent > 0
+        if sent > 0:
+            return True, "Imperial Dispatch successful."
+        else:
+            return False, "Herald accepted the request but failed to deliver the message."
     except Exception as e:
-        print(f"Error sending OTP to {user.email}: {e}")
-        return False
+        error_msg = str(e)
+        if "535" in error_msg:
+            return False, "Sovereign Authentication Failure: Incorrect credentials. Ensure you are using a GMAIL APP PASSWORD, not your standard account password."
+        return False, f"Imperial Herald Dispatch Error: {error_msg}"
+
+def get_tokens_for_user(user):
+    logger.info(f"Generating Imperial tokens for: {user.email}")
+    try:
+        from rest_framework_simplejwt.tokens import RefreshToken
+        refresh = RefreshToken.for_user(user)
+        refresh['name'] = getattr(user, 'full_name', '')
+        refresh['email'] = getattr(user, 'email', '')
+        refresh['role'] = getattr(user, 'role', 'buyer')
+        
+        user_data = UserSerializer(user).data
+        return {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'user': user_data
+        }
+    except Exception as e:
+        logger.error(f"CRITICAL ERROR in token generation for {user.email}: {e}")
+        raise e
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
@@ -80,39 +120,34 @@ class RegisterView(APIView):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            otp_sent = generate_and_send_otp(user)
+            otp_sent, otp_error = generate_and_send_otp(user)
 
             if not otp_sent:
                 # Optionally delete the user if email is mandatory for reg
                 # user.delete() 
                 return Response(
-                    {"error": "Imperial Herald failed to dispatch OTP. Please verify your email address or try again later."},
+                    {"error": f"Imperial Herald Error: {otp_error}"},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
 
-            # MongoDB activity log
-            try:
-                from config.mongo_utils import log_activity
-                log_activity(user.email, 'register', details={'role': user.role}, status='success')
-            except Exception:
-                pass
+            # PostgreSQL activity log
+            from analytics.utils import log_activity
+            log_activity(user.email, 'register', details={'role': user.role}, status='success')
 
             # Welcome email
-            try:
-                send_mail(
-                    subject="Welcome to SmartProperty! | स्मार्ट प्रोपर्टीमा स्वागत छ!",
-                    message=f"Hi {user.full_name},\n\nThank you for joining SmartProperty. Your account has been created with the role: {user.role}.\n\nPlease verify your email to get started.\n\nनमस्ते {user.full_name},\nस्मार्ट प्रोपर्टीमा जोडिनुभएकोमा धन्यवाद। तपाईंको खाता '{user.role}' भूमिकाका साथ सफलतापूर्वक सिर्जना गरिएको छ।\n\nकृपया सुरु गर्नको लागि आफ्नो इमेल प्रमाणीकरण गर्नुहोस्।\n\n— SmartProperty Team",
-                    from_email=None,
-                    recipient_list=[user.email],
-                    fail_silently=True,
-                )
-            except Exception:
-                pass
+            send_mail(
+                subject="Welcome to SmartProperty! | स्मार्ट प्रोपर्टीमा स्वागत छ!",
+                message=f"Hi {user.full_name},\n\nThank you for joining SmartProperty. Your account has been created with the role: {user.role}.\n\nPlease verify your email to get started.\n\nनमस्ते {user.full_name},\nस्मार्ट प्रोपर्टीमा जोडिनुभएकोमा धन्यवाद। तपाईंको खाता '{user.role}' भूमिकाका साथ सफलतापूर्वक सिर्जना गरिएको छ।\n\nकृपया सुरु गर्नको लागि आफ्नो इमेल प्रमाणीकरण गर्नुहोस्।\n\n— SmartProperty Team",
+                from_email=None,
+                recipient_list=[user.email],
+                fail_silently=True,
+            )
 
             return Response(
                 {"message": "User registered successfully. Please verify your email.", "user": UserSerializer(user).data},
                 status=status.HTTP_201_CREATED
             )
+        logger.warning(f"Registration 400 Errors for data: {request.data} - {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class VerifyOTPView(APIView):
@@ -144,7 +179,7 @@ class VerifyOTPView(APIView):
             
             # MongoDB activity log
             try:
-                from config.mongo_utils import log_activity
+                from analytics.utils import log_activity
                 log_activity(user.email, 'verify_email', details={'method': 'otp'}, status='success')
             except Exception:
                 pass
@@ -171,11 +206,11 @@ class ResendOTPView(APIView):
         if user.is_verified:
             return Response({"message": "This lineage is already verified."}, status=status.HTTP_400_BAD_REQUEST)
             
-        otp_sent = generate_and_send_otp(user)
+        otp_sent, otp_error = generate_and_send_otp(user)
         if otp_sent:
             return Response({"message": "A new Imperial Seal has been dispatched to your email."}, status=status.HTTP_200_OK)
         else:
-            return Response({"error": "The Herald failed to dispatch the seal. Please try again later."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error": f"Herald Dispatch Error: {otp_error}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
@@ -183,15 +218,114 @@ class LoginView(APIView):
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
-            # MongoDB activity log
+            # Now serializer.validated_data is a dict containing {"user": user_obj}
+            user_data_wrap = serializer.validated_data
+            user = user_data_wrap.get('user')
+            
+            if not user:
+                print("[AUTH DEBUG] Critical failure: Login serializer returned success but no user object.")
+                return Response({"error": "Identity resolution failed. Contact support."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            print(f"[AUTH DEBUG] LoginView - Authenticated User: {user.email}")
+            
+            # Use lower() to be case-insensitive for our custom roles
             try:
-                from config.mongo_utils import log_activity
-                email = request.data.get('email', '')
-                log_activity(email, 'login', ip_address=request.META.get('REMOTE_ADDR', ''))
-            except Exception:
-                pass
-            return Response(serializer.validated_data, status=status.HTTP_200_OK)
+                role = getattr(user, 'role', '').lower()
+                print(f"[AUTH DEBUG] User role identified as: {role}")
+            except Exception as role_err:
+                print(f"[AUTH DEBUG] Role attribute access failure: {role_err}")
+                return Response({"error": "Profile integrity check failed. Admin has been notified."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            if role == 'admin' or user.is_superuser:
+                logger.info(f"Admin MFA flow triggered for: {user.email}")
+                # Issue OTP every time admin logs in
+                otp_sent, otp_error = generate_and_send_otp(user, reason="admin_login")
+                if not otp_sent:
+                    logger.error(f"Admin OTP dispatch failure for {user.email}: {otp_error}")
+                    return Response({"error": f"Imperial Multi-Factor Dispatch Error: {otp_error}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
+                return Response({
+                    "requires_otp": True,
+                    "email": user.email,
+                    "message": "Double-layered security check: Enter the code sent to your email to descend into the administration hall."
+                }, status=status.HTTP_200_OK)
+            
+            # Standard login for buyers and sellers
+            try:
+                logger.info(f"Proceeding with standard login for {user.email}")
+                data = get_tokens_for_user(user)
+                
+                # PostgreSQL activity log
+                from analytics.utils import log_activity
+                log_activity(user.email, 'login', ip_address=request.META.get('REMOTE_ADDR', ''))
+                    
+                return Response(data, status=status.HTTP_200_OK)
+            except Exception as e:
+                logger.error(f"CRITICAL LOGIN ERROR for {user.email}: {e}")
+                return Response({"error": "Login failed during token generation. See server logs."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        logger.warning(f"Login 400 Validation Errors: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AdminLoginVerifyOTPView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+        otp_code = request.data.get('otp_code')
+        
+        if not email or not otp_code:
+            return Response({"error": "Email and OTP code are required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"error": "No account found."}, status=status.HTTP_404_NOT_FOUND)
+            
+        # Get the most recent valid OTP for login
+        otp_obj = OTP.objects.filter(user=user, otp_code=otp_code).order_by('-created_at').first()
+
+        if not otp_obj:
+            return Response({"error": "Invalid verification code."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if otp_obj.is_expired():
+            return Response({"error": "Code has expired. Please request a new one."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Success: Give the admin their tokens
+        data = get_tokens_for_user(user)
+        
+        # PostgreSQL activity log
+        try:
+            from analytics.utils import log_activity
+            log_activity(email, 'admin_login_complete', ip_address=request.META.get('REMOTE_ADDR', ''))
+        except Exception:
+            pass
+            
+        # Delete verified OTP
+        otp_obj.delete()
+
+        return Response(data, status=status.HTTP_200_OK)
+
+class AdminResendLoginOTPView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+        if not email:
+            return Response({"error": "Email is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user = User.objects.get(email=email)
+            if not (user.role == 'admin' or user.is_superuser):
+                 return Response({"error": "Invalid request for this account role."}, status=status.HTTP_403_FORBIDDEN)
+        except User.DoesNotExist:
+            return Response({"error": "No account found."}, status=status.HTTP_404_NOT_FOUND)
+            
+        otp_sent, otp_error = generate_and_send_otp(user, reason="admin_login")
+        if otp_sent:
+            return Response({"message": "A new verification code has been dispatched."}, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": f"MFA Herald Dispatch Error: {otp_error}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
@@ -199,6 +333,37 @@ class UserProfileView(APIView):
     def get(self, request):
         serializer = UserSerializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class SendTestEmailView(APIView):
+    """
+    Diagnostic view to verify SMTP settings are operational.
+    Admin access only.
+    """
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        test_recipient = request.data.get('email', request.user.email)
+        try:
+            sent = send_mail(
+                subject="SmartProperty - SMTP Configuration Verification",
+                message=(
+                    f"Imperial Dispatch Check:\n\n"
+                    f"This transmission confirms that your SMTP backend is operational.\n"
+                    f"Sent successfully to: {test_recipient}\n\n"
+                    f"— SmartProperty System Core"
+                ),
+                from_email=None,
+                recipient_list=[test_recipient],
+                fail_silently=False,
+            )
+            if sent > 0:
+                return Response({
+                    "message": f"Imperial Herald successfully dispatched the test message to {test_recipient}."
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({"error": "Transmission failed. The system accepted the request but failed to deliver."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            return Response({"error": f"Imperial Dispatch Error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class UserManagementViewSet(viewsets.ModelViewSet):
     """
@@ -303,9 +468,9 @@ class AdminKYCVerifyView(APIView):
                 user.kyc_verified_at = timezone.now()
             user.save()
             
-            # MongoDB activity log
+            # PostgreSQL activity log
             try:
-                from config.mongo_utils import log_activity
+                from analytics.utils import log_activity
                 action = 'verify_kyc' if kyc_status == 'verified' else 'reject_kyc'
                 log_activity(request.user.email, action, details={'target_user': user.email}, status='success')
             except Exception:

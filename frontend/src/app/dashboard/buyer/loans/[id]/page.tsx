@@ -3,10 +3,10 @@
 import { use, useState, useEffect } from 'react';
 import Container from '@/components/layout/Container';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
-import { getCurrentUser } from '@/lib/auth/mockAuth';
+import { getUser } from '@/lib/auth/getUser';
 import { getLoanById } from '@/lib/loans/storage';
 import { getPropertyById } from '@/lib/properties/storage';
-import { MOCK_PROPERTIES } from '@/lib/mock-data';
+
 import { LoanTimeline } from '@/components/loan/LoanTimeline';
 import { LoanStatusBadge } from '@/components/loan/LoanStatusBadge';
 import { ArrowLeft, Building2, IndianRupee, Briefcase, MessageSquare, AlertCircle } from 'lucide-react';
@@ -17,7 +17,7 @@ export default function BuyerLoanDetailPage({ params }: { params: Promise<{ id: 
     const { id } = use(params);
     const [loan, setLoan] = useState<LoanRequest | null>(() => {
         if (typeof window === 'undefined') return null;
-        const user = getCurrentUser();
+        const user = getUser();
         if (user) {
             const data = getLoanById(id);
             if (data && data.buyerId === user.id) {
@@ -47,7 +47,7 @@ export default function BuyerLoanDetailPage({ params }: { params: Promise<{ id: 
         );
     }
 
-    const property = getPropertyById(loan.propertyId) || MOCK_PROPERTIES.find(p => p.id === loan.propertyId);
+    const property = getPropertyById(loan.propertyId);
 
     return (
         <ProtectedRoute allowedRoles={['buyer']}>

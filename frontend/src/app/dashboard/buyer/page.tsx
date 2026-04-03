@@ -5,7 +5,8 @@ import api from '@/lib/api/http';
 import { Loader } from '@/components/common/Loader';
 import {
     Building, FileText, CreditCard, TrendingUp,
-    Search, Filter, Home, ArrowRight, MapPin, Bath, BedDouble, Crown, Heart, Sparkles, Navigation, Wallet
+    Search, Home, ArrowRight, MapPin, Bath, BedDouble, Heart, Wallet, Calculator,
+    LayoutDashboard
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/common/Button';
@@ -43,7 +44,7 @@ export default function BuyerDashboard() {
                     transaction_count: transactions.length,
                     active_loans: loans.filter((l: any) => l.LoanStatus === 'APPROVED').length,
                     recent_transactions: transactions.slice(0, 4),
-                    recommended_properties: properties.filter((p: any) => p.status === 'PUBLISHED' || p.status === 'APPROVED').slice(0, 3),
+                    recommended_properties: properties.filter((p: any) => p.status === 'published' || p.status === 'approved').slice(0, 3),
                 });
             } catch (e) {
                 console.error(e);
@@ -55,150 +56,143 @@ export default function BuyerDashboard() {
         load();
     }, []);
 
-    if (loading) return <div className="min-h-screen bg-[#fffdf9] flex justify-center items-center"><Loader size="lg" /></div>;
+    if (loading) return <div className="min-h-screen bg-background flex justify-center items-center"><Loader size="lg" /></div>;
 
     const summaryCards = [
-        { label: 'Estates Explored', value: stats!.recommended_properties.length, icon: Building, color: 'blue' },
-        { label: 'Imperial Deeds', value: stats!.transaction_count, icon: CreditCard, color: 'emerald' },
-        { label: 'Loan Petitions', value: stats!.loan_count, icon: FileText, color: 'purple' },
-        { label: 'Active Endowments', value: stats!.active_loans, icon: TrendingUp, color: 'amber' },
+        { label: 'Viewed Properties', value: stats!.recommended_properties.length, icon: Building, color: 'text-blue-600', bg: 'bg-blue-50' },
+        { label: 'My Inquiries', value: stats!.transaction_count, icon: CreditCard, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+        { label: 'Loan Requests', value: stats!.loan_count, icon: FileText, color: 'text-purple-600', bg: 'bg-purple-50' },
+        { label: 'Saved Homes', value: '12', icon: Heart, color: 'text-rose-600', bg: 'bg-rose-50' },
     ];
 
     return (
-        <div className="min-h-screen bg-[#fffdf9] py-12 px-4 sm:px-8">
+        <div className="min-h-screen bg-background py-8">
             {/* Header */}
-            <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 mb-12"
-            >
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
                 <div>
-                    <div className="flex items-center gap-3 mb-2">
-                        <Crown className="h-5 w-5 text-accent" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-accent">Sovereign Explorer Hub</span>
-                    </div>
-                    <h1 className="text-4xl lg:text-6xl font-serif text-primary">Portfolio Sanctuary</h1>
-                    <p className="text-gray-400 mt-2 font-medium italic">Discovering prestigious estates and managing imperial acquisitions</p>
+                    <h1 className="text-2xl font-bold text-foreground">Welcome Back</h1>
+                    <p className="text-gray-500 mt-1">Here's an overview of your property search and finance activity.</p>
                 </div>
                 <Link href="/properties">
-                    <Button className="h-16 px-10 rounded-full bg-primary text-accent font-black uppercase tracking-widest text-[10px] border border-accent/30 shadow-2xl hover:bg-accent hover:text-primary transition-all flex items-center gap-3 group">
-                        <Search className="h-5 w-5 group-hover:scale-110 transition-transform" /> Browse Royal Estates
+                    <Button className="flex items-center gap-2 h-12 px-6 rounded-lg font-bold">
+                        <Search className="h-5 w-5" /> Explore Properties
                     </Button>
                 </Link>
-            </motion.div>
+            </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
                 {summaryCards.map((card, i) => (
                     <motion.div 
                         key={i} 
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.1 }}
-                        className="bg-white/80 backdrop-blur-xl p-8 rounded-[2.5rem] border border-accent/10 shadow-xl shadow-accent/5 group hover:shadow-2xl transition-all"
+                        className="bg-white p-6 rounded-xl border border-border shadow-sm group hover:shadow-md transition-all"
                     >
-                        <div className="h-14 w-14 bg-primary text-accent rounded-2xl flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform">
-                            <card.icon className="h-7 w-7" />
+                        <div className={`h-12 w-12 ${card.bg} ${card.color} rounded-lg flex items-center justify-center mb-4 transition-transform group-hover:scale-110`}>
+                            <card.icon className="h-6 w-6" />
                         </div>
-                        <h3 className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] mb-1">{card.label}</h3>
-                        <p className="text-3xl font-serif text-primary">{card.value}</p>
+                        <h3 className="text-sm font-medium text-gray-500 mb-1">{card.label}</h3>
+                        <p className="text-2xl font-bold text-foreground">{card.value}</p>
                     </motion.div>
                 ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* EMI Calculator */}
-                <motion.div 
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="lg:col-span-2 bg-white/80 backdrop-blur-xl rounded-[3rem] border border-accent/10 shadow-xl p-0 overflow-hidden"
-                >
-                    <div className="premium-gradient p-10 text-white border-b border-accent/20 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full -mr-16 -mt-16 blur-3xl opacity-50" />
-                        <div className="relative z-10">
-                            <h2 className="text-2xl font-serif text-accent mb-2">Imperial Treasury Calculator</h2>
-                            <p className="text-gray-400 text-sm font-medium italic">Estimating endowments for sovereign acquisitions</p>
+                <div className="lg:col-span-2 space-y-8">
+                    <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
+                        <div className="p-8 border-b border-border bg-gray-50/50">
+                            <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                                <Calculator className="h-5 w-5 text-primary" /> Mortgage & EMI Calculator
+                            </h2>
+                            <p className="text-sm text-gray-500 mt-1">Estimate your monthly payments for your dream home.</p>
+                        </div>
+                        <div className="p-8">
+                            <EMICalculator />
                         </div>
                     </div>
-                    <div className="p-10">
-                        <EMICalculator />
-                    </div>
-                </motion.div>
 
-                {/* Sidebar: Recommended & Purchases */}
-                <div className="space-y-8">
+                    <div className="bg-[#F8F7FC] p-8 rounded-xl border border-border">
+                        <div className="flex items-center gap-3 mb-4 text-primary font-bold">
+                            <LayoutDashboard className="h-5 w-5" />
+                            <span>Buyer Tip</span>
+                        </div>
+                        <p className="text-sm text-gray-600 leading-relaxed italic">
+                            "Getting pre-approved for a loan increases your chances of closing a deal by 30%. Use our EMI calculator to find a budget that works for you."
+                        </p>
+                    </div>
+                </div>
+
+                {/* Sidebar: Recommended & Transactions */}
+                <div className="space-y-6">
                     {/* Recommended Estates */}
-                    <motion.div 
-                        initial={{ opacity: 0, x: 50 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="bg-white/80 backdrop-blur-xl rounded-[3rem] border border-accent/10 shadow-xl p-10"
-                    >
-                        <div className="flex justify-between items-center mb-8">
-                            <div>
-                                <h2 className="text-xl font-serif text-primary">Selected Estates</h2>
-                                <p className="text-[10px] font-black uppercase tracking-widest text-accent mt-1 italic">Curated for your lineage</p>
-                            </div>
-                            <Link href="/properties" className="h-10 w-10 bg-primary rounded-full flex items-center justify-center text-accent shadow-lg hover:scale-110 transition-transform">
-                                <Navigation className="h-4 w-4" />
-                            </Link>
-                        </div>
-                        <div className="space-y-6">
-                            {stats!.recommended_properties.length === 0 ? (
-                                <p className="text-sm font-serif text-gray-400 text-center py-8">The royal archive is searching for your match.</p>
-                            ) : stats!.recommended_properties.map((p: any, index: number) => (
-                                <Link key={p.id || index} href={`/properties/${p.id}`} className="block group">
-                                    <div className="p-5 bg-[#fffdf9] border border-accent/10 rounded-3xl hover:bg-white hover:border-accent/30 transition-all shadow-sm group-hover:shadow-md">
-                                        <p className="font-serif text-lg text-primary group-hover:text-accent transition-colors">{p.title}</p>
-                                        <div className="flex items-center gap-4 mt-2 text-[10px] text-gray-400 font-bold uppercase tracking-widest">
-                                            <span className="flex items-center gap-1"><BedDouble className="h-3 w-3 text-accent" /> {p.beds}</span>
-                                            <span className="flex items-center gap-1"><Bath className="h-3 w-3 text-accent" /> {p.baths}</span>
-                                            <span className="flex items-center gap-1"><MapPin className="h-3 w-3 text-accent" /> {p.location}</span>
-                                        </div>
-                                        <div className="mt-4 flex justify-between items-end">
-                                            <p className="font-serif text-xl text-primary">{formatNPR(p.price)}</p>
-                                            <ArrowRight className="h-4 w-4 text-accent opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-                                        </div>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-                    </motion.div>
-
-                    {/* Imperial Purchases */}
-                    <motion.div 
-                        initial={{ opacity: 0, x: 50 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="bg-white/80 backdrop-blur-xl rounded-[3rem] border border-accent/10 shadow-xl p-10"
-                    >
-                        <div className="flex items-center gap-4 mb-8">
-                            <div className="h-12 w-12 bg-primary rounded-2xl flex items-center justify-center text-accent shadow-lg">
-                                <Wallet className="h-6 w-6" />
-                            </div>
-                            <div>
-                                <h2 className="text-xl font-serif text-primary">Purse Registry</h2>
-                                <p className="text-[10px] font-black uppercase tracking-widest text-accent mt-1 italic">Acquisition History</p>
-                            </div>
+                    <div className="bg-white rounded-xl border border-border shadow-sm p-6">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="font-bold text-foreground">Top Recommendations</h2>
+                            <Link href="/properties" className="text-xs font-bold text-primary hover:underline">View All</Link>
                         </div>
                         <div className="space-y-4">
-                            {stats!.recent_transactions.length === 0 ? (
-                                <p className="text-sm font-serif text-gray-400 text-center py-8 italic">No imperial purchases recorded in the current era.</p>
-                            ) : stats!.recent_transactions.map((t: any, index: number) => (
-                                <div key={t.id || index} className="flex justify-between items-center p-5 bg-[#fffdf9] border border-accent/10 rounded-2xl group hover:bg-white transition-all shadow-sm">
-                                    <div className="space-y-1">
-                                        <p className="text-sm font-serif text-primary">{t.Property?.title ?? 'Estate Asset'}</p>
-                                        <p className="text-[10px] text-accent font-black uppercase tracking-tighter">{formatNPR(t.total_amount)}</p>
-                                    </div>
-                                    <StatusBadge status={t.status} />
-                                </div>
-                            ))}
+                            {stats!.recommended_properties.length === 0 ? (
+                                <p className="text-sm text-gray-400 text-center py-6 italic">No recommendations yet.</p>
+                            ) : (
+                                stats!.recommended_properties.map((p: any, i: number) => {
+                                    const rawId = p.id || p._id || p.PropertyID || p.property_id;
+                                    const finalId = rawId ? String(rawId) : `recommended-${i}`;
+                                    return (
+                                        <Link key={finalId} href={`/properties/${finalId}`} className="block group">
+                                            <div className="p-4 bg-gray-50 rounded-xl border border-border group-hover:border-primary/20 transition-all hover:bg-white group-hover:shadow-sm">
+                                                <p className="font-bold text-sm text-gray-900 group-hover:text-primary transition-colors line-clamp-1">{p.title}</p>
+                                                <div className="flex items-center gap-3 mt-2 text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+                                                    <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {p.location}</span>
+                                                </div>
+                                                <div className="mt-3 flex justify-between items-center">
+                                                    <p className="font-bold text-primary">{formatNPR(p.price)}</p>
+                                                    <ArrowRight className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    );
+                                })
+                            )}
                         </div>
-                        <Link href="/dashboard/buyer/transactions" className="mt-8 block">
-                            <Button className="w-full h-14 rounded-full border border-primary text-primary font-black uppercase tracking-widest text-[10px] hover:bg-primary hover:text-white transition-all shadow-lg">View Entire Ledger</Button>
+                    </div>
+
+                    {/* Transaction Registry */}
+                    <div className="bg-white rounded-xl border border-border shadow-sm p-6">
+                        <div className="flex items-center gap-2 mb-6">
+                            <div className="h-8 w-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center">
+                                <Wallet className="h-4 w-4" />
+                            </div>
+                            <h2 className="font-bold text-foreground">Recent Activity</h2>
+                        </div>
+                        <div className="space-y-3">
+                            {stats!.recent_transactions.length === 0 ? (
+                                <p className="text-sm text-gray-400 text-center py-6 italic">No recent inquiries.</p>
+                            ) : (
+                                stats!.recent_transactions.map((t: any, i: number) => {
+                                    const rawId = t.id || t._id || t.TransactionID || t.transaction_id;
+                                    const finalId = rawId ? String(rawId) : `transaction-${i}`;
+                                    return (
+                                        <div key={finalId} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-border hover:bg-white transition-all">
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-bold text-gray-900 truncate">{t.Property?.title ?? 'Property Inquiry'}</p>
+                                                <p className="text-[10px] text-primary font-bold mt-1">{formatNPR(t.total_amount)}</p>
+                                            </div>
+                                            <StatusBadge status={t.status} />
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+                        <Link href="/dashboard/buyer/transactions" className="mt-6 block">
+                            <Button variant="outline" className="w-full h-10 rounded-lg text-xs font-bold border-border text-gray-500 hover:bg-gray-50">Transaction History</Button>
                         </Link>
-                    </motion.div>
+                    </div>
                 </div>
             </div>
         </div>
     );
 }
+

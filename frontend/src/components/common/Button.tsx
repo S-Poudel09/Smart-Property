@@ -7,32 +7,34 @@ function cn(...inputs: ClassValue[]) {
 }
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-    variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
-    size?: 'sm' | 'md' | 'lg';
+    variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success';
+    size?: 'sm' | 'md' | 'lg' | 'icon';
     isLoading?: boolean;
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ({ className, variant = 'primary', size = 'md', isLoading, children, disabled, ...props }, ref) => {
         const variants = {
-            primary: 'bg-primary text-white hover:bg-primary-light shadow-lg hover:shadow-primary/20',
-            secondary: 'bg-royal-gold text-white hover:bg-royal-gold-light',
-            outline: 'border-2 border-primary bg-transparent hover:bg-primary/5 text-primary font-bold',
-            ghost: 'bg-transparent hover:bg-primary/10 text-primary',
-            danger: 'bg-red-600 text-white hover:bg-red-700',
+            primary: 'bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary/90 hover:shadow-primary/30 active:scale-[0.98]',
+            secondary: 'bg-white text-primary border border-primary/20 hover:bg-primary/5 hover:border-primary/30 active:scale-[0.98]',
+            outline: 'bg-transparent text-foreground border border-border hover:bg-gray-50 hover:border-muted active:scale-[0.98]',
+            ghost: 'bg-transparent text-muted hover:bg-gray-100 hover:text-foreground active:scale-[0.98]',
+            danger: 'bg-danger text-white shadow-lg shadow-danger/20 hover:bg-danger/90 hover:shadow-danger/30 active:scale-[0.98]',
+            success: 'bg-success text-white shadow-lg shadow-success/20 hover:bg-success/90 hover:shadow-success/30 active:scale-[0.98]',
         };
 
         const sizes = {
-            sm: 'px-3 py-1.5 text-sm',
-            md: 'px-4 py-2',
-            lg: 'px-6 py-3 text-lg',
+            sm: 'h-9 px-4 text-xs font-semibold',
+            md: 'h-11 px-6 text-sm font-bold',
+            lg: 'h-14 px-8 text-base font-bold',
+            icon: 'h-11 w-11 flex items-center justify-center',
         };
 
         return (
             <button
                 ref={ref}
                 className={cn(
-                    'inline-flex items-center justify-center rounded-full font-bold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50 active:scale-95 uppercase tracking-widest text-[11px]',
+                    'inline-flex items-center justify-center rounded-xl font-bold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] text-xs uppercase tracking-widest',
                     variants[variant],
                     sizes[size],
                     className

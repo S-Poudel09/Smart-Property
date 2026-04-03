@@ -34,7 +34,7 @@ class TransactionSerializer(serializers.ModelSerializer):
         model = Transaction
         fields = (
             'TransactionID', 'Buyer', 'Seller', 'Property', 'Proofs', 
-            'total_amount', 'amount_paid', 'payment_method', 
+            'total_amount', 'amount_paid', 'payment_method', 'transaction_reference_id',
             'status', 'Progress', 'created_at', 'updated_at',
             'property', 'seller',
             'card_brand', 'card_type', 'card_on_dark_web', 'has_chip'

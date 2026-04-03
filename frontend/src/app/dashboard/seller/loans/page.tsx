@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react';
 import Container from '@/components/layout/Container';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
-import { getCurrentUser } from '@/lib/auth/mockAuth';
+import { getUser } from '@/lib/auth/getUser';
 import { getLoansBySeller } from '@/lib/loans/storage';
 import { getPropertyById } from '@/lib/properties/storage';
-import { MOCK_PROPERTIES } from '@/lib/mock-data';
+
 import { LoanRequest } from '@/types/loan';
 import { LoanStatusBadge } from '@/components/loan/LoanStatusBadge';
 import { Building2, Calendar, IndianRupee } from 'lucide-react';
@@ -15,7 +15,7 @@ import { EmptyState } from '@/components/common/EmptyState';
 export default function SellerLoansPage() {
     const [loans, setLoans] = useState<LoanRequest[]>(() => {
         if (typeof window === 'undefined') return [];
-        const user = getCurrentUser();
+        const user = getUser();
         if (user) {
             const sellerLoans = getLoansBySeller(user.id);
             return sellerLoans.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -47,7 +47,7 @@ export default function SellerLoansPage() {
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
                                     {loans.map((loan) => {
-                                        const prop = getPropertyById(loan.propertyId) || MOCK_PROPERTIES.find(p => p.id === loan.propertyId);
+                                        const prop = getPropertyById(loan.propertyId);
                                         return (
                                             <tr key={loan.id} className="hover:bg-gray-50 transition-colors">
                                                 <td className="px-6 py-4">

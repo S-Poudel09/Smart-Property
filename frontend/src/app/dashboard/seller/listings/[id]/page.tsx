@@ -25,7 +25,7 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { Button } from '@/components/common/Button';
 import { ListingStatusBadge } from '@/components/property/ListingStatusBadge';
 import { getPropertyById, submitProperty, deleteProperty } from '@/lib/properties/storage';
-import { getCurrentUser } from '@/lib/auth/mockAuth';
+import { getUser } from '@/lib/auth/getUser';
 import { Property } from '@/types/property';
 import { toast } from 'react-hot-toast';
 
@@ -35,7 +35,7 @@ export default function SellerListingDetailsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isActionLoading, setIsActionLoading] = useState(false);
     const router = useRouter();
-    const user = getCurrentUser();
+    const user = getUser();
 
     useEffect(() => {
         const data = getPropertyById(id as string);
@@ -62,7 +62,7 @@ export default function SellerListingDetailsPage() {
         try {
             await new Promise(r => setTimeout(r, 1000));
             submitProperty(property.id);
-            setProperty(prev => prev ? { ...prev, status: 'SUBMITTED' } : null);
+            setProperty(prev => prev ? { ...prev, status: 'submitted' } : null);
             toast.success('Listing submitted for approval!');
         } catch (e) {
             toast.error('Failed to submit listing');
@@ -188,7 +188,7 @@ export default function SellerListingDetailsPage() {
                             <div className="rounded-2xl border bg-white p-6 shadow-sm">
                                 <h3 className="font-bold text-gray-900 mb-4">Management Actions</h3>
 
-                                {property.status === 'DRAFT' ? (
+                                {property.status === 'draft' ? (
                                     <div className="space-y-3">
                                         <div className="p-4 bg-yellow-50 border border-yellow-100 rounded-xl text-sm text-yellow-800 mb-4">
                                             <div className="flex gap-2 font-bold mb-1">
@@ -210,7 +210,7 @@ export default function SellerListingDetailsPage() {
                                             </Button>
                                         </Link>
                                     </div>
-                                ) : property.status === 'SUBMITTED' ? (
+                                ) : property.status === 'submitted' ? (
                                     <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-700">
                                         <div className="flex gap-2 font-bold mb-1">
                                             <CheckCircle2 className="h-4 w-4" /> Under Review

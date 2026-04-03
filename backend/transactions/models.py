@@ -25,6 +25,7 @@ class Transaction(models.Model):
     
     # PaymentMethod
     payment_method = models.CharField(max_length=50, default="Bank Transfer")
+    transaction_reference_id = models.CharField(max_length=100, blank=True, null=True, help_text="Khalti/Bank reference ID")
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)

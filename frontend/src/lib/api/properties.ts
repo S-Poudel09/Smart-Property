@@ -28,61 +28,78 @@ interface BackendProperty {
 }
 
 export const getProperties = async (): Promise<Property[]> => {
-    const response = await api.get('/properties/');
+    const response = await api.get('properties/');
 
     // Map backend snake_case to frontend camelCase
-    return response.data.map((item: BackendProperty) => ({
-        id: item.id,
-        sellerId: item.seller_id,
+    return response.data.map((item: any) => ({
+        id: item.id || item.PropertyID,
+        sellerId: item.seller_id || item.owner?.id,
         title: item.title,
         description: item.description || '',
-        price: parseFloat(item.price),
-        location: `${item.city || ''}, ${item.address || ''}`,
+        price: parseFloat(item.price || '0'),
+        location: item.location || `${item.city || ''}, ${item.address || ''}`,
         address: item.address,
         city: item.city,
-        lat: item.lat,
-        lng: item.lng,
-        type: item.listing_type,
-        category: item.property_type,
+        lat: item.lat || item.latitude,
+        lng: item.lng || item.longitude,
+        type: item.listing_type || 'sale',
+        category: item.property_type || 'house',
         bedrooms: item.beds || 0,
         bathrooms: item.baths || 0,
         area: item.area_sqft || 0,
-        images: item.images || [],
-        documents: item.documents || [],
+        area_ropani: item.area_ropani,
+        area_anna: item.area_anna,
+        ward: item.ward,
+        municipality: item.municipality,
+        district: item.district,
+        images: (item.property_images?.map((img: any) => {
+            const path = typeof img === 'string' ? img : img.image;
+            const { getFullImageUrl } = require('@/lib/utils/images');
+            return getFullImageUrl(path);
+        })) || item.images?.map((url: string) => {
+            const { getFullImageUrl } = require('@/lib/utils/images');
+            return getFullImageUrl(url);
+        }) || [],
+        documents: item.property_documents?.map((doc: any) => ({
+            ...doc,
+            document: require('@/lib/utils/images').getFullImageUrl(doc.document)
+        })) || [],
         status: item.status,
         isVerified: item.is_verified,
         rejectionReason: item.rejection_reason,
         boundaryCoordinates: item.boundary_coordinates,
         virtualTourUrl: item.virtual_tour_url,
-        features: [], // Backend doesn't support features array yet, default to empty
+        features: item.features || [],
         createdAt: item.created_at,
         updatedAt: item.updated_at,
+        hostelGender: item.hostel_gender,
+        foodIncluded: item.food_included,
     }));
 };
 
 export const createProperty = async (data: FormData | Record<string, unknown>) => {
     const headers = data instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : {};
-    const response = await api.post('/properties/', data, { headers });
+    const response = await api.post('properties/', data, { headers });
     return response.data;
 };
 
 export const submitProperty = async (id: string) => {
-    const response = await api.post(`/properties/${id}/submit/`);
+    const response = await api.post(`properties/${id}/submit/`);
     return response.data;
 };
 
 export const approveProperty = async (id: string) => {
-    const response = await api.post(`/properties/${id}/approve/`);
+    const response = await api.post(`properties/${id}/approve/`);
     return response.data;
 };
 
 export const rejectProperty = async (id: string, reason: string) => {
-    const response = await api.post(`/properties/${id}/reject/`, { rejection_reason: reason });
+    const response = await api.post(`properties/${id}/reject/`, { rejection_reason: reason });
     return response.data;
 };
 
 export const getProperty = async (id: string): Promise<Property> => {
-    const response = await api.get(`/properties/${id}/`);
+    const response = await api.get(`properties/${id}/`);
     const item = response.data;
     
     return {
@@ -91,30 +108,47 @@ export const getProperty = async (id: string): Promise<Property> => {
         title: item.title,
         description: item.description || '',
         price: parseFloat(item.price || item.total_amount || '0'),
-        location: `${item.city || ''}, ${item.address || ''}`,
+        location: item.location || `${item.city || ''}, ${item.address || ''}`,
         address: item.address,
-        city: item.city || item.location,
+        city: item.city,
         lat: item.lat || item.latitude,
         lng: item.lng || item.longitude,
-        type: item.listing_type || item.property_type || item.type,
-        category: item.property_type || item.category,
-        bedrooms: item.beds || item.bedrooms || 0,
-        bathrooms: item.baths || item.bathrooms || 0,
-        area: item.area_sqft || item.area || 0,
-        images: item.images || [],
-        documents: item.documents || [],
+        type: item.listing_type || 'sale',
+        category: item.property_type || 'house',
+        bedrooms: item.beds || 0,
+        bathrooms: item.baths || 0,
+        area: item.area_sqft || 0,
+        area_ropani: item.area_ropani,
+        area_anna: item.area_anna,
+        ward: item.ward,
+        municipality: item.municipality,
+        district: item.district,
+        images: (item.property_images?.map((img: any) => {
+            const path = typeof img === 'string' ? img : img.image;
+            const { getFullImageUrl } = require('@/lib/utils/images');
+            return getFullImageUrl(path);
+        })) || item.images?.map((url: string) => {
+            const { getFullImageUrl } = require('@/lib/utils/images');
+            return getFullImageUrl(url);
+        }) || [],
+        documents: item.property_documents?.map((doc: any) => ({
+            ...doc,
+            document: require('@/lib/utils/images').getFullImageUrl(doc.document)
+        })) || [],
         status: item.status,
-        isVerified: item.is_verified || item.isVerified,
+        isVerified: item.is_verified,
         rejectionReason: item.rejection_reason,
         boundaryCoordinates: item.boundary_coordinates,
         virtualTourUrl: item.virtual_tour_url,
         features: item.features || [],
-        createdAt: item.created_at || item.createdAt,
-        updatedAt: item.updated_at || item.updatedAt,
+        createdAt: item.created_at,
+        updatedAt: item.updated_at,
+        hostelGender: item.hostel_gender,
+        foodIncluded: item.food_included,
     };
 };
 
 export const verifyDocument = async (propertyId: string, docId: string) => {
-    const response = await api.post(`/properties/${propertyId}/verify-document/${docId}/`);
+    const response = await api.post(`properties/${propertyId}/verify-document/${docId}/`);
     return response.data;
 };

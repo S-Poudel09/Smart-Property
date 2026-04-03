@@ -1,41 +1,67 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import { Bell, Sparkles } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Bell } from 'lucide-react';
 import Link from 'next/link';
 import { getUser } from '@/lib/auth/getUser';
-import { getUnreadCount } from '@/lib/notifications/storage';
+import { getNotifications, Notification } from '@/lib/api/notifications';
 import { motion, AnimatePresence } from 'framer-motion';
+
+import { WebSocketClient } from '@/lib/api/websocket';
 
 export const NotificationBell = () => {
     const [count, setCount] = useState(0);
     const user = getUser();
 
+    const updateCountFromData = useCallback((data: any) => {
+        // If data is a list (initial load), count unread. 
+        // If it's a single notification object (WS update), increment.
+        if (Array.isArray(data)) {
+            setCount(data.filter((n: any) => !n.is_read).length);
+        } else if (data.id) {
+            setCount(prev => prev + 1);
+        }
+    }, []);
+
+    const fetchInitialCount = useCallback(async () => {
+        if (!user) return;
+        try {
+            const data = await getNotifications();
+            const notifications = Array.isArray(data) ? data : (data as any).results || [];
+            updateCountFromData(notifications);
+        } catch (error) {
+            console.error('Failed to fetch initial notification count:', error);
+        }
+    }, [user?.id, updateCountFromData]);
+
     useEffect(() => {
-        const updateCount = () => {
-            if (user?.user_id) {
-                setCount(getUnreadCount(user.user_id));
-            }
-        };
+        if (!user) return;
+        
+        // Fetch initial state
+        fetchInitialCount();
 
-        updateCount();
-        const handleNewNotif = () => updateCount();
-        window.addEventListener('smartproperty_new_notification', handleNewNotif);
+        // Connection disabled as WebSocket functionality has been removed.
+        // Reverting to standard HTTP-based fetching for now.
+        /*
+        const ws = new WebSocketClient('ws/notifications/', (data) => {
+            console.log('[WS NOTIF] Received:', data);
+            updateCountFromData(data);
+        });
+        
+        ws.connect();
 
-        const interval = setInterval(updateCount, 5000);
-
-        return () => {
-            window.removeEventListener('smartproperty_new_notification', handleNewNotif);
-            clearInterval(interval);
-        };
-    }, [user?.user_id]);
+        return () => ws.disconnect();
+        */
+    }, [user?.id, fetchInitialCount, updateCountFromData]);
 
     if (!user) return null;
 
     return (
         <Link href="/dashboard/notifications" className="relative group p-2">
-            <div className="relative z-10 p-2 rounded-2xl bg-white/50 border border-accent/10 text-primary hover:bg-white hover:text-accent hover:border-accent/40 hover:shadow-xl transition-all duration-300">
-                <Bell className="h-6 w-6 group-hover:rotate-12 transition-transform" />
+            <div className={`relative z-10 p-2 rounded-2xl transition-all duration-300 ${
+                count > 0 
+                ? 'bg-primary/10 border-primary/20 text-primary hover:bg-primary hover:text-white' 
+                : 'bg-white/50 border border-accent/10 text-gray-400 hover:bg-white hover:text-primary'
+            }`}>
+                <Bell className={`h-6 w-6 group-hover:rotate-12 transition-transform ${count > 0 ? 'animate-pulse' : ''}`} />
             </div>
             
             <AnimatePresence>
@@ -44,14 +70,14 @@ export const NotificationBell = () => {
                         initial={{ scale: 0, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         exit={{ scale: 0, opacity: 0 }}
-                        className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-xl bg-primary text-[9px] font-black text-accent ring-2 ring-white shadow-2xl z-20"
+                        className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-xl bg-red-500 text-[9px] font-black text-white ring-2 ring-white shadow-2xl z-20"
                     >
                         {count > 9 ? '9+' : count}
                     </motion.span>
                 )}
             </AnimatePresence>
 
-            <div className="absolute inset-0 bg-accent/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+            <div className={`absolute inset-0 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none ${count > 0 ? 'bg-primary/20' : 'bg-gray-400/10'}`} />
         </Link>
     );
 };

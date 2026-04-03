@@ -1,4 +1,4 @@
-export type PropertyStatus = 'available' | 'sold' | 'rented' | 'pending' | 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'PUBLISHED';
+export type PropertyStatus = 'available' | 'sold' | 'rented' | 'pending' | 'draft' | 'submitted' | 'approved' | 'rejected' | 'published';
 export type ListingType = 'sale' | 'rent';
 export type PropertyCategory = 'house' | 'flat' | 'bungalow' | 'apartment' | 'commercial' | 'hostel' | 'land';
 
@@ -47,4 +47,17 @@ export interface Property {
     virtualTourUrl?: string; // 360-degree virtual tour link
     createdAt: string;
     updatedAt: string;
+    
+    // Hostel Support
+    propertyType?: PropertyCategory;
+    hostelGender?: 'boys' | 'girls' | 'mixed';
+    room_type?: string;
+    foodIncluded?: boolean;
+    hasWifi?: boolean;
+    hasLaundry?: boolean;
+    bathroomType?: 'attached' | 'shared';
+    availableBeds?: number;
+    
+    // Workflow Tracking
+    workflowStep?: number;
 }

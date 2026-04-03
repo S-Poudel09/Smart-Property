@@ -65,7 +65,7 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
                         router.push('/');
                         return;
                     }
-                } else if (currentPath === '/dashboard') {
+                } else if (currentPath === '/dashboard' || currentPath === '/dashboard/') {
                     // Redirect /dashboard to the correct role dashboard
                     if (userRole === 'buyer') router.push('/dashboard/buyer');
                     else if (userRole === 'seller') router.push('/dashboard/seller');

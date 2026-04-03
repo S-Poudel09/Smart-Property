@@ -6,7 +6,7 @@ import { MessageBubble } from './MessageBubble';
 import { MessageInput } from './MessageInput';
 import { ChatHeader } from './ChatHeader';
 import { getMessages, sendMessage } from '@/lib/chat/storage';
-import { getCurrentUser } from '@/lib/auth/mockAuth';
+import { getUser } from '@/lib/auth/getUser';
 import { EmptyState } from '../common/EmptyState';
 import { MessageSquare } from 'lucide-react';
 
@@ -23,7 +23,7 @@ export const ChatWindow = ({ threadId, propertyTitle, otherUserLabel }: ChatWind
     });
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const currentUser = getCurrentUser();
+    const currentUser = getUser();
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

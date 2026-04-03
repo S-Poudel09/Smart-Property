@@ -3,19 +3,20 @@
 import { use, useState, useEffect } from 'react';
 import Container from '@/components/layout/Container';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
-import { getCurrentUser } from '@/lib/auth/mockAuth';
+import { getUser } from '@/lib/auth/getUser';
 import { getThreadById, getThreadsForSeller } from '@/lib/chat/storage';
 import { getPropertyById } from '@/lib/properties/storage';
-import { MOCK_PROPERTIES } from '@/lib/mock-data';
-import { ChatThreadList } from '@/components/chat/ChatThreadList';
-import { ChatWindow } from '@/components/chat/ChatWindow';
 import { ChatThread } from '@/types/chat';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+
+const ChatThreadList = dynamic(() => import('@/components/chat/ChatThreadList').then(m => m.ChatThreadList), { ssr: false });
+const ChatWindow = dynamic(() => import('@/components/chat/ChatWindow').then(m => m.ChatWindow), { ssr: false });
 
 export default function SellerChatDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
-    const user = getCurrentUser();
+    const user = getUser();
     const [threads, setThreads] = useState<ChatThread[]>(() => {
         if (typeof window === 'undefined' || !user) return [];
         const sellerThreads = getThreadsForSeller(user.id);
@@ -53,7 +54,7 @@ export default function SellerChatDetailPage({ params }: { params: Promise<{ id:
         );
     }
 
-    const property = getPropertyById(thread.propertyId) || MOCK_PROPERTIES.find(p => p.id === thread.propertyId);
+    const property = getPropertyById(thread.propertyId);
 
     return (
         <ProtectedRoute allowedRoles={['seller']}>

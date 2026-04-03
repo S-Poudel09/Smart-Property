@@ -30,6 +30,7 @@ export interface Transaction {
     Progress: number;
     created_at: string;
     updated_at: string;
+    id?: string;
     // Fraud detection fields
     card_brand?: string;
     card_type?: string;
@@ -38,12 +39,17 @@ export interface Transaction {
 }
 
 export const getTransactions = async (): Promise<Transaction[]> => {
-    const response = await api.get('/transactions/');
+    const response = await api.get('transactions/');
+    return response.data;
+};
+
+export const getTransactionById = async (id: string): Promise<Transaction> => {
+    const response = await api.get(`transactions/${id}/`);
     return response.data;
 };
 
 export const createTransaction = async (propertyId: string, sellerId: string, amount: number) => {
-    const response = await api.post('/transactions/', {
+    const response = await api.post('transactions/', {
         property: propertyId,
         seller: sellerId,
         total_amount: amount
@@ -57,24 +63,24 @@ export const uploadPaymentProof = async (transactionId: string, amount: number, 
     formData.append('proof_file', file);
     formData.append('notes', notes);
     
-    const response = await api.post(`/transactions/${transactionId}/upload-proof/`, formData, {
+    const response = await api.post(`transactions/${transactionId}/upload-proof/`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
     });
     return response.data;
 };
 
 export const verifyPaymentProof = async (transactionId: string, proofId: string) => {
-    const response = await api.post(`/transactions/${transactionId}/verify-proof/${proofId}/`);
+    const response = await api.post(`transactions/${transactionId}/verify-proof/${proofId}/`);
     return response.data;
 };
 
 export const confirmTransaction = async (transactionId: string) => {
-    const response = await api.post(`/transactions/${transactionId}/confirm/`);
+    const response = await api.post(`transactions/${transactionId}/confirm/`);
     return response.data;
 };
 
 export const createPurchaseRequest = async (propertyId: string, sellerId: string, totalAmount: number) => {
-    const response = await api.post('/transactions/', {
+    const response = await api.post('transactions/', {
         property: propertyId,
         seller: sellerId,
         total_amount: totalAmount

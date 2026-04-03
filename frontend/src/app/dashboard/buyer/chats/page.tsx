@@ -1,10 +1,11 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import ChatRoomComponent from '@/components/chat/ChatRoom';
 import Container from '@/components/layout/Container';
 
-export default function BuyerChatsPage() {
+function BuyerChatsContent() {
     const searchParams = useSearchParams();
     const roomId = searchParams.get('room');
 
@@ -16,5 +17,13 @@ export default function BuyerChatsPage() {
             </div>
             <ChatRoomComponent initialRoomId={roomId} />
         </Container>
+    );
+}
+
+export default function BuyerChatsPage() {
+    return (
+        <Suspense fallback={<div>Loading chats...</div>}>
+            <BuyerChatsContent />
+        </Suspense>
     );
 }

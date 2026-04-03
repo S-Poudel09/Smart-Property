@@ -2,7 +2,7 @@
 
 import { ChatThread } from '@/types/chat';
 import { Property } from '@/types/property';
-import { MOCK_PROPERTIES } from '@/lib/mock-data';
+
 import { getPropertyById } from '@/lib/properties/storage';
 import { Building2, ChevronRight, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
@@ -34,9 +34,6 @@ export const ChatThreadList = ({ threads, activeThreadId, baseUrl }: ChatThreadL
                     <div className="divide-y divide-gray-50">
                         {threads.map((thread) => {
                             let prop = getPropertyById(thread.propertyId);
-                            if (!prop) {
-                                prop = MOCK_PROPERTIES.find(p => p.id === thread.propertyId);
-                            }
 
                             const isActive = thread.id === activeThreadId;
 

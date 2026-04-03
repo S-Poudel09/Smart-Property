@@ -2,7 +2,7 @@
 
 import { LoanRequest } from '@/types/loan';
 import { getPropertyById } from '@/lib/properties/storage';
-import { MOCK_PROPERTIES } from '@/lib/mock-data';
+
 import { Building2, IndianRupee, Calendar } from 'lucide-react';
 import { LoanStatusBadge } from './LoanStatusBadge';
 import Link from 'next/link';
@@ -14,7 +14,7 @@ interface LoanCardProps {
 }
 
 export const LoanCard = ({ loan, baseUrl }: LoanCardProps) => {
-    const property = getPropertyById(loan.propertyId) || MOCK_PROPERTIES.find(p => p.id === loan.propertyId);
+    const property = getPropertyById(loan.propertyId);
 
     return (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-all">

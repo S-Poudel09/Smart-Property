@@ -21,12 +21,14 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         transaction = serializer.save(buyer=self.request.user)
-        # MongoDB activity log
-        try:
-            from config.mongo_utils import log_activity
-            log_activity(self.request.user.email, 'create_transaction', details={'transaction_id': str(transaction.id)}, status='success')
-        except Exception:
-            pass
+        # PostgreSQL activity log
+        from analytics.utils import log_activity
+        log_activity(
+            self.request.user.email, 
+            'create_transaction', 
+            details={'transaction_id': str(transaction.id), 'property': transaction.property.title},
+            status='success'
+        )
 
     @action(detail=True, methods=['post'], url_path='upload-proof')
     def upload_proof(self, request, pk=None):
@@ -41,8 +43,14 @@ class TransactionViewSet(viewsets.ModelViewSet):
         amount = request.data.get('amount')
         proof_file = request.FILES.get('proof_file')
         
-        if not amount or not proof_file:
+        if amount is None or proof_file is None:
             return Response({"error": "Amount and proof file are required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            from decimal import Decimal
+            amount = Decimal(str(amount))
+        except (ValueError, TypeError, OverflowError):
+            return Response({"error": "Invalid amount format"}, status=status.HTTP_400_BAD_REQUEST)
             
         proof = PaymentProof.objects.create(
             transaction=transaction,
@@ -51,12 +59,14 @@ class TransactionViewSet(viewsets.ModelViewSet):
             notes=request.data.get('notes', '')
         )
         
-        # MongoDB activity log
-        try:
-            from config.mongo_utils import log_activity
-            log_activity(request.user.email, 'upload_proof', details={'transaction_id': str(transaction.id)}, status='success')
-        except Exception:
-            pass
+        # PostgreSQL activity log
+        from analytics.utils import log_activity
+        log_activity(
+            request.user.email, 
+            'upload_proof', 
+            details={'transaction_id': str(transaction.id), 'amount': float(amount)}, 
+            status='success'
+        )
 
         return Response(PaymentProofSerializer(proof).data, status=status.HTTP_201_CREATED)
 
@@ -78,25 +88,29 @@ class TransactionViewSet(viewsets.ModelViewSet):
         if proof.is_verified:
             return Response({"error": "Already verified"}, status=status.HTTP_400_BAD_REQUEST)
             
-        proof.is_verified = True
-        proof.verified_at = timezone.now()
-        proof.verified_by = request.user
-        proof.save()
+        from django.db import transaction as db_transaction
+        with db_transaction.atomic():
+            proof.is_verified = True
+            proof.verified_at = timezone.now()
+            proof.verified_by = request.user
+            proof.save()
+            
+            # Update transaction amount paid
+            transaction.amount_paid += proof.amount
+            if transaction.amount_paid >= transaction.total_amount:
+                transaction.status = "COMPLETED"
+            else:
+                transaction.status = "PARTIAL"
+            transaction.save()
         
-        # Update transaction amount paid
-        transaction.amount_paid += proof.amount
-        if transaction.amount_paid >= transaction.total_amount:
-            transaction.status = "COMPLETED"
-        else:
-            transaction.status = "PARTIAL"
-        transaction.save()
-        
-        # MongoDB activity log
-        try:
-            from config.mongo_utils import log_activity
-            log_activity(request.user.email, 'verify_proof', details={'transaction_id': str(transaction.id), 'proof_id': str(proof.id)}, status='success')
-        except Exception:
-            pass
+        # PostgreSQL activity log
+        from analytics.utils import log_activity
+        log_activity(
+            request.user.email, 
+            'verify_proof', 
+            details={'transaction_id': str(transaction.id), 'proof_id': str(proof.id)}, 
+            status='success'
+        )
 
         return Response({"status": "Verified", "new_total_paid": transaction.amount_paid})
 

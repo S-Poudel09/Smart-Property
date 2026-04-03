@@ -25,22 +25,42 @@ class RegisterSerializer(serializers.ModelSerializer):
             'password': {'write_only': True}
         }
 
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            print(f"[AUTH DEBUG] Registration Blocked: Email {value} already exists.")
+            raise serializers.ValidationError("An account with this email already exists.")
+        return value
+
+    def validate_role(self, value):
+        if value.lower() == 'admin':
+            raise serializers.ValidationError("Admin accounts cannot be created through public registration.")
+        if value.lower() not in ['buyer', 'seller']:
+            raise serializers.ValidationError("Invalid role selected.")
+        return value.lower()
+
     def create(self, validated_data):
-        # Use .get() or provided keys safely to satisfy static analysis
+        # DRF maps 'name' (input) to 'full_name' (output) because of source='full_name'
+        # but in validated_data IT IS the source field name ('full_name')!
         email = validated_data.get('email')
         password = validated_data.get('password')
-        # DRF maps 'name' to 'full_name' in validated_data because of source='full_name'
         full_name = validated_data.get('full_name', '')
         role = validated_data.get('role', 'buyer')
 
-        user = User.objects.create_user(
-            username=email, # email is the username
-            email=email,
-            password=password,
-            full_name=full_name,
-            role=role
-        )
-        return user
+        print(f"[AUTH DEBUG] Creating user object: email={email}, role={role}")
+        try:
+            # We enforce username = email for consistency with AbstractUser behavior when USERNAME_FIELD is email
+            user = User.objects.create_user(
+                username=email, 
+                email=email,
+                password=password,
+                full_name=full_name,
+                role=role
+            )
+            print("[AUTH DEBUG] User created successfully in DB.")
+            return user
+        except Exception as e:
+            print(f"[AUTH DEBUG] ERROR during create_user: {str(e)}")
+            raise serializers.ValidationError({"error": f"Internal database error: {str(e)}"})
 
 
 class LoginSerializer(serializers.Serializer):
@@ -49,25 +69,32 @@ class LoginSerializer(serializers.Serializer):
 
     def validate(self, data):
 
-        user = authenticate(username=data['email'], password=data['password'])
+        email = data.get('email')
+        
+        # Diagnostic logging for development
+        print(f"[AUTH DEBUG] Login attempt for email: {email}")
+        
+        user_exists = User.objects.filter(email=email).exists()
+        if not user_exists:
+            print(f"[AUTH DEBUG] Failed: User not found for {email}")
+            raise serializers.ValidationError({"detail": "Incorrect credentials"})
+            
+        user = authenticate(username=email, password=data.get('password'))
 
         if not user:
+            print(f"[AUTH DEBUG] Failed: Password mismatch for {email}")
             raise serializers.ValidationError({"detail": "Incorrect credentials"})
 
-        if not getattr(user, 'is_verified', False):
+        # Bypass email verification block for admin users
+        # Note: Admin accounts are forced into an MFA flow in LoginView.
+        is_admin_account = user.is_superuser or getattr(user, 'role', '').lower() == 'admin'
+        
+        if not is_admin_account and not getattr(user, 'is_verified', False):
+            print(f"[AUTH DEBUG] Failed: Unverified account for {email}")
             raise serializers.ValidationError({"detail": "Please verify your email before logging in."})
 
-        refresh = RefreshToken.for_user(user)
-        refresh['name'] = getattr(user, 'full_name', '')
-        refresh['email'] = getattr(user, 'email', '')
-        refresh['role'] = getattr(user, 'role', 'buyer')
-
-        user_serializer = UserSerializer(instance=user)
-        return {
-            "refresh": str(refresh),
-            "access": str(refresh.access_token),
-            "user": user_serializer.data
-        }
+        print(f"[AUTH DEBUG] Final check before success: role={getattr(user, 'role', 'N/A')}")
+        return {"user": user}
 
 
 class VerifyOTPSerializer(serializers.Serializer):

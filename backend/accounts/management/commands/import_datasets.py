@@ -1,10 +1,13 @@
 import csv
 import os
 from django.core.management.base import BaseCommand
-from accounts.models import User
-from properties.models import Property
+from accounts.models import User, OTP
+from properties.models import Property, PropertyImage
 from transactions.models import Transaction, PaymentProof
 from loans.models import Loan
+from chat.models import Message, ChatRoom
+from services.models import ServiceBooking
+from notifications.models import Notification
 from django.conf import settings
 from decimal import Decimal
 import random
@@ -15,12 +18,28 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         base_path = os.path.join(settings.BASE_DIR, 'datasets')
         
+        self.stdout.write(self.style.WARNING('Clearing existing data for fresh import...'))
+        # Order matters for deletion if we don't use CASCADE universally, 
+        # but Django's on_delete=models.CASCADE inside the DB handles most.
+        # Clearing related models first.
+        OTP.objects.all().delete()
+        Message.objects.all().delete()
+        ChatRoom.objects.all().delete()
+        ServiceBooking.objects.all().delete()
+        Notification.objects.all().delete()
+        PaymentProof.objects.all().delete()
+        Transaction.objects.all().delete()
+        Loan.objects.all().delete()
+        PropertyImage.objects.all().delete()
+        Property.objects.all().delete()
+        User.objects.filter(is_superuser=False).delete()
+        
         self.import_users(os.path.join(base_path, 'users.csv'))
         self.import_properties(os.path.join(base_path, 'properties.csv'))
         self.import_transactions(os.path.join(base_path, 'transactions.csv'))
         self.import_loans(os.path.join(base_path, 'loans.csv'))
         
-        self.stdout.write(self.style.SUCCESS('Successfully imported all datasets'))
+        self.stdout.write(self.style.SUCCESS('Successfully imported all datasets with imagery'))
 
     def clean_decimal(self, value):
         if not value: return Decimal("0.00")
@@ -33,45 +52,44 @@ class Command(BaseCommand):
             for row in reader:
                 csv_id = int(row['id'])
                 email = f"user_{csv_id}@smartproperty.com"
-                user, created = User.objects.get_or_create(
+                user = User.objects.create(
                     csv_id=csv_id,
-                    defaults={
-                        'email': email,
-                        'username': email,
-                        'full_name': f"User {csv_id}",
-                        'role': 'buyer',
-                        'is_verified': True,
-                        'current_age': int(row['current_age']),
-                        'yearly_income': self.clean_decimal(row['yearly_income']),
-                        'credit_score': int(row['credit_score']),
-                        'total_debt': self.clean_decimal(row['total_debt'])
-                    }
+                    email=email,
+                    username=email,
+                    full_name=f"User {csv_id}",
+                    role='buyer',
+                    is_verified=True,
+                    current_age=int(row['current_age']),
+                    yearly_income=self.clean_decimal(row['yearly_income']),
+                    credit_score=int(row['credit_score']),
+                    total_debt=self.clean_decimal(row['total_debt'])
                 )
-                if created:
-                    user.set_password('password123')
-                    user.save()
+                import uuid
+                user.set_password("SecurePassword123!")
+                user.save()
 
     def import_properties(self, file_path):
-        self.stdout.write('Importing properties...')
+        self.stdout.write('Importing properties with integrated images...')
+        # Get an existing seller from the DB, fallback to first user if none
         seller = User.objects.filter(role='seller').first()
         if not seller:
-            seller = User.objects.create_user(
-                email='seller_dataset@smartproperty.com',
-                username='seller_dataset@smartproperty.com',
-                password='password123',
-                full_name='System Seller',
-                role='seller',
-                is_verified=True
-            )
+            seller = User.objects.first() # Should be the admin we just created or imported user
+            if not seller:
+                 self.stdout.write(self.style.ERROR('No user found to own properties. Please create a seller first.'))
+                 return
+
+        from django.core.files import File
+        from properties.models import PropertyImage
+        image_base_path = os.path.join(settings.BASE_DIR, 'datasets', 'Image')
+        subfolders = ['backyard', 'bathroom', 'bedroom', 'frontyard', 'kitchen', 'livingRoom']
 
         with open(file_path, mode='r') as f:
             reader = csv.DictReader(f)
-            # Limit to 20 for performance
             for i, row in enumerate(reader):
-                if i >= 20: break
-                Property.objects.create(
+                if i >= 30: break # Increased to 30 for better variety
+                prop = Property.objects.create(
                     title=f"Premium Property {i+1}",
-                    description="Advanced listing imported from dataset.",
+                    description="Advanced listing imported from dataset with integrated high-resolution imagery.",
                     price=Decimal(row['price']),
                     area_sqft=float(row['area']),
                     beds=int(row['bedrooms']),
@@ -87,20 +105,38 @@ class Command(BaseCommand):
                     furnishing_status=row['furnishingstatus'],
                     location="Kathmandu, Nepal",
                     owner=seller,
-                    status="PUBLISHED",
+                    status="submitted",
                     is_verified=True
                 )
+
+                # Attach images from dataset folders
+                try:
+                    selected_folders = random.sample(subfolders, k=min(3, len(subfolders)))
+                    for idx, folder in enumerate(selected_folders):
+                        folder_path = os.path.join(image_base_path, folder)
+                        if os.path.exists(folder_path):
+                            images = [img for img in os.listdir(folder_path) if img.lower().endswith(('.jpg', '.jpeg', '.png'))]
+                            if images:
+                                img_name = random.choice(images)
+                                img_path = os.path.join(folder_path, img_name)
+                                with open(img_path, 'rb') as img_f:
+                                    prop_img = PropertyImage(property=prop, is_primary=(idx == 0))
+                                    prop_img.image.save(f"prop_{prop.id}_{idx}.jpg", File(img_f), save=True)
+                except Exception as e:
+                    self.stdout.write(self.style.WARNING(f"Failed to attach images for property {i+1}: {e}"))
 
     def import_transactions(self, file_path):
         self.stdout.write('Importing transactions...')
         properties = list(Property.objects.all())
+        if not properties: return
+        
         with open(file_path, mode='r') as f:
             reader = csv.DictReader(f)
             for i, row in enumerate(reader):
                 if i >= 50: break
                 try:
                     user = User.objects.get(csv_id=int(row['client_id']))
-                    prop = random.choice(properties)
+                    prop = properties[i % len(properties)]
                     Transaction.objects.create(
                         buyer=user,
                         seller=prop.owner,
@@ -120,12 +156,14 @@ class Command(BaseCommand):
         self.stdout.write('Importing loans...')
         users = list(User.objects.filter(role='buyer'))
         properties = list(Property.objects.all())
+        if not users or not properties: return
+        
         with open(file_path, mode='r') as f:
             reader = csv.DictReader(f)
             for i, row in enumerate(reader):
                 if i >= 30: break
-                user = random.choice(users)
-                prop = random.choice(properties)
+                user = users[i % len(users)]
+                prop = properties[i % len(properties)]
                 Loan.objects.create(
                     user=user,
                     property=prop,

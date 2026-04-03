@@ -1,65 +1,106 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fffdf9; /* Silk Ivory */
-  --foreground: #1a1a2e; /* Deep Royal Navy */
-  --primary: #4c1d95; /* Deep Purple / Royal Violet */
-  --primary-light: #7c3aed;
-  --royal-gold: #c5a059; /* Elegant Gold */
-  --royal-gold-light: #e6d5b8;
-  --royal-silk: #f1ebd7;
-  --accent: #c5a059;
+  --background: #FDFCDC; /* wait, no. Let's use #FDFBF8 */
+  --background: #FCFBF8;
+  --foreground: #1A1A1A;
+  --primary: #594270; /* Elegant deep purple */
+  --primary-light: #775A96;
+  --card: #F7F6F3; /* Muted stone */
+  --success: #28A745;
+  --info: #3B82F6;
+  --danger: #DC3545;
+  --warning: #FFC107;
+  --border: #E8E6E1;
+  --muted: #6C757D;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.03);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
-  --color-primary-light: var(--primary-light);
-  --color-royal-gold: var(--royal-gold);
-  --color-royal-silk: var(--royal-silk);
-  --color-accent: var(--accent);
-  --font-serif: "Playfair Display", serif;
-  --font-sans: "Inter", sans-serif;
+  --color-primary-soft: rgba(99, 102, 241, 0.05);
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --font-inter: "Inter", sans-serif;
+  --font-outfit: "Outfit", sans-serif;
 }
 
 @layer base {
   body {
     background: var(--background);
     color: var(--foreground);
-    @apply font-sans antialiased;
+    @apply font-inter antialiased selection:bg-primary/10 selection:text-primary;
   }
 }
 
-/* Custom Utilities */
-.royal-heading {
-  @apply font-serif italic font-black;
-  background: linear-gradient(135deg, #4c1d95 0%, #c5a059 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+/* Professional Style System */
+.glass-effect {
+  @apply bg-white/80 backdrop-blur-xl border border-white/20 shadow-sm;
 }
 
-.silk-card {
-  @apply bg-white/80 backdrop-blur-md border border-royal-silk/50 shadow-sm rounded-[2.5rem] transition-all duration-500;
+.premium-card {
+  @apply bg-white border border-border/50 rounded-2xl transition-all duration-300;
+  box-shadow: var(--shadow-sm);
 }
 
-.silk-card:hover {
-  @apply shadow-2xl shadow-primary/5 -translate-y-2 border-accent/20;
+.premium-card:hover {
+  @apply border-primary/20 -translate-y-[2px];
+  box-shadow: var(--shadow-md);
 }
 
-.glass-nav {
-  @apply bg-white/70 backdrop-blur-xl border-b border-white/20 sticky top-0 z-[100];
+.modern-nav {
+  @apply bg-white/80 backdrop-blur-xl border-b border-border/40 sticky top-0 z-[100];
 }
 
-.premium-gradient {
-  background: linear-gradient(135deg, #1a1a2e 0%, #4c1d95 100%);
+.sidebar-link {
+  @apply flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200;
 }
 
-.gold-glow {
-  box-shadow: 0 0 20px rgba(197, 160, 89, 0.3);
+.sidebar-link-active {
+  @apply bg-primary text-white shadow-lg shadow-primary/20;
 }
 
-.page-transition {
-  @apply animate-in fade-in slide-in-from-bottom-4 duration-1000 ease-out;
+.sidebar-link-inactive {
+  @apply text-muted hover:bg-white hover:text-primary hover:shadow-sm;
 }
+
+.section-title {
+  @apply text-3xl font-bold tracking-tight text-foreground;
+  font-family: var(--font-outfit);
+}
+
+.label-subtle {
+  @apply text-[10px] font-bold uppercase tracking-[0.15em] text-muted;
+}
+
+.form-input-clean {
+  @apply w-full rounded-xl border border-border bg-white px-4 py-3 text-sm focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none placeholder:text-muted/50;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Custom Scrollbar for Premium Feel */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-border rounded-full hover:bg-muted/30 transition-colors;
+}
+

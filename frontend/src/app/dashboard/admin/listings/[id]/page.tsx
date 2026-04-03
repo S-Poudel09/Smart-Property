@@ -254,7 +254,7 @@ export default function AdminReviewPage({ params }: { params: Promise<{ id: stri
                                             <p className="text-2xl font-serif text-[#1a1a2e] capitalize">{property.status}</p>
                                         </div>
 
-                                        {property.status === 'SUBMITTED' ? (
+                                        {property.status === 'submitted' ? (
                                             <div className="space-y-4 pt-4">
                                                 <Button
                                                     className="w-full h-16 bg-emerald-600 hover:bg-emerald-700 rounded-full font-black uppercase tracking-widest text-[10px] text-white shadow-xl shadow-emerald-900/10 flex items-center justify-center gap-3 transition-all"

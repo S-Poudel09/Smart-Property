@@ -8,13 +8,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Map as MapIcon, Layers, Maximize2 } from 'lucide-react';
 
 // Fix for default marker icon in Leaflet + Next.js
-const DefaultIcon = L.icon({
-    iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-    shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-});
-L.Marker.prototype.options.icon = DefaultIcon;
+if (typeof window !== 'undefined') {
+    const DefaultIcon = L.icon({
+        iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+    });
+    L.Marker.prototype.options.icon = DefaultIcon;
+}
 
 interface PropertyMapProps {
     center: [number, number];
@@ -37,6 +39,7 @@ export default function PropertyMap({ center, zoom = 15, boundary, title }: Prop
     const [mapLayer, setMapLayer] = useState<'street' | 'satellite'>('satellite');
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMounted(true);
     }, []);
 

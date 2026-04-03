@@ -1,5 +1,8 @@
+import { clearAuthFromStorage } from './storage';
+
 export interface DecodedUser {
     user_id: string;
+    id: string;
     email: string;
     role?: string;
     name?: string;
@@ -15,8 +18,7 @@ export const getUser = (): DecodedUser | null => {
         const parts = token.split('.');
         if (parts.length < 2) return null;
 
-        // JWT is Base64URL, not standard Base64. 
-        // We need to replace characters and pad before using atob.
+        // JWT is Base64URL
         const base64Url = parts[1];
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
         const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
@@ -25,14 +27,26 @@ export const getUser = (): DecodedUser | null => {
 
         const payload = JSON.parse(jsonPayload);
         
+        const userId = payload.user_id || payload.sub;
         return {
-            user_id: payload.user_id || payload.sub,
+            user_id: userId,
+            id: userId,
             email: payload.email,
             role: payload.role,
             name: payload.name || payload.full_name || (payload.email ? payload.email.split('@')[0] : 'User'),
         };
     } catch {
-        // Only log in development or keep it silent to avoid console noise
         return null;
+    }
+};
+
+export const isAuthenticated = (): boolean => {
+    return !!getUser();
+};
+
+export const logout = (): void => {
+    if (typeof window !== 'undefined') {
+        clearAuthFromStorage();
+        window.location.href = '/auth/login';
     }
 };

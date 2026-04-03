@@ -53,11 +53,11 @@ export const FileUploader = ({ label, accept, multiple = false, onFilesChange, e
             <div className="flex items-center justify-center w-full">
                 <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <Upload className="w-8 h-8 mb-3 text-gray-400" />
+                        <Upload className="w-8 h-8 mb-3 text-primary/40" />
                         <p className="mb-2 text-sm text-gray-500">
-                            <span className="font-semibold">Click to upload</span> or drag and drop
+                            <span className="font-bold text-primary">Click to upload</span> or drag and drop
                         </p>
-                        <p className="text-xs text-gray-400">{accept.split(',').join(' ')}</p>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{accept.split(',').join(' ')}</p>
                     </div>
                     <input
                         type="file"
@@ -70,25 +70,31 @@ export const FileUploader = ({ label, accept, multiple = false, onFilesChange, e
             </div>
 
             {previews.length > 0 && (
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
                     {previews.map((file, index) => (
-                        <div key={index} className="relative group rounded-lg border bg-white p-2 shadow-sm">
+                        <div key={index} className="relative group rounded-xl border border-border bg-white p-1.5 shadow-sm hover:shadow-md transition-all">
                             <button
                                 type="button"
                                 onClick={() => removeFile(index)}
-                                className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                className="absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all z-10 shadow-lg hover:scale-110 active:scale-95"
                             >
                                 <X className="w-3 h-3" />
                             </button>
 
                             {file.type?.startsWith('image/') ? (
-                                <div className="aspect-square relative rounded-md overflow-hidden bg-gray-100">
-                                    {file.previewUrl && <img src={file.previewUrl} alt={file.name} className="object-cover w-full h-full" />}
+                                <div className="aspect-square relative rounded-lg overflow-hidden bg-gray-50 border border-gray-100">
+                                    {file.previewUrl && (
+                                        <img 
+                                            src={file.previewUrl} 
+                                            alt={file.name} 
+                                            className="object-cover w-full h-full" 
+                                        />
+                                    )}
                                 </div>
                             ) : (
-                                <div className="aspect-square flex flex-col items-center justify-center rounded-md bg-blue-50 text-blue-600 p-2">
-                                    <FileText className="w-8 h-8 mb-1" />
-                                    <span className="text-[10px] truncate w-full text-center">{file.name}</span>
+                                <div className="aspect-square flex flex-col items-center justify-center rounded-lg bg-primary/5 text-primary p-2 border border-primary/10">
+                                    <FileText className="w-8 h-8 mb-1 opacity-50" />
+                                    <span className="text-[9px] font-bold truncate w-full text-center uppercase tracking-tighter">{file.name}</span>
                                 </div>
                             )}
                         </div>

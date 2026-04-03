@@ -140,38 +140,49 @@ export default function EMICalculator() {
 
                             {/* Eligibility Status */}
                             <div className={`p-6 rounded-3xl border ${
+                                !eligibility ? 'bg-gray-50 border-gray-100' :
                                 eligibility.is_eligible 
                                     ? 'bg-green-50 border-green-100' 
                                     : 'bg-red-50 border-red-100'
                             }`}>
-                                <div className="flex items-start gap-4">
-                                    {eligibility.is_eligible ? (
-                                        <CheckCircle className="h-6 w-6 text-green-600 shrink-0" />
-                                    ) : (
-                                        <AlertCircle className="h-6 w-6 text-red-600 shrink-0" />
-                                    )}
-                                    <div>
-                                        <h3 className={`font-bold ${eligibility.is_eligible ? 'text-green-900' : 'text-red-900'}`}>
-                                            {eligibility.is_eligible ? 'Likely Eligible' : 'Eligibility Warning'}
-                                        </h3>
-                                        <p className={`text-sm mt-1 mb-4 ${eligibility.is_eligible ? 'text-green-700' : 'text-red-700'}`}>
-                                            {eligibility.recommendation}
-                                        </p>
-                                        
-                                        <div className="space-y-2">
-                                            <div className="flex justify-between text-xs font-medium">
-                                                <span className="opacity-60">Max Monthly Debt Allowed</span>
-                                                <span className="font-bold">{formatNPR(eligibility.max_allowed_emi)}</span>
-                                            </div>
-                                            <div className="w-full h-1.5 bg-white/50 rounded-full overflow-hidden">
-                                                <div 
-                                                    className={`h-full transition-all duration-1000 ${eligibility.is_eligible ? 'bg-green-500' : 'bg-red-500'}`}
-                                                    style={{ width: `${Math.min(100, (eligibility.estimated_emi / eligibility.max_allowed_emi) * 100)}%` }}
-                                                />
+                                {!eligibility ? (
+                                    <div className="flex items-center gap-3">
+                                        <AlertCircle className="h-6 w-6 text-gray-400" />
+                                        <div>
+                                            <h3 className="font-bold text-gray-900 text-sm">Awaiting Eligibility</h3>
+                                            <p className="text-xs text-gray-500 mt-1">Check your income to see if you qualify.</p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-start gap-4">
+                                        {eligibility.is_eligible ? (
+                                            <CheckCircle className="h-6 w-6 text-green-600 shrink-0" />
+                                        ) : (
+                                            <AlertCircle className="h-6 w-6 text-red-600 shrink-0" />
+                                        )}
+                                        <div>
+                                            <h3 className={`font-bold ${eligibility.is_eligible ? 'text-green-900' : 'text-red-900'}`}>
+                                                {eligibility.is_eligible ? 'Likely Eligible' : 'Eligibility Warning'}
+                                            </h3>
+                                            <p className={`text-sm mt-1 mb-4 ${eligibility.is_eligible ? 'text-green-700' : 'text-red-700'}`}>
+                                                {eligibility.recommendation || 'No recommendation provided.'}
+                                            </p>
+                                            
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between text-xs font-medium">
+                                                    <span className="opacity-60">Max Monthly Debt Allowed</span>
+                                                    <span className="font-bold">{formatNPR(eligibility.max_allowed_emi || 0)}</span>
+                                                </div>
+                                                <div className="w-full h-1.5 bg-white/50 rounded-full overflow-hidden">
+                                                    <div 
+                                                        className={`h-full transition-all duration-1000 ${eligibility.is_eligible ? 'bg-green-500' : 'bg-red-500'}`}
+                                                        style={{ width: `${Math.min(100, (eligibility.estimated_emi / (eligibility.max_allowed_emi || 1)) * 100)}%` }}
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
 
                             <p className="text-[10px] text-gray-400 text-center uppercase tracking-tight font-medium leading-relaxed">

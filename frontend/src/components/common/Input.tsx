@@ -14,24 +14,29 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 const Input = forwardRef<HTMLInputElement, InputProps>(
     ({ className, label, error, type, value, ...props }, ref) => {
         return (
-            <div className="w-full">
+            <div className="space-y-2 w-full">
                 {label && (
-                    <label className="mb-2 block text-[10px] font-black uppercase tracking-[0.2em] text-[#1a1a2e]/60">
+                    <label className="block text-xs font-bold text-muted uppercase tracking-[0.1em] ml-1">
                         {label}
                     </label>
                 )}
-                <input
-                    type={type}
-                    className={cn(
-                        'flex h-14 w-full rounded-2xl border border-royal-silk bg-white px-6 py-4 text-sm text-[#1a1a2e] ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all shadow-sm',
-                        error && 'border-red-500 focus-visible:ring-red-500',
-                        className
-                    )}
-                    ref={ref}
-                    value={value}
-                    {...props}
-                />
-                {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
+                <div className="relative group">
+                    <input
+                        className={cn(
+                            "form-input-clean shadow-sm",
+                            error && "border-danger ring-danger/10",
+                            className
+                        )}
+                        ref={ref}
+                        {...props}
+                    />
+                    <div className="absolute inset-0 rounded-xl border border-primary/0 group-focus-within:border-primary/10 pointer-events-none transition-all duration-300 ring-4 ring-primary/0 group-focus-within:ring-primary/5" />
+                </div>
+                {error && (
+                    <p className="text-[11px] font-bold text-danger flex items-center gap-1.5 ml-1 animate-slide-up">
+                        <span className="h-1 w-1 rounded-full bg-danger" /> {error}
+                    </p>
+                )}
             </div>
         );
     }

@@ -52,7 +52,7 @@ export const ServiceCard = ({ provider }: ServiceCardProps) => {
             </div>
 
             <p className="text-sm text-gray-600 font-medium italic line-clamp-2 mb-10 h-10 leading-relaxed border-l-2 border-accent/20 pl-4">
-                "{provider.description}"
+                &quot;{provider.description}&quot;
             </p>
 
             <Link href={`/services/${provider.id}`}>

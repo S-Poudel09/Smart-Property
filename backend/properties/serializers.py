@@ -41,11 +41,14 @@ class PropertySerializer(serializers.ModelSerializer):
         fields = (
             'PropertyID', 'title', 'description', 'location', 'latitude', 
             'longitude', 'price', 'property_type', 'OwnerID', 'seller_id', 'CreatedAt',
-            'listing_type', 'beds', 'baths', 'area_sqft', 'status', 'is_verified',
+            'listing_type', 'beds', 'baths', 'area_sqft', 'area_ropani', 'area_anna', 
+            'city', 'ward', 'district', 'municipality', 'status', 'is_verified',
             'property_images', 'property_documents', 'uploaded_images', 'uploaded_documents',
             'boundary_coordinates', 'virtual_tour_url',
             'stories', 'mainroad', 'guestroom', 'basement', 'hotwaterheating',
-            'airconditioning', 'parking_spaces', 'prefarea', 'furnishing_status'
+            'airconditioning', 'parking_spaces', 'prefarea', 'furnishing_status',
+            'hostel_gender', 'room_type', 'food_included', 'has_wifi', 'has_laundry',
+            'bathroom_type', 'available_beds', 'workflow_step'
         )
         # We can also keep the original names for internal use
         extra_kwargs = {
@@ -66,8 +69,17 @@ class PropertySerializer(serializers.ModelSerializer):
             PropertyImage.objects.create(property=property_obj, image=image)
             
         for doc in uploaded_documents:
-            # For simplicity, default to 'deed' if not specified in a more complex payload
-            # In a real app, you'd send a list of objects with doc_type
+            # Document type should ideally be passed in payload, defaulting here to 'deed'
             PropertyDocument.objects.create(property=property_obj, document=doc, doc_type='deed')
             
         return property_obj
+
+    def validate_price(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("Price must be a positive value.")
+        return value
+
+    def validate_boundary_coordinates(self, value):
+        if value and not isinstance(value, list):
+            raise serializers.ValidationError("Boundary coordinates must be a list of coordinates.")
+        return value

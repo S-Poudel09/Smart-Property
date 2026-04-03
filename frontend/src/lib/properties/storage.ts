@@ -49,16 +49,16 @@ export const updatePropertyStatus = (id: string, status: PropertyStatus, extra: 
 };
 
 export const submitProperty = (id: string): void => {
-    updatePropertyStatus(id, 'SUBMITTED');
+    updatePropertyStatus(id, 'submitted');
 };
 
 export const getPendingProperties = (): Property[] => {
-    return getPropertiesByStatus('SUBMITTED');
+    return getPropertiesByStatus('submitted');
 };
 
 export const adminApproveProperty = (id: string): void => {
     const property = getPropertyById(id);
-    updatePropertyStatus(id, 'PUBLISHED', {
+    updatePropertyStatus(id, 'published', {
         isVerified: true,
         updatedAt: new Date().toISOString()
     });
@@ -76,7 +76,7 @@ export const adminApproveProperty = (id: string): void => {
 
 export const adminRejectProperty = (id: string, reason: string): void => {
     const property = getPropertyById(id);
-    updatePropertyStatus(id, 'REJECTED', {
+    updatePropertyStatus(id, 'rejected', {
         isVerified: false,
         rejectionReason: reason,
         updatedAt: new Date().toISOString()

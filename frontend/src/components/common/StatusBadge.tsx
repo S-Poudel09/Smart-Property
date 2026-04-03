@@ -14,37 +14,31 @@ interface StatusBadgeProps {
 
 const StatusBadge = ({ status, className }: StatusBadgeProps) => {
     const styles: Record<string, string> = {
-        available: 'bg-green-100 text-green-800 border-green-200',
-        sold: 'bg-gray-100 text-gray-800 border-gray-200',
-        rented: 'bg-blue-100 text-blue-800 border-blue-200',
-        pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-        DRAFT: 'bg-gray-100 text-gray-600 border-gray-200',
-        SUBMITTED: 'bg-blue-50 text-blue-700 border-blue-100',
-        APPROVED: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-        REJECTED: 'bg-red-50 text-red-700 border-red-100',
-        PUBLISHED: 'bg-green-100 text-green-800 border-green-200',
-        // Transaction Statuses (from API)
-        PENDING: 'bg-yellow-50 text-yellow-700 border-yellow-100',
-        PARTIAL: 'bg-orange-50 text-orange-700 border-orange-100',
-        COMPLETED: 'bg-green-50 text-green-700 border-green-100',
-        FAILED: 'bg-red-50 text-red-700 border-red-100',
-        REFUNDED: 'bg-purple-50 text-purple-700 border-purple-100',
-        AWAITING_PROOF: 'bg-orange-50 text-orange-700 border-orange-100',
-        PROOF_UPLOADED: 'bg-blue-50 text-blue-700 border-blue-100',
-        CONFIRMED: 'bg-green-50 text-green-700 border-green-100',
-        CANCELLED: 'bg-red-50 text-red-700 border-red-100',
+        PENDING: 'bg-amber-50 text-amber-700 border-amber-100/50',
+        APPROVED: 'bg-emerald-50 text-emerald-700 border-emerald-100/50',
+        REJECTED: 'bg-rose-50 text-rose-700 border-rose-100/50',
+        SUBMITTED: 'bg-indigo-50 text-indigo-700 border-indigo-100/50',
+        PARTIAL: 'bg-orange-50 text-orange-700 border-orange-100/50',
+        COMPLETED: 'bg-emerald-50 text-emerald-700 border-emerald-100/50 shadow-sm shadow-emerald-100/20',
+        FAILED: 'bg-rose-50 text-rose-700 border-rose-100/50',
+        REFUNDED: 'bg-indigo-50 text-indigo-700 border-indigo-100/50',
+        AWAITING_PROOF: 'bg-orange-50 text-orange-700 border-orange-100/50',
+        PROOF_UPLOADED: 'bg-blue-50 text-blue-700 border-blue-100/50',
+        CONFIRMED: 'bg-emerald-50 text-emerald-700 border-emerald-100/50 shadow-sm shadow-emerald-100/20',
+        CANCELLED: 'bg-rose-50 text-rose-700 border-rose-100/50',
     };
 
-    const statusLabel = styles[status] ? status : 'pending';
+    const statusLabel = styles[status] ? status : 'PENDING';
 
     return (
         <span
             className={cn(
-                'inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-tight transition-colors',
+                'inline-flex items-center rounded-lg border px-3 py-1 text-[9px] font-bold uppercase tracking-[0.1em] transition-all duration-300',
                 styles[statusLabel],
                 className
             )}
         >
+            <span className={cn("mr-1.5 h-1 w-1 rounded-full", (statusLabel === 'APPROVED' || statusLabel === 'COMPLETED' || statusLabel === 'CONFIRMED') ? 'bg-emerald-500' : 'bg-current')} />
             {status.replace('_', ' ')}
         </span>
     );

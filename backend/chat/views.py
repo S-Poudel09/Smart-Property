@@ -31,8 +31,13 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
         if rooms.exists():
             room = rooms.first()
         else:
-            room = ChatRoom.objects.create(property_id=property_id)
-            room.participants.add(request.user, recipient_id)
+            try:
+                from accounts.models import User
+                recipient = User.objects.get(id=recipient_id)
+                room = ChatRoom.objects.create(property_id=property_id)
+                room.participants.add(request.user, recipient)
+            except User.DoesNotExist:
+                return Response({"error": "Recipient does not exist"}, status=status.HTTP_404_NOT_FOUND)
         
         return Response(ChatRoomSerializer(room).data)
 
@@ -48,8 +53,10 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         room = serializer.validated_data.get('room')
-        if self.request.user not in room.participants.all():
-            return Response({"error": "You are not a participant in this room"}, status=status.HTTP_403_FORBIDDEN)
+        # Security check: Ensure sender is a participant
+        if not room.participants.filter(id=self.request.user.id).exists():
+             from rest_framework.exceptions import PermissionDenied
+             raise PermissionDenied("You are not a participant in this room")
         serializer.save(sender=self.request.user)
         room.save() # Update room's updated_at timestamp
 

@@ -8,7 +8,7 @@ import Container from '@/components/layout/Container';
 import { Button } from '@/components/common/Button';
 import { getProviderById, createBooking } from '@/lib/services/storage';
 import { ServiceProvider } from '@/types/service';
-import { isAuthenticated, getCurrentUser } from '@/lib/auth/mockAuth';
+import { isAuthenticated, getUser } from '@/lib/auth/getUser';
 import { toast } from 'react-hot-toast';
 import {
     Star,
@@ -23,7 +23,6 @@ import {
     Sparkles
 } from 'lucide-react';
 import Link from 'next/link';
-import { MOCK_PROPERTIES } from '@/lib/mock-data';
 import { getAllProperties } from '@/lib/properties/storage';
 
 const bookingSchema = z.object({
@@ -46,7 +45,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [properties, setProperties] = useState<Property[]>(() => {
         if (typeof window === 'undefined') return [];
-        return [...MOCK_PROPERTIES, ...getAllProperties()] as Property[];
+        return getAllProperties() as Property[];
     });
 
     const { register, handleSubmit, formState: { errors } } = useForm<BookingFormData>();
@@ -67,7 +66,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
             return;
         }
 
-        const user = getCurrentUser();
+        const user = getUser();
         if (user?.role !== 'buyer') {
             toast.error('Only buyers can book services');
             return;

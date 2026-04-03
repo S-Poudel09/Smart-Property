@@ -1,6 +1,7 @@
 'use client';
 
 import { Search, RotateCcw } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 import { PropertyCategory } from '@/types/property';
@@ -14,6 +15,9 @@ export interface FilterState {
     maxPrice: string;
     district: string;
     amenities: string[];
+    // Hostel specific
+    hostelGender?: 'all' | 'boys' | 'girls' | 'mixed';
+    foodIncluded?: boolean | 'all';
 }
 
 interface PropertyFiltersProps {
@@ -105,6 +109,42 @@ const PropertyFilters = ({ filters, onFilterChange, onApply, onReset }: Property
                         ))}
                     </select>
                 </div>
+
+                {filters.category === 'hostel' && (
+                    <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        className="space-y-4 pt-2 border-t border-gray-100"
+                    >
+                        <div>
+                            <label className="mb-2 block text-[10px] font-black uppercase tracking-widest text-gray-400">Hostel For</label>
+                            <div className="grid grid-cols-2 gap-2">
+                                {['boys', 'girls', 'mixed'].map((g) => (
+                                    <button
+                                        key={g}
+                                        onClick={() => updateFilter('hostelGender', g as any)}
+                                        className={`rounded-lg border py-2 text-[11px] font-bold transition-all capitalize ${filters.hostelGender === g
+                                                ? 'bg-primary text-white border-primary'
+                                                : 'bg-white text-gray-600 hover:bg-gray-50'
+                                            }`}
+                                    >
+                                        {g}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <input
+                                type="checkbox"
+                                id="food"
+                                className="rounded border-gray-300 text-primary focus:ring-primary"
+                                checked={filters.foodIncluded === true}
+                                onChange={(e) => updateFilter('foodIncluded', e.target.checked)}
+                            />
+                            <label htmlFor="food" className="text-sm font-bold text-gray-700 cursor-pointer">Food Included</label>
+                        </div>
+                    </motion.div>
+                )}
 
                 <div>
                     <label className="mb-2 block text-sm font-medium text-gray-700">Price Range (Rs)</label>

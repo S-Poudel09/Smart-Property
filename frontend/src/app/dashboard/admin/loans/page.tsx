@@ -5,7 +5,7 @@ import Container from '@/components/layout/Container';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { getAllLoans, updateLoanStatus } from '@/lib/loans/storage';
 import { getPropertyById } from '@/lib/properties/storage';
-import { MOCK_PROPERTIES } from '@/lib/mock-data';
+
 import { LoanRequest, LoanStatus } from '@/types/loan';
 import { LoanStatusBadge } from '@/components/loan/LoanStatusBadge';
 import { Button } from '@/components/common/Button';
@@ -106,7 +106,7 @@ export default function AdminLoansPage() {
                                 </thead>
                                 <tbody className="divide-y divide-[#c5a059]/5">
                                     {filteredLoans.map((loan, i) => {
-                                        const prop = getPropertyById(loan.propertyId) || MOCK_PROPERTIES.find(p => p.id === loan.propertyId);
+                                        const prop = getPropertyById(loan.propertyId);
                                         return (
                                             <motion.tr 
                                                 key={loan.id} 

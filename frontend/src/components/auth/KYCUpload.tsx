@@ -4,8 +4,9 @@ import { useState } from 'react';
 import { FileUploader, FilePreview } from '@/components/common/FileUploader';
 import { Button } from '@/components/common/Button';
 import { toast } from 'react-hot-toast';
-import axios from 'axios';
-import { Shield, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import api from '@/lib/api/http';
+import { motion } from 'framer-motion';
+import { Shield, CheckCircle, AlertCircle, Clock, Loader2 } from 'lucide-react';
 
 interface KYCUploadProps {
     currentStatus: 'not_submitted' | 'pending' | 'verified' | 'rejected';
@@ -33,18 +34,15 @@ export default function KYCUpload({ currentStatus, onSuccess }: KYCUploadProps) 
         formData.append('document_type', docType);
 
         try {
-            // Retrieve token from localStorage (assuming this is where it's stored)
-            const token = localStorage.getItem('access_token');
-            await axios.post('http://localhost:8000/api/auth/kyc/upload/', formData, {
+            await api.post('auth/kyc/upload/', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
-                    'Authorization': `Bearer ${token}`
                 }
             });
-            toast.success('KYC documents submitted successfully!');
+            toast.success('Imperial Registry updated. KYC documents submitted!');
             onSuccess?.();
         } catch (error: any) {
-            toast.error(error.response?.data?.message || 'Failed to upload KYC documents');
+            toast.error(error.response?.data?.message || 'Failed to sync with Imperial Registry');
         } finally {
             setIsLoading(false);
         }
@@ -52,76 +50,91 @@ export default function KYCUpload({ currentStatus, onSuccess }: KYCUploadProps) 
 
     if (currentStatus === 'verified') {
         return (
-            <div className="rounded-xl border border-green-100 bg-green-50 p-6 text-center">
-                <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
-                <h3 className="mt-4 text-lg font-semibold text-green-900">Identity Verified</h3>
-                <p className="mt-2 text-sm text-green-700">Your KYC verification is complete. You have full access to the platform.</p>
+            <div className="p-12 text-center group">
+                <div className="h-20 w-20 bg-emerald-50 rounded-[2rem] flex items-center justify-center text-emerald-600 mx-auto mb-8 border border-emerald-100 shadow-xl shadow-emerald-500/10 group-hover:scale-110 transition-transform duration-500">
+                    <CheckCircle className="h-10 w-10" />
+                </div>
+                <h3 className="text-3xl font-serif text-primary mb-4">Identity Sealed</h3>
+                <p className="text-gray-400 font-medium italic mb-0 max-w-sm mx-auto">"Your credentials have been verified by the Imperial Council. Full access is granted."</p>
             </div>
         );
     }
 
     if (currentStatus === 'pending') {
         return (
-            <div className="rounded-xl border border-blue-100 bg-blue-50 p-6 text-center">
-                <Clock className="mx-auto h-12 w-12 text-blue-500" />
-                <h3 className="mt-4 text-lg font-semibold text-blue-900">Verification Pending</h3>
-                <p className="mt-2 text-sm text-blue-700">Your documents are under review. This usually takes 24-48 hours.</p>
+            <div className="p-12 text-center group">
+                <div className="h-20 w-20 bg-amber-50 rounded-[2rem] flex items-center justify-center text-amber-600 mx-auto mb-8 border border-amber-100 shadow-xl shadow-amber-500/10 group-hover:rotate-12 transition-transform duration-500">
+                    <Clock className="h-10 w-10" />
+                </div>
+                <h3 className="text-3xl font-serif text-primary mb-4">Decree Pending</h3>
+                <p className="text-gray-400 font-medium italic mb-0 max-w-sm mx-auto">"Your documents are currently being scrutinized by the high council. Expect a manifestation within 48 hours."</p>
             </div>
         );
     }
 
     return (
-        <div className="rounded-xl border bg-white p-6 shadow-sm">
-            <div className="mb-6 flex items-center gap-3">
-                <div className="rounded-full bg-blue-100 p-2 text-blue-600">
-                    <Shield className="h-6 w-6" />
+        <div className="p-12">
+            <div className="mb-12 flex items-center gap-6">
+                <div className="h-16 w-16 bg-primary text-accent rounded-2xl flex items-center justify-center shadow-lg">
+                    <Shield className="h-8 w-8" />
                 </div>
                 <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Identity Verification (KYC)</h3>
-                    <p className="text-sm text-gray-500">Upload your identity document to verify your account.</p>
+                    <h3 className="text-3xl font-serif text-primary">Identity Verification</h3>
+                    <p className="text-gray-400 font-medium italic">Present your credentials to secure your position in the realm.</p>
                 </div>
             </div>
 
             {currentStatus === 'rejected' && (
-                <div className="mb-6 rounded-lg bg-red-50 p-4 flex items-start gap-3 text-red-700 text-sm">
-                    <AlertCircle className="h-5 w-5 shrink-0" />
-                    <p>Your previous submission was rejected. Please upload clear documents and try again.</p>
-                </div>
+                <motion.div 
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="mb-10 rounded-3xl bg-red-50 p-6 flex items-start gap-4 text-red-700 border border-red-100"
+                >
+                    <AlertCircle className="h-6 w-6 shrink-0 mt-0.5" />
+                    <p className="text-sm font-medium italic">"The Council has found discrepancies in your previous decree. Please provide higher fidelity captures."</p>
+                </motion.div>
             )}
 
-            <div className="space-y-6">
+            <div className="space-y-12">
                 <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">Document Type</label>
-                    <div className="grid grid-cols-3 gap-3">
-                        {['nid', 'passport', 'license'].map((type) => (
+                    <label className="text-[10px] font-black uppercase text-accent tracking-[0.3em] block mb-6">Document Type</label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {[
+                            { id: 'nid', label: 'National ID' },
+                            { id: 'passport', label: 'Passport' },
+                            { id: 'license', label: 'License' }
+                        ].map((type) => (
                             <button
-                                key={type}
+                                key={type.id}
                                 type="button"
-                                onClick={() => setDocType(type as any)}
-                                className={`rounded-lg border px-4 py-2 text-sm font-medium transition-all ${
-                                    docType === type 
-                                        ? 'border-blue-600 bg-blue-50 text-blue-600' 
-                                        : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                                onClick={() => setDocType(type.id as any)}
+                                className={`h-16 rounded-2xl border-2 px-6 text-[10px] font-black uppercase tracking-widest transition-all ${
+                                    docType === type.id 
+                                        ? 'border-primary bg-primary text-accent shadow-xl shadow-primary/20' 
+                                        : 'border-accent/10 bg-white text-gray-400 hover:border-accent hover:text-primary'
                                 }`}
                             >
-                                {type === 'nid' ? 'National ID' : type === 'passport' ? 'Passport' : 'License'}
+                                {type.label}
                             </button>
                         ))}
                     </div>
                 </div>
 
-                <FileUploader
-                    label="Identity Document"
-                    accept=".jpg,.jpeg,.png,.pdf"
-                    onFilesChange={(newFiles) => setFiles(newFiles)}
-                />
+                <div className="space-y-4">
+                     <label className="text-[10px] font-black uppercase text-accent tracking-[0.3em] block mb-2">Registry Files</label>
+                    <FileUploader
+                        label="Identity Capture"
+                        accept=".jpg,.jpeg,.png,.pdf"
+                        onFilesChange={(newFiles) => setFiles(newFiles)}
+                    />
+                </div>
 
                 <Button 
-                    className="w-full" 
+                    className="w-full h-16 rounded-full bg-primary text-accent font-black uppercase tracking-widest text-[10px] shadow-2xl shadow-primary/20 hover:bg-accent hover:text-primary transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
                     onClick={handleSubmit} 
                     disabled={isLoading || !docType || files.length === 0}
                 >
-                    {isLoading ? 'Uploading...' : 'Submit for Verification'}
+                    {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Seal & Submit Decree'}
                 </Button>
             </div>
         </div>

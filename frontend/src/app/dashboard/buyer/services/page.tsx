@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Container from '@/components/layout/Container';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
-import { getCurrentUser } from '@/lib/auth/mockAuth';
+import { getUser } from '@/lib/auth/getUser';
 import { getServiceBookings, ServiceBooking } from '@/lib/api/services';
 import { BookingStatusBadge } from '@/components/services/BookingStatusBadge';
 import { MapPin, Calendar, Clock, Briefcase, ExternalLink } from 'lucide-react';

@@ -4,61 +4,66 @@ import { use, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Container from '@/components/layout/Container';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
-import { getTransactionById, sellerConfirm } from '@/lib/transactions/storage';
-import { getPropertyById } from '@/lib/properties/storage';
-import { MOCK_PROPERTIES } from '@/lib/mock-data';
+import { getTransactionById, verifyPaymentProof, confirmTransaction, Transaction } from '@/lib/api/transactions';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { Button } from '@/components/common/Button';
-import { TransactionTimeline } from '@/components/transaction/TransactionTimeline';
-import { ArrowLeft, Building2, User, DollarSign, FileText, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react';
+import { TransactionStepper } from '@/components/property/TransactionStepper';
+import { ArrowLeft, Building2, User, FileText, CheckCircle2, AlertCircle, ExternalLink, IndianRupee, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
-
-import { Transaction } from '@/types/transaction';
-import { Property } from '@/types/property';
 import { formatNPR } from '@/lib/utils/currency';
+import { Loader } from '@/components/common/Loader';
 
 export default function SellerTransactionDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
-    const [transaction, setTransaction] = useState<(Transaction & { property?: Property }) | null>(() => {
-        if (typeof window === 'undefined') return null;
-        const trx = getTransactionById(id);
-        if (trx) {
-            let prop = getPropertyById(trx.propertyId);
-            if (!prop) {
-                prop = MOCK_PROPERTIES.find(p => p.id === trx.propertyId) as Property;
-            }
-            return { ...(trx as Transaction), property: prop };
-        }
-        return null;
-    });
-    const [isLoading, setIsLoading] = useState(false);
-    const [isConfirming, setIsConfirming] = useState(false);
+    const [transaction, setTransaction] = useState<Transaction | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isActionLoading, setIsActionLoading] = useState(false);
+    const router = useRouter();
 
-    const fetchData = () => {
-        const trx = getTransactionById(id);
-        if (trx) {
-            let prop = getPropertyById(trx.propertyId);
-            if (!prop) {
-                prop = MOCK_PROPERTIES.find(p => p.id === trx.propertyId);
-            }
-            setTransaction({ ...trx, property: prop });
+    const fetchData = async () => {
+        try {
+            const data = await getTransactionById(id);
+            setTransaction(data);
+        } catch (e) {
+            console.error('Failed to fetch transaction', e);
+            toast.error('Could not sync transaction state');
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     };
 
-    const handleConfirmTransfer = () => {
-        if (!confirm('Are you sure you have received the funds? This will mark the transaction as completed.')) {
-            return;
-        }
+    useEffect(() => {
+        fetchData();
+        const interval = setInterval(fetchData, 10000); // Poll for updates
+        return () => clearInterval(interval);
+    }, [id]);
 
-        setIsConfirming(true);
-        setTimeout(() => {
-            sellerConfirm(id);
-            toast.success('Payment confirmed! Sale completed.');
+    const handleVerifyProof = async (proofId: string) => {
+        setIsActionLoading(true);
+        try {
+            await verifyPaymentProof(id, proofId);
+            toast.success('Payment proof verified!');
             fetchData();
-            setIsConfirming(false);
-        }, 1500);
+        } catch (e) {
+            toast.error('Failed to verify proof');
+        } finally {
+            setIsActionLoading(false);
+        }
+    };
+
+    const handleConfirmSale = async () => {
+        if (!confirm('Are you sure the total amount has been received correctly? This will close the deal.')) return;
+        setIsActionLoading(true);
+        try {
+            await confirmTransaction(id);
+            toast.success('Sale successfully confirmed!');
+            fetchData();
+        } catch (e) {
+            toast.error('Failed to confirm sale');
+        } finally {
+            setIsActionLoading(false);
+        }
     };
 
     if (isLoading) {
@@ -95,100 +100,113 @@ export default function SellerTransactionDetailPage({ params }: { params: Promis
                             <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
                                 <div className="flex flex-col md:flex-row justify-between gap-6 mb-8">
                                     <div className="flex items-center gap-4">
-                                        <div className="h-14 w-14 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
+                                        <div className="h-14 w-14 rounded-2xl bg-primary/5 flex items-center justify-center text-primary border border-primary/10">
                                             <Building2 className="h-7 w-7" />
                                         </div>
                                         <div>
-                                            <h1 className="text-2xl font-bold text-gray-900">Sale Review: {transaction.property?.title}</h1>
-                                            <p className="text-sm text-gray-500 font-medium">TRX ID: {transaction.id}</p>
+                                            <h1 className="text-2xl font-bold text-gray-900">Sale Review: {transaction.Property?.title || 'Asset Disposal'}</h1>
+                                            <p className="text-sm text-gray-500 font-medium font-mono uppercase tracking-tighter">TRX: #{id.slice(0, 8).toUpperCase()}</p>
                                         </div>
                                     </div>
                                     <div className="flex flex-col md:items-end">
                                         <StatusBadge status={transaction.status} className="scale-110" />
-                                        <p className="text-xs text-gray-400 mt-2">Received on {new Date(transaction.createdAt).toLocaleDateString()}</p>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mt-2">Started {new Date(transaction.created_at).toLocaleDateString()}</p>
                                     </div>
                                 </div>
-                                <TransactionTimeline status={transaction.status} />
+                                <div className="mt-12">
+                                    <TransactionStepper currentStep={transaction.status === 'COMPLETED' ? 5 : (transaction.Proofs?.length > 0 ? 4 : 3)} />
+                                </div>
                             </div>
 
                             {/* Proof Review Section */}
-                            {transaction.status === 'PROOF_UPLOADED' && (
+                            {transaction.Proofs?.length > 0 && (
                                 <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
-                                    <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                                        <FileText className="h-6 w-6 text-blue-600" />
-                                        Buyer Payment Proof
+                                    <h3 className="text-xl font-bold text-gray-900 mb-8 flex items-center gap-3">
+                                        <FileText className="h-6 w-6 text-primary" />
+                                        Payment Reconciliation
                                     </h3>
                                     <div className="space-y-6">
-                                        <div className="rounded-2xl border-2 border-dashed p-4 bg-gray-50">
-                                            {transaction.paymentProof?.type?.startsWith('image/') ? (
-                                                <div className="aspect-video relative rounded-xl overflow-hidden bg-white group">
-                                                    <img
-                                                        src={transaction.paymentProof.previewUrl}
-                                                        alt="Payment Proof"
-                                                        className="h-full w-full object-contain"
-                                                    />
-                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                        <a
-                                                            href={transaction.paymentProof.previewUrl}
-                                                            target="_blank"
-                                                            rel="noreferrer"
-                                                            className="bg-white text-gray-900 px-4 py-2 rounded-lg font-bold flex items-center gap-2"
+                                        {transaction.Proofs.map((proof, idx) => (
+                                            <div key={idx} className="p-6 bg-gray-50 rounded-2xl border border-gray-100 space-y-6">
+                                                <div className="flex justify-between items-center">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="h-12 w-12 bg-white rounded-xl border border-gray-100 flex items-center justify-center text-primary shadow-sm">
+                                                            <IndianRupee className="h-6 w-6" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-lg font-bold text-gray-900">{formatNPR(parseFloat(proof.amount))}</p>
+                                                            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">{proof.notes || 'In-App Payment Capture'}</p>
+                                                        </div>
+                                                    </div>
+                                                    {!proof.is_verified ? (
+                                                        <Button 
+                                                            size="sm" 
+                                                            className="bg-emerald-600 hover:bg-emerald-700 h-9 px-6 rounded-lg text-[10px] font-black uppercase tracking-widest"
+                                                            onClick={() => handleVerifyProof(proof.ProofID)}
+                                                            isLoading={isActionLoading}
                                                         >
-                                                            <ExternalLink className="h-4 w-4" /> View Full Size
-                                                        </a>
+                                                            Verify Proof
+                                                        </Button>
+                                                    ) : (
+                                                        <span className="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em]">
+                                                            <CheckCircle2 className="h-4 w-4" /> Verified
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                
+                                                <div className="aspect-[4/1] bg-white rounded-xl border border-gray-100 flex items-center justify-center text-gray-300 font-mono text-[10px] uppercase tracking-widest group relative overflow-hidden">
+                                                    <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    <FileText className="h-4 w-4 mr-2" /> Digital Receipt Verified
+                                                </div>
+                                            </div>
+                                        ))}
+
+                                        {transaction.status !== 'COMPLETED' && parseFloat(transaction.amount_paid) >= parseFloat(transaction.total_amount) && (
+                                            <div className="pt-8 border-t border-gray-100 flex flex-col items-center gap-6">
+                                                <div className="bg-emerald-50 border border-emerald-100 p-6 rounded-2xl flex items-start gap-4 w-full">
+                                                    <ShieldCheck className="h-6 w-6 text-emerald-500 shrink-0" />
+                                                    <div className="space-y-1">
+                                                        <h4 className="font-bold text-emerald-900 text-sm italic underline">Accounting Ledger Status: BALANCED</h4>
+                                                        <p className="text-xs text-emerald-700/80 leading-relaxed font-medium">
+                                                            The full negotiated amount has been verified. You may now finalize the sale to transfer digital ownership credentials to the buyer.
+                                                        </p>
                                                     </div>
                                                 </div>
-                                            ) : (
-                                                <div className="flex flex-col items-center justify-center py-12 text-blue-600">
-                                                    <FileText className="h-16 w-16 mb-2" />
-                                                    <p className="font-bold">{transaction.paymentProof?.name}</p>
-                                                    <p className="text-sm text-gray-500">PDF Document</p>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 flex gap-4">
-                                            <AlertCircle className="h-6 w-6 text-blue-600 flex-shrink-0" />
-                                            <div>
-                                                <p className="text-sm font-bold text-blue-900">Verify Carefully</p>
-                                                <p className="text-sm text-blue-700 mt-1">
-                                                    Please ensure the amount matches the property price and the funds have cleared in your bank account before confirming receipt.
-                                                </p>
+                                                <Button
+                                                    onClick={handleConfirmSale}
+                                                    isLoading={isActionLoading}
+                                                    className="w-full h-16 text-xs font-black uppercase tracking-[0.3em] bg-[#1a1a2e] hover:bg-black rounded-2xl shadow-2xl shadow-black/20"
+                                                >
+                                                    Finalize Sale & Close Record
+                                                </Button>
                                             </div>
-                                        </div>
-
-                                        <div className="flex justify-end">
-                                            <Button
-                                                onClick={handleConfirmTransfer}
-                                                isLoading={isConfirming}
-                                                className="px-10 py-6 text-lg bg-green-600 hover:bg-green-700 shadow-lg shadow-green-100"
-                                            >
-                                                <CheckCircle2 className="h-5 w-5 mr-2" />
-                                                Confirm Receipt & Complete Sale
-                                            </Button>
-                                        </div>
+                                        )}
                                     </div>
                                 </div>
                             )}
 
-                            {transaction.status === 'CONFIRMED' && (
-                                <div className="bg-green-50 border border-green-100 rounded-2xl p-8 flex items-center gap-6">
-                                    <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center text-green-600 shrink-0">
+                            {transaction.status === 'COMPLETED' && (
+                                <div className="bg-emerald-50 border border-emerald-100 rounded-3xl p-10 flex flex-col md:flex-row items-center gap-8 animate-in fade-in zoom-in">
+                                    <div className="h-20 w-20 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-xl shadow-emerald-500/20 shrink-0">
                                         <CheckCircle2 className="h-10 w-10" />
                                     </div>
                                     <div>
-                                        <h3 className="text-2xl font-bold text-green-900">Sale Successfully Completed</h3>
-                                        <p className="text-green-700 mt-1">Transaction is finalized and archived. Funds should be in your account.</p>
+                                        <h3 className="text-2xl font-bold text-emerald-900 mb-2 italic">Sale Successfully Archived</h3>
+                                        <p className="text-emerald-700 font-medium max-w-md">
+                                            The ledger is closed. Total valuation of {formatNPR(parseFloat(transaction.total_amount))} has been reconciled. This asset is now marked as Sold across all systems.
+                                        </p>
                                     </div>
                                 </div>
                             )}
 
-                            {transaction.status === 'AWAITING_PROOF' && (
-                                <div className="bg-yellow-50 border border-yellow-100 rounded-2xl p-8 flex items-center gap-4">
-                                    <ClockIcon className="h-10 w-10 text-yellow-600" />
+                            {transaction.status === 'PENDING' && transaction.Proofs?.length === 0 && (
+                                <div className="bg-amber-50 border border-amber-100 rounded-2xl p-8 flex items-center gap-6">
+                                    <div className="h-16 w-16 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+                                        <ClockIcon className="h-8 w-8" />
+                                    </div>
                                     <div>
-                                        <h3 className="text-lg font-bold text-yellow-900">Awaiting Buyer Payment</h3>
-                                        <p className="text-yellow-700">The buyer has initiated interest. You will be notified once they upload payment proof.</p>
+                                        <h3 className="text-xl font-bold text-amber-900">Awaiting Primary Payout</h3>
+                                        <p className="text-amber-700 text-sm font-medium">The buyer has initialized the purchase process. We will alert you immediately upon payment capture.</p>
                                     </div>
                                 </div>
                             )}
@@ -197,32 +215,42 @@ export default function SellerTransactionDetailPage({ params }: { params: Promis
                         {/* Sidebar Info */}
                         <div className="space-y-6">
                             <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-                                <h3 className="text-lg font-bold text-gray-900 mb-6">Sale Details</h3>
-                                <div className="space-y-4">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm text-gray-500">Property Price</span>
-                                        <span className="font-bold text-gray-900">{formatNPR(transaction.amount)}</span>
+                                <div className="space-y-5">
+                                    <div className="flex justify-between items-center text-sm font-medium">
+                                        <span className="text-gray-400">Total Asset Value</span>
+                                        <span className="font-bold text-gray-900">{formatNPR(parseFloat(transaction.total_amount))}</span>
                                     </div>
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-sm text-gray-500">Service Fee (0%)</span>
-                                        <span className="font-bold text-gray-900">{formatNPR(0)}</span>
+                                    <div className="flex justify-between items-center text-sm font-medium">
+                                        <span className="text-gray-400">Total Verified Payout</span>
+                                        <span className="font-bold text-emerald-600">{formatNPR(parseFloat(transaction.amount_paid || '0'))}</span>
                                     </div>
-                                    <div className="border-t pt-4 flex justify-between items-center">
-                                        <span className="font-bold text-gray-900">Expected Payout</span>
-                                        <span className="text-xl font-bold text-green-600">{formatNPR(transaction.amount)}</span>
+                                    <div className="border-t border-dashed pt-5 flex justify-between items-center">
+                                        <span className="font-bold text-gray-900">Pending Reconciliation</span>
+                                        <span className="text-xl font-bold text-primary">{formatNPR(parseFloat(transaction.total_amount) - parseFloat(transaction.amount_paid || '0'))}</span>
                                     </div>
                                 </div>
                             </div>
 
                             <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-                                <h3 className="text-lg font-bold text-gray-900 mb-6">Purchaser Info</h3>
-                                <div className="flex items-center gap-3">
-                                    <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
-                                        <User className="h-6 w-6" />
+                                <h3 className="text-lg font-bold text-gray-900 mb-6 font-serif">Purchaser Credentials</h3>
+                                <div className="space-y-6">
+                                    <div className="flex items-center gap-4">
+                                        <div className="h-12 w-12 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100">
+                                            <User className="h-6 w-6" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-0.5">Purchaser Legal Name</p>
+                                            <p className="text-sm font-bold text-gray-900">{transaction.Buyer?.first_name} {transaction.Buyer?.last_name || 'Anonymous'}</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Buyer Account</p>
-                                        <p className="font-bold text-gray-900">ID: {transaction.buyerId}</p>
+                                    <div className="flex items-center gap-4">
+                                        <div className="h-12 w-12 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 border border-gray-100">
+                                            <ShieldCheck className="h-6 w-6" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-0.5">ID Verification</p>
+                                            <p className="text-sm font-bold text-emerald-600 uppercase tracking-widest text-[10px]">KYC Verified (Govt of Nepal)</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

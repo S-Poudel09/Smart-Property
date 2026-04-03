@@ -5,6 +5,7 @@ from django.conf import settings
 
 class Notification(models.Model):
     NOTIFICATION_TYPES = [
+        ('property_submission', 'Property Submission'),
         ('property_approved', 'Property Approved'),
         ('property_rejected', 'Property Rejected'),
         ('transaction_update', 'Transaction Update'),

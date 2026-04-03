@@ -26,7 +26,7 @@ import { Input } from '@/components/common/Input';
 import { FileUploader, FilePreview } from '@/components/common/FileUploader';
 import MapPlaceholder from '@/components/map/MapPlaceholder';
 import { upsertProperty, getPropertyById } from '@/lib/properties/storage';
-import { getCurrentUser } from '@/lib/auth/mockAuth';
+import { getUser } from '@/lib/auth/getUser';
 import { Property } from '@/types/property';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
@@ -63,7 +63,7 @@ export default function EditListingPage() {
     const [documents, setDocuments] = useState<FilePreview[]>([]);
     const [property, setProperty] = useState<Property | null>(null);
     const router = useRouter();
-    const user = getCurrentUser();
+    const user = getUser();
 
     const {
         register,
@@ -211,7 +211,7 @@ export default function EditListingPage() {
                         <form onSubmit={handleSubmit(onSubmit)}>
                             {/* Same form content as add-listing */}
                             {currentStep === 1 && (
-                                <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                                <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                                     <Input
                                         label="Listing Title"
                                         {...register('title')}
@@ -248,7 +248,7 @@ export default function EditListingPage() {
                             )}
 
                             {currentStep === 2 && (
-                                <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                                <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                         <Input
                                             label="Price"
@@ -290,7 +290,7 @@ export default function EditListingPage() {
                             )}
 
                             {currentStep === 3 && (
-                                <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                                <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                                     <Input label="Full Address" {...register('address')} error={errors.address?.message} />
                                     <Input label="City" {...register('city')} error={errors.city?.message} />
                                     <div>
@@ -301,7 +301,7 @@ export default function EditListingPage() {
                             )}
 
                             {currentStep === 4 && (
-                                <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
+                                <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
                                     <FileUploader
                                         label="Property Images"
                                         accept="image/*"
@@ -320,7 +320,7 @@ export default function EditListingPage() {
                             )}
 
                             {currentStep === 5 && (
-                                <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
+                                <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
                                     <div className="rounded-xl bg-gray-50 p-6 space-y-4">
                                         <h3 className="text-lg font-bold text-gray-900">Review Changes</h3>
                                         <div className="grid grid-cols-2 gap-4 text-sm">

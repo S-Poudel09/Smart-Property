@@ -2,10 +2,14 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
+import logging
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
-SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key")
+logger = logging.getLogger(__name__)
+
+SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-default-key-replace-in-production")
 
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
@@ -25,6 +29,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
 
     "rest_framework",
+    "rest_framework_simplejwt",
     "drf_spectacular",
 
     "accounts",
@@ -34,6 +39,15 @@ INSTALLED_APPS = [
     "chat",
     "services",
     "notifications",
+    "analytics",
+
+    # 2FA Apps
+    'django_otp',
+    'django_otp.plugins.otp_static',
+    'django_otp.plugins.otp_totp',
+    'two_factor',
+    'two_factor.plugins.phonenumber',
+    'two_factor.plugins.email',
 ]
 
 
@@ -46,6 +60,7 @@ MIDDLEWARE = [
 
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django_otp.middleware.OTPMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -76,8 +91,12 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("DB_NAME", "smartproperty"),
+        "USER": os.getenv("DB_USER", "postgres"),
+        "PASSWORD": os.getenv("DB_PASSWORD", ""),
+        "HOST": os.getenv("DB_HOST", "localhost"),
+        "PORT": os.getenv("DB_PORT", "5432"),
     }
 }
 
@@ -112,18 +131,29 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
  
 # EMAIL SETTINGS
-EMAIL_BACKEND_TYPE = os.getenv('EMAIL_BACKEND_TYPE', 'console')
+EMAIL_BACKEND_TYPE = os.getenv('EMAIL_BACKEND_TYPE', 'console').lower()
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', f"SmartProperty <{EMAIL_HOST_USER}>")
+
+# Custom display name for emails
+EMAIL_DISPLAY_NAME = os.getenv('EMAIL_DISPLAY_NAME', 'Smart Property')
+if EMAIL_HOST_USER:
+    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', f"{EMAIL_DISPLAY_NAME} <{EMAIL_HOST_USER}>")
+else:
+    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'webmaster@localhost')
 
 if EMAIL_BACKEND_TYPE == 'smtp':
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    # Required for some SMTP servers like Gmail
+    EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False').lower() == 'true'
 else:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+logger.info(f"Email Backend Type: {EMAIL_BACKEND_TYPE}")
+logger.info(f"Active Email Backend: {EMAIL_BACKEND}")
 
 
 REST_FRAMEWORK = {
@@ -132,6 +162,32 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
+
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=7),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': False,
+    'UPDATE_LAST_LOGIN': True,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'VERIFYING_KEY': None,
+    'AUDIENCE': None,
+    'ISSUER': None,
+    'JWK_URL': None,
+    'LEEWAY': 0,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+    'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
+    'TOKEN_USER_CLASS': 'rest_framework_simplejwt.models.TokenUser',
+    'JTI_CLAIM': 'jti',
+}
+
 
 # SPECTACULAR SETTINGS
 # drf-spectacular ensures your API documentation is accurate
@@ -159,24 +215,17 @@ CORS_ALLOW_METHODS = [
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# MONGO SETTINGS
-MONGO_URI = os.getenv("MONGO_URI")
-if MONGO_URI:
-    try:
-        from mongoengine import connect, disconnect
-        disconnect(alias='default')  # Clear any stale connections
-        connect(
-            db='smart_property',
-            host=MONGO_URI,
-            alias='default',
-            serverSelectionTimeoutMS=5000,
-            connectTimeoutMS=10000,
-            retryReads=True,
-            retryWrites=True
-        )
-        print("✓ MongoDB connected successfully to Imperial Cluster")
-    except Exception as e:
-        print(f"⚠ MongoDB connection failed: {e}")
+# MONGO SETTINGS (Removed - Replaced by PostgreSQL models in analytics app)
 
 # API ROUTING SETTINGS
 APPEND_SLASH = True
+
+# 2FA SETTINGS
+LOGIN_URL = 'two_factor:login'
+LOGIN_REDIRECT_URL = '/' # Home/Dashboard
+TWO_FACTOR_REMEMBER_COOKIE_AGE = 60 * 60 * 24 * 30 # 30 days
+TWO_FACTOR_PATCH_ADMIN = True # This automatically patches the admin site to require 2FA
+
+# ACCOUNT SETTINGS
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+ACCOUNT_EMAIL_REQUIRED = True

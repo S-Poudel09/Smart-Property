@@ -56,12 +56,11 @@ class Property(models.Model):
     district = models.CharField(max_length=100, blank=True, null=True, help_text="District name")
     
     city = models.CharField(max_length=100, blank=True, null=True)
-    images = models.JSONField(default=list)
-    documents = models.JSONField(default=list)
+    # Media handled via PropertyImage and PropertyDocument models for consistency
     status = models.CharField(
         max_length=20, 
-        default="DRAFT", 
-        choices=[("DRAFT", "Draft"), ("SUBMITTED", "Submitted"), ("APPROVED", "Approved"), ("REJECTED", "Rejected"), ("PUBLISHED", "Published")]
+        default="submitted", 
+        choices=[("draft", "Draft"), ("submitted", "Submitted"), ("approved", "Approved"), ("rejected", "Rejected"), ("published", "Published")]
     )
     
     # Detailed Features (from datasets)
@@ -80,6 +79,24 @@ class Property(models.Model):
     # GIS and Interactive Features
     boundary_coordinates = models.JSONField(null=True, blank=True, help_text="Polygon coordinates for property boundaries")
     virtual_tour_url = models.URLField(null=True, blank=True, help_text="360-degree virtual tour link")
+    
+    # Hostel Specific Fields
+    HOSTEL_GENDER_CHOICES = [
+        ('boys', 'Boys Only'),
+        ('girls', 'Girls Only'),
+        ('mixed', 'Mixed / Co-ed'),
+    ]
+    hostel_gender = models.CharField(max_length=20, choices=HOSTEL_GENDER_CHOICES, blank=True, null=True)
+    room_type = models.CharField(max_length=50, blank=True, null=True, help_text="Single, Double, Triple, etc.")
+    food_included = models.BooleanField(default=False)
+    has_wifi = models.BooleanField(default=False)
+    has_laundry = models.BooleanField(default=False)
+    bathroom_type = models.CharField(max_length=50, blank=True, null=True, choices=[('attached', 'Attached'), ('shared', 'Shared')])
+    available_beds = models.IntegerField(default=0)
+    
+    # Progress/Workflow State for Transactions
+    # 1: Contact Seller, 2: Chat Started, 3: Payment Submitted, 4: Admin Verified, 5: Deal Completed
+    workflow_step = models.IntegerField(default=1) 
     
     updated_at = models.DateTimeField(auto_now=True)
 
