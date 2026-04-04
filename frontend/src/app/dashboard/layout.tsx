@@ -7,7 +7,7 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 export default function DashboardLayout({ children }: { children: ReactNode }) {
     return (
         <ProtectedRoute>
-            <DashboardShell title="">
+            <DashboardShell>
                 {children}
             </DashboardShell>
         </ProtectedRoute>

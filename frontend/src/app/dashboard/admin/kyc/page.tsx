@@ -210,7 +210,7 @@ export default function AdminKycPage() {
                                 <div className="pt-10 border-t border-[#c5a059]/10">
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <Button
-                                            className="bg-emerald-600 hover:bg-emerald-700 h-16 rounded-full font-black uppercase tracking-widest text-[10px] shadow-xl flex items-center justify-center gap-2 group text-white"
+                                            className="bg-indigo-600 hover:bg-indigo-700 h-16 rounded-full font-black uppercase tracking-widest text-[10px] shadow-xl flex items-center justify-center gap-2 group text-white"
                                             onClick={() => handleAction(selectedProfile.userId, 'VERIFIED')}
                                         >
                                             <CheckCircle className="h-4 w-4" /> Bestow Verified Status

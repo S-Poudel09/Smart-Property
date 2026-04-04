@@ -45,4 +45,30 @@ api.interceptors.response.use(
     }
 );
 
+// Global Request Deduplication
+// This catches duplicate GET requests (from StrictMode or multiple components mounting simultaneously)
+// and shares the same Promise, guaranteeing only 1 network hit.
+const originalGet = api.get;
+const pendingGetRequests = new Map();
+
+api.get = async function (...args) {
+    const url = args[0];
+    const config = args[1];
+    
+    const key = url + JSON.stringify(config?.params || {});
+    
+    if (pendingGetRequests.has(key)) {
+        return pendingGetRequests.get(key);
+    }
+    
+    // @ts-ignore
+    const promise = originalGet.apply(api, args).finally(() => {
+        // Clear from active cache after an adequate debounce buffer
+        setTimeout(() => pendingGetRequests.delete(key), 500);
+    });
+    
+    pendingGetRequests.set(key, promise);
+    return promise;
+};
+
 export default api;

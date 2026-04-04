@@ -169,12 +169,12 @@ export default function SettingsPage() {
 
                                             <div className="flex items-center justify-between p-8 bg-gray-50 rounded-3xl group hover:bg-white hover:shadow-xl transition-all duration-500 border border-transparent hover:border-accent/10">
                                                 <div className="flex items-center gap-6">
-                                                    <div className="h-12 w-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
+                                                    <div className="h-12 w-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:scale-110 transition-transform">
                                                         <CheckCircle2 className="h-6 w-6" />
                                                     </div>
                                                     <div>
                                                         <p className="text-sm font-bold text-primary">Identity Verification (KYC)</p>
-                                                        <p className="text-[10px] text-emerald-600 font-bold mt-1 uppercase tracking-widest">Status: {user?.kyc_status || 'SEALED'}</p>
+                                                        <p className="text-[10px] text-indigo-600 font-bold mt-1 uppercase tracking-widest">Status: {user?.kyc_status || 'SEALED'}</p>
                                                     </div>
                                                 </div>
                                                 <Button variant="ghost" className="text-gray-400 text-[10px] font-black uppercase tracking-widest">View Credentials</Button>

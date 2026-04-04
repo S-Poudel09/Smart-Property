@@ -6,8 +6,32 @@ import { createProperty } from '@/lib/api/properties';
 import { Button } from '@/components/common/Button';
 import { FileUploader, FilePreview } from '@/components/common/FileUploader';
 import { toast } from 'react-hot-toast';
-import { ArrowLeft, ArrowRight, Home, MapPin, Upload, FileText, CheckCircle2, ChevronRight, ChevronLeft, ShieldCheck } from 'lucide-react';
+import { 
+    ArrowLeft, ArrowRight, Home, MapPin, 
+    Upload, FileText, CheckCircle2, ChevronRight, 
+    ChevronLeft, ShieldCheck 
+} from 'lucide-react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+
+const InputField = ({ label, name, type = "text", required = false, placeholder = "", value, onChange, error }: any) => (
+    <div className="space-y-2">
+        <label className="text-sm font-bold text-slate-700 flex items-center justify-between">
+            <span>{label} {required && <span className="text-red-500">*</span>}</span>
+            {error && <span className="text-[10px] text-red-500 font-black uppercase tracking-widest animate-pulse">Required</span>}
+        </label>
+        <input 
+            type={type}
+            name={name}
+            value={value}
+            onChange={onChange}
+            placeholder={placeholder}
+            className={`w-full px-5 py-3.5 bg-slate-50 border rounded-2xl text-sm font-medium focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 focus:bg-white outline-none transition-all duration-300 ${
+                error ? 'border-red-400 bg-red-50/10' : 'border-slate-200'
+            }`}
+        />
+        {error && <p className="text-[11px] text-red-500 font-bold italic pl-2">{error[0]}</p>}
+    </div>
+);
 
 export default function SellerAddListingPage() {
     return (
@@ -65,6 +89,7 @@ function AddListingContent() {
 
         if (step < 2) {
             setStep(step + 1);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
         }
 
@@ -96,183 +121,239 @@ function AddListingContent() {
 
         try {
             await createProperty(formData);
-            toast.success("Property created successfully!");
+            toast.success("Asset intelligence submitted for verification!");
             router.push('/dashboard/seller/listings');
         } catch (error: any) {
             if (error.response?.data && typeof error.response.data === 'object') {
                 setFieldErrors(error.response.data);
-                toast.error("Please fix the errors in the form.");
+                toast.error("Validation error in registry details.");
                 
                 const step1Fields = ['title', 'price', 'district', 'municipality', 'ward', 'address'];
                 if (step1Fields.some(f => error.response.data[f])) {
                     setStep(1);
                 }
             } else {
-                toast.error("Failed to create property.");
+                toast.error("Strategic failure during asset creation.");
             }
         } finally {
             setLoading(false);
         }
     };
 
-    const InputField = ({ label, name, type = "text", required = false, placeholder = "" }: any) => (
-        <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-gray-700">{label} {required && <span className="text-red-500">*</span>}</label>
-            <input 
-                type={type}
-                name={name}
-                value={(form as any)[name]}
-                onChange={handleChange}
-                placeholder={placeholder}
-                className={`w-full px-4 py-2.5 bg-white border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ${
-                    fieldErrors[name] ? 'border-red-500 bg-red-50/10' : 'border-border'
-                }`}
-            />
-            {fieldErrors[name] && <p className="text-[11px] text-red-500 font-medium italic">{fieldErrors[name][0]}</p>}
-        </div>
-    );
-
     return (
-        <div className="max-w-4xl mx-auto py-8 px-4">
-            <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Add New Property</h1>
-                    <p className="text-gray-500 mt-1">List your property on the most trusted marketplace in Nepal.</p>
+        <div className="max-w-5xl mx-auto py-12 px-6">
+            <header className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-8">
+                <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                         <div className="h-10 w-10 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 border border-indigo-100 shadow-sm">
+                            <Home className="h-5 w-5" />
+                         </div>
+                         <span className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-600">Inventory Entry</span>
+                    </div>
+                    <h1 className="text-4xl font-black text-slate-900 font-outfit tracking-tighter">Register New Asset</h1>
+                    <p className="text-slate-500 font-medium italic border-l-4 border-indigo-600/20 pl-8 max-w-xl">
+                        "Enlist your property securely within our verified imperial registry for high-intent asset acquisition."
+                    </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-4 bg-slate-100 p-2 rounded-3xl border border-slate-200">
                     {[1, 2].map((i) => (
-                        <div key={i} className={`h-1.5 w-12 rounded-full ${step >= i ? 'bg-primary' : 'bg-gray-200'}`} />
+                        <div key={i} className={`flex items-center gap-2 px-6 py-2 rounded-[1.25rem] transition-all duration-500 ${step === i ? 'bg-white text-indigo-600 shadow-lg' : 'text-slate-400'}`}>
+                             <span className="text-[10px] font-black uppercase tracking-widest">{i === 1 ? 'Logistics' : 'Verification'}</span>
+                        </div>
                     ))}
                 </div>
             </header>
 
-            <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
-                <div className="p-8">
+            <form onSubmit={handleSubmit} className="bg-white rounded-[3rem] border border-slate-200/60 shadow-2xl shadow-indigo-100 overflow-hidden">
+                <div className="p-12">
                     {step === 1 ? (
-                        <div className="space-y-8 animate-fade-in">
+                        <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
                             <section>
-                                <div className="flex items-center gap-2 mb-6 pb-2 border-b border-gray-100">
-                                    <Home className="h-5 w-5 text-primary" />
-                                    <h2 className="font-bold text-gray-900">Basic Information</h2>
+                                <div className="flex items-center gap-4 mb-10">
+                                    <div className="h-2 w-10 bg-indigo-600 rounded-full"></div>
+                                    <h2 className="text-2xl font-black text-slate-900 font-outfit tracking-tighter">Core Asset Parameters</h2>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div className="md:col-span-2">
-                                        <InputField label="Listing Title" name="title" required placeholder="e.g. Modern Villa in Bhaisepati" />
-                                    </div>
-                                    <div className="md:col-span-2">
-                                        <label className="text-sm font-semibold text-gray-700 block mb-1.5">Description</label>
-                                        <textarea 
-                                            name="description" 
-                                            rows={4} 
-                                            value={form.description} 
-                                            onChange={handleChange} 
-                                            className="w-full px-4 py-2.5 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                                            placeholder="Tell us more about the property..."
+                                        <InputField 
+                                            label="Asset Designation" 
+                                            name="title" 
+                                            required 
+                                            placeholder="e.g. Imperial Domain in Central Kathmandu"
+                                            value={form.title}
+                                            onChange={handleChange}
+                                            error={fieldErrors.title}
                                         />
                                     </div>
-                                    <InputField label="Price (Rs)" name="price" type="number" required />
-                                    <InputField label="Total Area (sqft)" name="area_sqft" type="number" required />
+                                    <div className="md:col-span-2">
+                                        <label className="text-sm font-bold text-slate-700 block mb-2">Technical Description</label>
+                                        <textarea 
+                                            name="description" 
+                                            rows={5} 
+                                            value={form.description} 
+                                            onChange={handleChange} 
+                                            className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-[2rem] text-sm font-medium focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 focus:bg-white outline-none transition-all duration-300"
+                                            placeholder="Details regarding architecture, amenities, and strategic value..."
+                                        />
+                                    </div>
+                                    <InputField label="Acquisition Price (NPR)" name="price" type="number" required value={form.price} onChange={handleChange} error={fieldErrors.price} />
+                                    <InputField label="Total Land Area (sqft)" name="area_sqft" type="number" required value={form.area_sqft} onChange={handleChange} error={fieldErrors.area_sqft} />
                                     
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <InputField label="Bedrooms" name="beds" type="number" />
-                                        <InputField label="Bathrooms" name="baths" type="number" />
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <InputField label="Quarters (Beds)" name="beds" type="number" value={form.beds} onChange={handleChange} error={fieldErrors.beds} />
+                                        <InputField label="Sanitation (Baths)" name="baths" type="number" value={form.baths} onChange={handleChange} error={fieldErrors.baths} />
                                     </div>
                                     
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1.5">
-                                            <label className="text-sm font-semibold text-gray-700">Listing Type</label>
-                                            <select name="listing_type" value={form.listing_type} onChange={handleChange} className="w-full px-4 py-2.5 bg-white border border-border rounded-lg text-sm outline-none">
-                                                <option value="sale">For Sale</option>
-                                                <option value="rent">For Rent</option>
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-slate-700">Contract Type</label>
+                                            <select name="listing_type" value={form.listing_type} onChange={handleChange} className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-[1.5rem] text-sm font-bold outline-none focus:border-indigo-600 focus:bg-white transition-all">
+                                                <option value="sale">Direct Acquisition (Sale)</option>
+                                                <option value="rent">Temporary Lease (Rent)</option>
                                             </select>
                                         </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-sm font-semibold text-gray-700">Property Type</label>
-                                            <select name="property_type" value={form.property_type} onChange={handleChange} className="w-full px-4 py-2.5 bg-white border border-border rounded-lg text-sm outline-none">
-                                                <option value="house">House</option>
-                                                <option value="apartment">Apartment</option>
-                                                <option value="land">Land</option>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-slate-700">Structural Class</label>
+                                            <select name="property_type" value={form.property_type} onChange={handleChange} className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-[1.5rem] text-sm font-bold outline-none focus:border-indigo-600 focus:bg-white transition-all">
+                                                <option value="house">Standard Residency</option>
+                                                <option value="apartment">Executive Flat</option>
+                                                <option value="hostel">Hostel / PG</option>
+                                                <option value="land">Undeveloped Terrain</option>
+                                                <option value="commercial">Commercial Building</option>
                                             </select>
                                         </div>
                                     </div>
+
+                                    {form.property_type === 'hostel' && (
+                                        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8 bg-indigo-50/30 p-8 rounded-[2rem] border border-indigo-100 animate-in fade-in slide-in-from-top-2 duration-500">
+                                            <div className="md:col-span-2 flex items-center gap-3 mb-2">
+                                                <ShieldCheck className="h-4 w-4 text-indigo-600" />
+                                                <h3 className="text-xs font-black uppercase tracking-widest text-indigo-900">Hostel Protocol Parameters</h3>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-bold text-slate-700">Hostel Admission Policy</label>
+                                                <select name="hostel_gender" value={(form as any).hostel_gender || 'mixed'} onChange={handleChange} className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-indigo-600 transition-all">
+                                                    <option value="boys">Boys Only</option>
+                                                    <option value="girls">Girls Only</option>
+                                                    <option value="mixed">Mixed / Co-ed</option>
+                                                </select>
+                                            </div>
+                                            <InputField label="Available Bed Inventory" name="available_beds" type="number" value={(form as any).available_beds || '0'} onChange={handleChange} />
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-bold text-slate-700">Sanitation Protocol</label>
+                                                <select name="bathroom_type" value={(form as any).bathroom_type || 'shared'} onChange={handleChange} className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-indigo-600 transition-all">
+                                                    <option value="attached">Attached Bathroom</option>
+                                                    <option value="shared">Shared Facility</option>
+                                                </select>
+                                            </div>
+                                            <InputField label="Room Configuration" name="room_type" placeholder="e.g. 2-Seater, 3-Seater" value={(form as any).room_type || ''} onChange={handleChange} />
+                                            
+                                            <div className="md:col-span-2 flex flex-wrap gap-6 pt-4">
+                                                {[
+                                                    { id: 'food_included', label: 'Mess / Food Included' },
+                                                    { id: 'has_wifi', label: 'High-Speed Internet' },
+                                                    { id: 'has_laundry', label: 'Laundry System' }
+                                                ].map((amenity) => (
+                                                    <label key={amenity.id} className="flex items-center gap-3 cursor-pointer group">
+                                                        <input 
+                                                            type="checkbox" 
+                                                            name={amenity.id} 
+                                                            checked={(form as any)[amenity.id] === true || (form as any)[amenity.id] === 'true'} 
+                                                            onChange={(e) => setForm(prev => ({ ...prev, [amenity.id]: e.target.checked }))}
+                                                            className="w-5 h-5 rounded-lg border-slate-200 text-indigo-600 focus:ring-indigo-500/20 transition-all"
+                                                        />
+                                                        <span className="text-xs font-bold text-slate-500 group-hover:text-slate-900 transition-colors uppercase tracking-widest">{amenity.label}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </section>
 
                             <section>
-                                <div className="flex items-center gap-2 mb-6 pb-2 border-b border-gray-100">
-                                    <MapPin className="h-5 w-5 text-red-500" />
-                                    <h2 className="font-bold text-gray-900">Location Details</h2>
+                                <div className="flex items-center gap-4 mb-10 pt-10 border-t border-slate-100">
+                                    <div className="h-2 w-10 bg-red-500 rounded-full"></div>
+                                    <h2 className="text-2xl font-black text-slate-900 font-outfit tracking-tighter">Geographic Deployment</h2>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-1.5">
-                                        <label className="text-sm font-semibold text-gray-700">District <span className="text-red-500">*</span></label>
-                                        <select name="district" required value={form.district} onChange={handleChange} className="w-full px-4 py-2.5 bg-white border border-border rounded-lg text-sm outline-none">
-                                            <option value="">Select District</option>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-slate-700">Administrative District <span className="text-red-500">*</span></label>
+                                        <select name="district" required value={form.district} onChange={handleChange} className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-[1.5rem] text-sm font-bold outline-none focus:border-indigo-600 transition-colors">
+                                            <option value="">Select Territory</option>
                                             <option value="Kathmandu">Kathmandu</option>
                                             <option value="Lalitpur">Lalitpur</option>
                                             <option value="Bhaktapur">Bhaktapur</option>
                                             <option value="Pokhara">Pokhara</option>
                                         </select>
                                     </div>
-                                    <InputField label="Municipality" name="municipality" required />
-                                    <InputField label="Ward No." name="ward" required />
-                                    <InputField label="Street Address / Tol" name="address" required />
+                                    <InputField label="Municipality Area" name="municipality" required value={form.municipality} onChange={handleChange} error={fieldErrors.municipality} />
+                                    <InputField label="Sector / Ward" name="ward" required value={form.ward} onChange={handleChange} error={fieldErrors.ward} />
+                                    <InputField label="Tactical Address / Tol" name="address" required value={form.address} onChange={handleChange} error={fieldErrors.address} />
                                 </div>
                             </section>
                         </div>
                     ) : (
-                        <div className="space-y-8 animate-fade-in">
+                        <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
                             <section>
-                                <div className="flex items-center gap-2 mb-6 pb-2 border-b border-gray-100">
-                                    <Upload className="h-5 w-5 text-primary" />
-                                    <h2 className="font-bold text-gray-900">Property Media</h2>
+                                <div className="flex items-center gap-4 mb-10">
+                                    <div className="h-2 w-10 bg-indigo-600 rounded-full"></div>
+                                    <h2 className="text-2xl font-black text-slate-900 font-outfit tracking-tighter">Visual Intelligence</h2>
                                 </div>
-                                <FileUploader
-                                    label="Upload Property Images"
-                                    accept="image/*"
-                                    multiple
-                                    onFilesChange={(newFiles) => setImages(newFiles)}
-                                />
-                                <p className="text-[11px] text-gray-500 mt-2 italic">* Upload at least 3 clear images of the property.</p>
+                                <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200/50">
+                                    <FileUploader
+                                        label="Strategic Asset Documentation (Images)"
+                                        accept="image/*"
+                                        multiple
+                                        onFilesChange={(newFiles) => setImages(newFiles)}
+                                    />
+                                    <p className="text-[11px] text-slate-400 mt-4 font-bold uppercase tracking-widest pl-4">* Minimum 3 high-resolution captures required.</p>
+                                </div>
                             </section>
 
                             <section>
-                                <div className="flex items-center gap-2 mb-6 pb-2 border-b border-gray-100">
-                                    <FileText className="h-5 w-5 text-emerald-500" />
-                                    <h2 className="font-bold text-gray-900">Verification Documents</h2>
+                                <div className="flex items-center gap-4 mb-10 pt-10 border-t border-slate-100">
+                                    <div className="h-2 w-10 bg-indigo-400 rounded-full"></div>
+                                    <h2 className="text-2xl font-black text-slate-900 font-outfit tracking-tighter">Verification Credentials</h2>
                                 </div>
-                                <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-lg mb-6 flex gap-3 italic">
-                                    <ShieldCheck className="h-5 w-5 text-emerald-600 shrink-0" />
-                                    <p className="text-xs text-emerald-800 leading-relaxed">
-                                        Uploading clear scans of your Lalpurja and citizenship certificate will speed up the approval process significantly.
+                                <div className="bg-indigo-50/50 border border-indigo-100 p-8 rounded-[2.5rem] mb-10 flex gap-6 italic">
+                                    <ShieldCheck className="h-8 w-8 text-indigo-600 shrink-0" />
+                                    <p className="text-sm text-indigo-900 leading-relaxed font-medium">
+                                        "Digital submission of Title Deeds (Lalpurja) and authentic identification ensures prioritized verification by our intelligence board."
                                     </p>
                                 </div>
-                                <FileUploader
-                                    label="Title Deed / Lalpurja (PDF or Image)"
-                                    accept=".pdf,.jpg,.jpeg,.png"
-                                    multiple
-                                    onFilesChange={(newFiles) => setDocuments(newFiles)}
-                                />
+                                <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200/50">
+                                    <FileUploader
+                                        label="Asset Decree / Title Deed (PDF/JPG)"
+                                        accept=".pdf,.jpg,.jpeg,.png"
+                                        multiple
+                                        onFilesChange={(newFiles) => setDocuments(newFiles)}
+                                    />
+                                </div>
                             </section>
                         </div>
                     )}
                 </div>
 
-                <div className="p-6 bg-gray-50 border-t border-border flex justify-between items-center">
+                <div className="px-12 py-10 bg-slate-50/80 border-t border-slate-200 flex justify-between items-center">
                     <button 
                         type="button"
                         onClick={() => step > 1 && setStep(step - 1)}
-                        className={`flex items-center gap-2 text-sm font-bold transition-all ${step === 1 ? 'opacity-0 cursor-default' : 'text-gray-500 hover:text-gray-900'}`}
+                        className={`flex items-center gap-3 text-xs font-black uppercase tracking-widest transition-all ${step === 1 ? 'opacity-0 cursor-default' : 'text-slate-400 hover:text-slate-900'}`}
                     >
-                        <ChevronLeft className="h-4 w-4" /> Back
+                        <ChevronLeft className="h-4 w-4" /> Operations Back
                     </button>
                     
-                    <Button type="submit" disabled={loading} className="px-8 h-12 rounded-lg font-bold min-w-[140px]">
-                        {loading ? 'Processing...' : step === 1 ? 'Continue' : 'Submit Listing'}
-                    </Button>
+                    <button 
+                        type="submit" 
+                        disabled={loading} 
+                        className="h-16 px-12 bg-slate-900 text-white rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-[10px] hover:bg-indigo-600 transition-all shadow-xl shadow-indigo-900/10 flex items-center gap-4 active:scale-95 disabled:opacity-50"
+                    >
+                        {loading ? 'Transmitting Data...' : step === 1 ? 'Advance to Verification' : 'Commit to Registry'}
+                        {step === 1 && <ChevronRight className="h-4 w-4 text-white/50" />}
+                    </button>
                 </div>
             </form>
         </div>
     );
 }
-

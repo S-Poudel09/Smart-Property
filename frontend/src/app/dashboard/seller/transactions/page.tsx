@@ -126,7 +126,7 @@ export default function SellerTransactionsPage() {
                                                         <AlertTriangle className="h-3.5 w-3.5" /> High Risk
                                                     </span>
                                                 ) : (
-                                                    <span className="text-[10px] font-bold uppercase px-2 py-1 rounded bg-emerald-50 text-emerald-600 flex items-center gap-1.5 w-fit border border-emerald-100">
+                                                    <span className="text-[10px] font-bold uppercase px-2 py-1 rounded bg-indigo-50 text-indigo-600 flex items-center gap-1.5 w-fit border border-indigo-100">
                                                         <ShieldCheck className="h-3.5 w-3.5" /> Verified Safe
                                                     </span>
                                                 )}
@@ -138,7 +138,7 @@ export default function SellerTransactionsPage() {
                                                 <div className="flex justify-end gap-2">
                                                     {tx.status === 'PENDING' && (
                                                         <button 
-                                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-[11px] font-bold hover:bg-emerald-700 transition-all shadow-sm border border-emerald-500"
+                                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-[11px] font-bold hover:bg-indigo-700 transition-all shadow-sm border border-indigo-500"
                                                             onClick={() => handleConfirm(tx.TransactionID)}
                                                         >
                                                             <Check className="w-3.5 h-3.5" /> Confirm Sale

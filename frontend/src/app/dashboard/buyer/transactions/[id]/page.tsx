@@ -10,7 +10,7 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { Button } from '@/components/common/Button';
 import { KhaltiPaymentDemo } from '@/components/transaction/KhaltiPaymentDemo';
 import { TransactionStepper } from '@/components/property/TransactionStepper';
-import { ArrowLeft, Building2, Calendar, FileText, User, ShieldCheck, AlertCircle, CheckCircle2, IndianRupee } from 'lucide-react';
+import { ArrowLeft, Building2, Calendar, FileText, User, ShieldCheck, AlertCircle, CheckCircle2, IndianRupee, History as HistoryIcon } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { formatNPR } from '@/lib/utils/currency';
@@ -115,20 +115,60 @@ export default function BuyerTransactionDetailPage({ params }: { params: Promise
 
                             {/* Payment Section */}
                             {(transaction.status === 'PENDING' || transaction.status === 'PARTIAL') && (
-                                <div className="space-y-8">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <KhaltiPaymentDemo 
                                         amount={parseFloat(transaction.total_amount) - parseFloat(transaction.amount_paid || '0')} 
                                         propertyTitle={transaction.Property?.title || 'Property Purchase'} 
                                         onSuccess={handleKhaltiSuccess}
                                     />
                                     
-                                    <div className="bg-emerald-50 border border-emerald-100 p-8 rounded-3xl flex items-start gap-4">
-                                        <ShieldCheck className="h-6 w-6 text-emerald-500 shrink-0" />
-                                        <div className="space-y-2">
-                                            <h4 className="font-bold text-emerald-900 text-sm">Escrow Protection Active</h4>
-                                            <p className="text-xs text-emerald-700/80 leading-relaxed font-medium">
-                                                In Nepal's digital economy, security is paramount. Your funds will be held in our secure internal ledger until both parties confirm documentation at Malpot.
+                                    <div className="space-y-6">
+                                        <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm flex flex-col items-center text-center">
+                                            <div className="h-14 w-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6">
+                                                <FileText className="h-7 w-7" />
+                                            </div>
+                                            <h4 className="font-bold text-gray-900 mb-2">Manual Bank Deposit</h4>
+                                            <p className="text-xs text-gray-500 font-medium mb-6">
+                                                Already paid via Bank Transfer or Cash? Upload your voucher/receipt here for manual verification.
                                             </p>
+                                            <input 
+                                                type="file" 
+                                                id="manual-proof" 
+                                                className="hidden" 
+                                                onChange={async (e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) {
+                                                        setIsActionLoading(true);
+                                                        try {
+                                                            await uploadPaymentProof(id, parseFloat(transaction.total_amount) - parseFloat(transaction.amount_paid || '0'), file, 'Manual Voucher Upload');
+                                                            toast.success('Voucher submitted for audit');
+                                                            fetchData();
+                                                        } catch {
+                                                            toast.error('Upload failed');
+                                                        } finally {
+                                                            setIsActionLoading(false);
+                                                        }
+                                                    }
+                                                }}
+                                            />
+                                            <Button 
+                                                variant="outline" 
+                                                className="w-full rounded-2xl h-14 border-2 border-dashed border-gray-200 hover:border-primary hover:text-primary transition-all font-bold text-[10px] uppercase tracking-widest"
+                                                onClick={() => document.getElementById('manual-proof')?.click()}
+                                                disabled={isActionLoading}
+                                            >
+                                                {isActionLoading ? 'Uploading...' : 'Upload Payment Receipt'}
+                                            </Button>
+                                        </div>
+
+                                        <div className="bg-indigo-50 border border-indigo-100 p-6 rounded-3xl flex items-start gap-4">
+                                            <ShieldCheck className="h-6 w-6 text-indigo-500 shrink-0" />
+                                            <div className="space-y-2">
+                                                <h4 className="font-bold text-indigo-900 text-sm">Escrow Protection Active</h4>
+                                                <p className="text-[10px] text-indigo-700/80 leading-relaxed font-medium">
+                                                    In Nepal&apos;s digital economy, security is paramount. Your funds will be held in our secure internal ledger until both parties confirm documentation at Malpot.
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -138,9 +178,9 @@ export default function BuyerTransactionDetailPage({ params }: { params: Promise
                                 <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
                                     <div className="flex items-center gap-3 mb-8">
                                         <div className="h-10 w-10 rounded-xl bg-primary/5 flex items-center justify-center text-primary">
-                                            <FileText className="h-5 w-5" />
+                                            <HistoryIcon className="h-5 w-5" />
                                         </div>
-                                        <h3 className="text-xl font-bold text-gray-900">Payment Reconciliation</h3>
+                                        <h3 className="text-xl font-bold text-gray-900">Ledger Activity</h3>
                                     </div>
                                     <div className="space-y-4">
                                         {transaction.Proofs.map((proof, idx) => (
@@ -155,7 +195,7 @@ export default function BuyerTransactionDetailPage({ params }: { params: Promise
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
-                                                    <span className={`text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1.5 rounded-full ${proof.is_verified ? 'bg-emerald-50 text-emerald-500' : 'bg-amber-50 text-amber-500'}`}>
+                                                    <span className={`text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1.5 rounded-full ${proof.is_verified ? 'bg-indigo-50 text-indigo-500' : 'bg-amber-50 text-amber-500'}`}>
                                                         {proof.is_verified ? 'Verified' : 'Reviewing'}
                                                     </span>
                                                 </div>
@@ -214,11 +254,11 @@ export default function BuyerTransactionDetailPage({ params }: { params: Promise
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-4">
-                                        <div className="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center border border-emerald-100">
+                                        <div className="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-500 flex items-center justify-center border border-indigo-100">
                                             <ShieldCheck className="h-5 w-5" />
                                         </div>
                                         <div>
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400 mb-0.5">Agreement Type</p>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-0.5">Agreement Type</p>
                                             <p className="text-sm font-bold text-gray-900">Digital Smart Contract</p>
                                         </div>
                                     </div>

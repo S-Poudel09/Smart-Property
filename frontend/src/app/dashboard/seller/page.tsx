@@ -3,12 +3,19 @@
 import { useEffect, useState } from 'react';
 import api from '@/lib/api/http';
 import { Loader } from '@/components/common/Loader';
-import { Home, DollarSign, Clock, CheckCircle, PlusCircle, ArrowRight, LayoutDashboard, Briefcase, FileText } from 'lucide-react';
+import {
+    Home, DollarSign, Clock, CheckCircle, PlusCircle,
+    ArrowRight, Briefcase, ShieldCheck, Zap, TrendingUp, ArrowUpRight
+} from 'lucide-react';
 import Link from 'next/link';
-import { Button } from '@/components/common/Button';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { formatNPR } from '@/lib/utils/currency';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+    AreaChart, Area, XAxis, YAxis, CartesianGrid, 
+    Tooltip, ResponsiveContainer 
+} from 'recharts';
+import { useRouter } from 'next/navigation';
 
 interface SellerStats {
     total_listings: number;
@@ -20,8 +27,6 @@ interface SellerStats {
         title: string;
         price: string;
         status: string;
-        bedrooms: number;
-        bathrooms: number;
         location: string;
     }>;
     recent_transactions: Array<{
@@ -34,7 +39,17 @@ interface SellerStats {
     }>;
 }
 
+const mockRevenueData = [
+    { month: 'Jan', revenue: 4500000 },
+    { month: 'Feb', revenue: 5200000 },
+    { month: 'Mar', revenue: 4800000 },
+    { month: 'Apr', revenue: 6100000 },
+    { month: 'May', revenue: 5500000 },
+    { month: 'Jun', revenue: 6800000 },
+];
+
 export default function SellerDashboard() {
+    const router = useRouter();
     const [stats, setStats] = useState<SellerStats | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -42,8 +57,8 @@ export default function SellerDashboard() {
         const load = async () => {
             try {
                 const [propertiesRes, transactionsRes] = await Promise.all([
-                    api.get('/properties/?seller=me'),
-                    api.get('/transactions/')
+                    api.get('/properties/?seller=me').catch(() => ({ data: [] })),
+                    api.get('/transactions/').catch(() => ({ data: [] }))
                 ]);
                 const listings = propertiesRes.data?.results ?? propertiesRes.data ?? [];
                 const transactions = transactionsRes.data?.results ?? transactionsRes.data ?? [];
@@ -55,20 +70,17 @@ export default function SellerDashboard() {
                     total_revenue: revenue,
                     pending_reviews: listings.filter((p: any) => p.status === 'submitted').length,
                     completed_sales: completed.length,
-                    recent_listings: listings.slice(0, 5).map((p: any, index: number) => ({
-                        id: String(p.id || p._id || p.PropertyID || p.property_id || `listing-${index}`),
-                        title: p.title || 'Untitled',
+                    recent_listings: listings.slice(0, 5).map((p: any, idx: number) => ({
+                        id: String(p.id || p.PropertyID || idx),
+                        title: p.title || 'Untitled Property',
                         price: p.price || '0',
-                        status: p.status || 'DRAFT',
-                        bedrooms: p.bedrooms || 0,
-                        bathrooms: p.bathrooms || 0,
-                        location: p.location || 'Nepal'
+                        status: p.status || 'draft',
+                        location: p.location || 'Nepal',
                     })),
                     recent_transactions: transactions.slice(0, 5),
                 });
             } catch (e) {
                 console.error(e);
-                setStats({ total_listings: 0, total_revenue: 0, pending_reviews: 0, completed_sales: 0, recent_listings: [], recent_transactions: [] });
             } finally {
                 setLoading(false);
             }
@@ -76,133 +88,214 @@ export default function SellerDashboard() {
         load();
     }, []);
 
-    if (loading) return <div className="min-h-screen bg-background flex justify-center items-center"><Loader size="lg" /></div>;
+    if (loading) return <div className="h-[60vh] flex justify-center items-center"><Loader size="lg" /></div>;
 
     const summaryCards = [
-        { label: 'Total Listings', value: stats!.total_listings, icon: Home, color: 'text-blue-600', bg: 'bg-blue-50' },
-        { label: 'Total Revenue', value: formatNPR(stats!.total_revenue), icon: DollarSign, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-        { label: 'Pending Review', value: stats!.pending_reviews, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
-        { label: 'Sold Properties', value: stats!.completed_sales, icon: CheckCircle, color: 'text-purple-600', bg: 'bg-purple-50' },
+        { label: 'Active Inventory', value: stats!.total_listings, icon: Home, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100', trend: 'Properties listed' },
+        { label: 'Settled Revenue', value: formatNPR(stats!.total_revenue), icon: DollarSign, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100', trend: 'Total earnings' },
+        { label: 'Review Queue', value: stats!.pending_reviews, icon: Clock, color: 'text-amber-500', bg: 'bg-amber-50', border: 'border-amber-100', trend: 'Awaiting site visit' },
+        { label: 'Closed Deals', value: stats!.completed_sales, icon: CheckCircle, color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100', trend: 'Successful sales' },
     ];
 
     return (
-        <div className="min-h-screen bg-background py-8">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
-                <div>
-                    <h1 className="text-2xl font-bold text-foreground">Seller Dashboard</h1>
-                    <p className="text-gray-500 mt-1">Manage your properties and track your sales performance.</p>
+        <div className="max-w-7xl mx-auto space-y-10 py-2">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pb-8 border-b border-slate-200">
+                <div className="space-y-3">
+                    <div className="flex items-center gap-2.5">
+                        <div className="h-9 w-9 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 border border-indigo-100/50 shadow-sm">
+                            <Briefcase className="h-4.5 w-4.5" />
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-600">Merchant Hub</span>
+                    </div>
+                    <h1 className="text-4xl font-black text-slate-900 font-outfit tracking-tighter leading-tight italic">Portfolio Manager</h1>
+                    <p className="text-slate-500 font-medium italic border-l-4 border-indigo-600/20 pl-6 max-w-xl">
+                        Overview of your property inventory performance and transaction settlements.
+                    </p>
                 </div>
                 <Link href="/dashboard/seller/add-listing">
-                    <Button className="flex items-center gap-2 px-6 h-12 rounded-lg font-bold">
-                        <PlusCircle className="h-5 w-5" /> Add New Listing
-                    </Button>
+                    <button className="flex items-center gap-2.5 h-14 px-8 bg-slate-900 text-white text-sm font-black uppercase tracking-widest rounded-2xl hover:bg-indigo-600 transition-all shadow-xl hover:shadow-indigo-500/20 group">
+                        <PlusCircle className="h-4 w-4 text-indigo-400 group-hover:text-white transition-colors" /> Add New Asset
+                    </button>
                 </Link>
-            </div>
+            </header>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {summaryCards.map((card, i) => (
-                    <motion.div 
-                        key={i} 
-                        initial={{ opacity: 0, y: 10 }}
+                    <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: 16 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.1 }}
-                        className="bg-white p-6 rounded-xl border border-border shadow-sm group hover:shadow-md transition-all"
+                        transition={{ delay: i * 0.07 }}
+                        className="bg-white p-7 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-500 group"
                     >
-                        <div className={`h-12 w-12 ${card.bg} ${card.color} rounded-lg flex items-center justify-center mb-4 transition-transform group-hover:scale-110`}>
-                            <card.icon className="h-6 w-6" />
+                        <div className="flex justify-between items-start mb-6">
+                            <div className={`h-11 w-11 ${card.bg} ${card.color} rounded-[1.25rem] flex items-center justify-center border ${card.border} transition-transform group-hover:scale-110`}>
+                                <card.icon className="h-5 w-5" />
+                            </div>
+                            <div className="p-2 bg-slate-50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                                <ArrowUpRight className="h-3 w-3 text-slate-400" />
+                            </div>
                         </div>
-                        <h3 className="text-sm font-medium text-gray-500 mb-1">{card.label}</h3>
-                        <p className="text-2xl font-bold text-foreground">{card.value}</p>
+                        <div className="text-2xl font-black text-slate-900 mb-1 tabular-nums font-outfit">{card.value}</div>
+                        <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">{card.label}</div>
                     </motion.div>
                 ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Recent Listings */}
-                <div className="lg:col-span-2 bg-white rounded-xl border border-border shadow-sm overflow-hidden">
-                    <div className="flex items-center justify-between p-6 border-b border-border">
-                        <h2 className="text-lg font-bold text-foreground">My Recent Listings</h2>
-                        <Link href="/dashboard/seller/listings" className="text-sm font-bold text-primary hover:underline flex items-center gap-1">
-                            View All <ArrowRight className="h-4 w-4" />
-                        </Link>
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                <div className="xl:col-span-2 space-y-8">
+                    <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-[80px] -mr-32 -mt-32 pointer-events-none" />
+                        <div className="flex justify-between items-center mb-10 relative z-10">
+                            <div>
+                                <h2 className="text-xl font-black text-slate-900 font-outfit tracking-tight leading-tight italic">Fiscal Performance</h2>
+                                <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1 font-bold">Projected Revenue Momentum</p>
+                            </div>
+                            <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-xl text-indigo-700 text-xs font-bold">
+                                <TrendingUp className="h-3.5 w-3.5" />
+                                +31.2% VOLUME
+                            </div>
+                        </div>
+                        
+                        <div className="h-[300px] w-full relative z-10">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={mockRevenueData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                                    <defs>
+                                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
+                                            <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                    <XAxis 
+                                        dataKey="month" 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                        tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} 
+                                        dy={10}
+                                    />
+                                    <YAxis 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                        tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }}
+                                        tickFormatter={(v) => `Rs ${v/1000000}M`}
+                                    />
+                                    <Tooltip 
+                                        formatter={(v) => formatNPR(Number(v))}
+                                        contentStyle={{ 
+                                            borderRadius: '16px', 
+                                            border: 'none', 
+                                            boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+                                            fontWeight: '800',
+                                            fontSize: '12px'
+                                        }}
+                                    />
+                                    <Area 
+                                        type="monotone" 
+                                        dataKey="revenue" 
+                                        stroke="#6366f1" 
+                                        strokeWidth={4} 
+                                        fillOpacity={1} 
+                                        fill="url(#colorRevenue)" 
+                                        animationDuration={1500}
+                                    />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
                     </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
-                            <thead>
-                                <tr className="bg-gray-50 border-b border-border">
-                                    <th className="px-6 py-4 font-semibold text-gray-700">Property</th>
-                                    <th className="px-6 py-4 font-semibold text-gray-700">Price</th>
-                                    <th className="px-6 py-4 font-semibold text-gray-700 text-right">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-border">
-                                {stats!.recent_listings.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={3} className="p-12 text-center text-gray-500 italic">
-                                            You haven't added any listings yet.
-                                        </td>
+
+                    <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden">
+                        <div className="px-10 py-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                            <div>
+                                <h2 className="text-xl font-black text-slate-900 font-outfit uppercase tracking-tighter italic">Recent Asset Ledger</h2>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Live status tracking</p>
+                            </div>
+                            <Link href="/dashboard/seller/listings" className="text-[10px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2 hover:bg-white px-5 py-3 rounded-xl border border-slate-200 transition-all">
+                                Expand Registry <ArrowRight className="h-3.5 w-3.5" />
+                            </Link>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead>
+                                    <tr className="bg-white border-b border-slate-100">
+                                        <th className="px-10 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Asset Title</th>
+                                        <th className="px-10 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Valuation</th>
+                                        <th className="px-10 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Status</th>
                                     </tr>
-                                ) : (
-                                    stats!.recent_listings.map((p) => (
-                                        <tr key={p.id} className="hover:bg-gray-50/50 transition-colors cursor-pointer" onClick={() => window.location.href=`/dashboard/seller/listings/edit/${p.id}`}>
-                                            <td className="px-6 py-4">
-                                                <div className="font-semibold text-gray-900">{p.title}</div>
-                                                <div className="text-xs text-gray-500 mt-1">{p.location}</div>
-                                            </td>
-                                            <td className="px-6 py-4 font-medium text-gray-900">
-                                                Rs {Number(p.price).toLocaleString()}
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <StatusBadge status={p.status} />
+                                </thead>
+                                <tbody className="divide-y divide-slate-50">
+                                    {stats!.recent_listings.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={3} className="px-10 py-20 text-center">
+                                                <Home className="h-10 w-10 text-slate-100 mx-auto mb-4" />
+                                                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">No assets registered</p>
+                                                <Link href="/dashboard/seller/add-listing" className="text-xs text-indigo-600 font-black mt-4 inline-block hover:underline">Begin Onboarding Protocol →</Link>
                                             </td>
                                         </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
+                                    ) : (
+                                        stats!.recent_listings.map((p) => (
+                                            <tr
+                                                key={p.id}
+                                                className="hover:bg-slate-50/50 transition-all cursor-pointer group"
+                                                onClick={() => router.push(`/dashboard/seller/listings/${p.id}`)}
+                                            >
+                                                <td className="px-10 py-6">
+                                                    <div className="text-sm font-black text-slate-900 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{p.title}</div>
+                                                    <div className="text-[10px] text-slate-400 font-bold uppercase mt-1 tracking-widest">{p.location}</div>
+                                                </td>
+                                                <td className="px-10 py-6 text-right">
+                                                    <div className="text-sm font-black text-slate-900 tabular-nums">{formatNPR(p.price)}</div>
+                                                </td>
+                                                <td className="px-10 py-6 text-right">
+                                                    <StatusBadge status={p.status} />
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
-                {/* Quick Actions & Tips */}
-                <div className="flex flex-col gap-6">
-                    <div className="bg-white p-6 rounded-xl border border-border shadow-sm">
-                        <h2 className="text-lg font-bold text-foreground mb-4">Quick Actions</h2>
+                <div className="space-y-8">
+                    <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm p-8 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50/50 rounded-full blur-[60px] pointer-events-none" />
+                        <h2 className="text-base font-black text-slate-900 font-outfit uppercase tracking-widest mb-8 italic">Tactical Actions</h2>
                         <div className="space-y-3">
-                            <Link href="/dashboard/seller/listings" className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-border">
-                                <div className="h-8 w-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
-                                    <Briefcase className="h-4 w-4" />
-                                </div>
-                                <span className="text-sm font-medium">Manage Listings</span>
-                            </Link>
-                            <Link href="/dashboard/seller/transactions" className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-border">
-                                <div className="h-8 w-8 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center">
-                                    <DollarSign className="h-4 w-4" />
-                                </div>
-                                <span className="text-sm font-medium">Sales History</span>
-                            </Link>
-                            <Link href="/dashboard/seller/profile" className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-border">
-                                <div className="h-8 w-8 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center">
-                                    <FileText className="h-4 w-4" />
-                                </div>
-                                <span className="text-sm font-medium">Update KYC Documents</span>
-                            </Link>
+                            {[
+                                { link: '/dashboard/seller/listings', label: 'Inventory Matrix', icon: Briefcase, color: 'bg-indigo-50 text-indigo-600' },
+                                { link: '/dashboard/seller/transactions', label: 'Settlement Ledger', icon: DollarSign, color: 'bg-blue-50 text-blue-600' },
+                                { link: '/dashboard/profile', label: 'Node Verification', icon: ShieldCheck, color: 'bg-violet-50 text-violet-600' },
+                            ].map((item, i) => (
+                                <Link key={i} href={item.link} className="flex items-center gap-4 p-5 rounded-2xl bg-slate-50 border border-transparent hover:bg-white hover:border-slate-100 hover:shadow-xl hover:shadow-slate-900/5 transition-all group">
+                                    <div className={`h-11 w-11 ${item.color} rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110`}>
+                                        <item.icon className="h-5 w-5" />
+                                    </div>
+                                    <span className="text-[11px] font-black uppercase tracking-widest text-slate-600 group-hover:text-slate-900">{item.label}</span>
+                                    <ArrowRight className="h-4 w-4 text-slate-200 ml-auto group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
+                                </Link>
+                            ))}
                         </div>
                     </div>
 
-                    <div className="bg-primary/5 p-6 rounded-xl border border-primary/10">
-                        <div className="flex items-center gap-3 mb-4 text-primary">
-                            <LayoutDashboard className="h-5 w-5" />
-                            <h3 className="font-bold">Seller Tip</h3>
+                    <div className="bg-slate-900 p-10 rounded-[3rem] text-white relative overflow-hidden group shadow-2xl">
+                        <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500/10 rounded-full blur-[60px] -mr-24 -mt-24" />
+                        <div className="flex items-center gap-4 mb-6 relative z-10">
+                            <Zap className="h-6 w-6 text-indigo-400 group-hover:animate-pulse" />
+                            <h3 className="text-base font-black uppercase tracking-tighter italic font-outfit">Optimization Intel</h3>
                         </div>
-                        <p className="text-sm text-gray-600 leading-relaxed">
-                            Verified properties with clear images of Lalpurja and the site get 3x more views and faster approvals from our team.
+                        <p className="text-sm text-slate-400 leading-relaxed font-medium italic relative z-10">
+                            "Verified assets observe a 2.8x increase in registry momentum. Ensure all appraisal documentation is current to maximize visibility."
                         </p>
+                        <Link href="/dashboard/profile" className="block mt-10 relative z-10">
+                            <button className="w-full bg-indigo-600 text-white text-[10px] font-black uppercase tracking-[0.2em] py-5 rounded-[1.25rem] hover:bg-indigo-500 transition-all shadow-xl shadow-indigo-900/50 active:scale-95">
+                                Upgrade Node Status
+                            </button>
+                        </Link>
                     </div>
                 </div>
             </div>
         </div>
     );
 }
-

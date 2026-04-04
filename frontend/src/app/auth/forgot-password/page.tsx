@@ -53,93 +53,70 @@ export default function ForgotPasswordPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#fffdf9] flex items-center justify-center p-4 sm:p-8 lg:p-12 relative overflow-hidden">
-            {/* Background Decorations */}
-            <div className="absolute top-0 right-0 w-1/2 h-full bg-accent/5 blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-1/2 h-full bg-primary/5 blur-[120px] pointer-events-none" />
+        <div className="min-h-screen bg-slate-50/50 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+            {/* Subtle background blur elements */}
+            <div className="absolute top-1/4 -left-20 w-96 h-96 bg-indigo-500/5 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-blue-500/5 rounded-full blur-[100px] pointer-events-none" />
 
             <motion.div 
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 1 }}
-                className="w-full max-w-4xl bg-white/40 backdrop-blur-3xl rounded-[4rem] border border-accent/10 shadow-3xl overflow-hidden flex flex-col lg:flex-row relative z-10"
+                className="w-full max-w-[460px] relative z-10"
             >
-                {/* Left Panel - Branding */}
-                <div className="lg:w-[45%] premium-gradient p-16 text-white relative overflow-hidden flex flex-col justify-between group">
-                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
-                    <div className="relative z-10">
-                        <Link href="/" className="inline-flex items-center gap-4 group/logo">
-                            <div className="h-14 w-14 bg-accent rounded-2xl flex items-center justify-center text-primary shadow-gold-glow group-hover/logo:scale-110 transition-transform duration-500">
-                                <Crown className="h-8 w-8" />
-                            </div>
-                            <span className="text-2xl font-serif tracking-tight">SmartProperty</span>
-                        </Link>
-                    </div>
-
-                    <div className="relative z-10 space-y-8">
-                        <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-accent/10 border border-accent/30 rounded-full text-[10px] font-black uppercase tracking-[0.3em] text-accent">
-                            <Key className="h-3.5 w-3.5" /> Credentials Recovery
+                {/* Logo Section */}
+                <div className="text-center mb-10">
+                    <Link href="/" className="inline-flex items-center gap-3 group">
+                        <div className="h-12 w-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-200 transition-transform group-hover:scale-105">
+                            <Building2 className="h-6 w-6" />
                         </div>
-                        <h2 className="text-5xl lg:text-6xl font-serif leading-[0.9]">Restore <br /> <span className="italic text-accent">Access.</span></h2>
-                        <p className="text-gray-400 text-lg lg:text-xl font-medium italic border-l-4 border-accent/30 pl-8 leading-relaxed max-w-sm">
-                            "Reclaim your keys to the imperial sanctuary and continue your legacy in the realm."
-                        </p>
-                    </div>
-
-                    <div className="relative z-10 mt-auto opacity-0 group-hover:opacity-100 transition-opacity duration-1000">
-                         <p className="text-[10px] font-black uppercase tracking-widest text-accent/40 italic">System Identity Management</p>
-                    </div>
+                        <span className="text-2xl font-black tracking-tighter text-slate-900 font-outfit italic">SmartProperty</span>
+                    </Link>
                 </div>
 
-                {/* Right Panel - Form */}
-                <div className="flex-1 p-12 sm:p-20 relative bg-[#fffdf9]/80 flex flex-col justify-center">
+                {/* Form Card */}
+                <div className="bg-white rounded-[2.5rem] shadow-[0_8px_40px_rgba(0,0,0,0.04)] border border-slate-100 p-10 md:p-12 overflow-hidden">
                     <AnimatePresence mode="wait">
                         {!isSubmitted ? (
                             <motion.div 
-                                key="form"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                className="max-w-md mx-auto w-full"
+                                key="forgot-form"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="w-full"
                             >
-                                <div className="mb-12 text-center lg:text-left">
-                                    <div className="h-1px w-12 bg-accent mb-6 hidden lg:block" />
-                                    <h3 className="text-4xl font-serif text-primary mb-4">Reset Security Key</h3>
-                                    <p className="text-gray-400 font-medium italic">Enter your archive email to receive the Imperial Seal.</p>
+                                <div className="mb-10 text-center">
+                                    <h1 className="text-3xl font-black text-slate-900 mb-2 font-outfit tracking-tight italic">Restore Access</h1>
+                                    <p className="text-slate-500 font-medium text-sm italic">Request a security recovery seal</p>
                                 </div>
 
-                                <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-                                    <Input
-                                        label="Email Archive"
-                                        placeholder="your-lineage@domain.com"
-                                        type="email"
-                                        {...register('email')}
-                                        value={formValues.email}
-                                        error={errors.email?.message}
-                                        className="h-16 rounded-2xl bg-white border-accent/10 focus:border-accent shadow-inner"
-                                    />
+                                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Identity Archive Email</label>
+                                        <Input
+                                            placeholder="Enter your registered email"
+                                            {...register('email')}
+                                            error={errors.email?.message}
+                                            className="h-14 rounded-2xl bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all"
+                                        />
+                                    </div>
 
                                     <Button 
                                         type="submit" 
-                                        className="w-full h-18 rounded-full bg-primary text-white hover:bg-accent transition-all duration-500 shadow-xl text-xs font-black uppercase tracking-[0.2em] flex items-center justify-center gap-4 group" 
                                         disabled={isLoading}
+                                        className="w-full rounded-[1.25rem] h-16 bg-slate-900 text-white hover:bg-slate-800 shadow-xl transition-all font-black uppercase tracking-widest text-[11px] group active:scale-95"
                                     >
                                         {isLoading ? (
-                                            <>
-                                                <Loader2 className="h-5 w-5 animate-spin" />
-                                                <span>Dispatching Seal...</span>
-                                            </>
+                                            <Loader2 className="h-5 w-5 animate-spin" />
                                         ) : (
-                                            <>
-                                                <span>Send Reset Seal</span>
-                                                <ArrowRight className="h-4 w-4 group-hover:translate-x-2 transition-transform" />
-                                            </>
+                                            <span className="flex items-center justify-center gap-3">
+                                                Dispatch Seal <ArrowRight className="h-4 w-4 text-indigo-400 group-hover:translate-x-1 transition-transform" />
+                                            </span>
                                         )}
                                     </Button>
                                 </form>
 
-                                <div className="mt-16 text-center">
-                                    <Link href="/auth/login" className="inline-flex items-center gap-2 text-gray-400 font-black uppercase tracking-widest text-[10px] hover:text-primary transition-colors group">
+                                <div className="mt-10 pt-8 border-t border-slate-50 text-center">
+                                    <Link href="/auth/login" className="inline-flex items-center gap-2 text-slate-400 font-black uppercase tracking-widest text-[10px] hover:text-indigo-600 transition-colors group">
                                         <ArrowLeft className="h-3 w-3 group-hover:-translate-x-1 transition-transform" /> Back to Entry Gates
                                     </Link>
                                 </div>
@@ -149,22 +126,22 @@ export default function ForgotPasswordPage() {
                                 key="success"
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                className="text-center space-y-8 max-w-sm mx-auto"
+                                className="text-center space-y-8"
                             >
-                                <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-3xl bg-accent text-primary shadow-gold-glow mb-10">
-                                    <Mail className="h-12 w-12" />
+                                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 shadow-sm border border-indigo-100">
+                                    <Mail className="h-10 w-10" />
                                 </div>
-                                <h2 className="text-3xl font-serif text-primary">Verify Your Archive</h2>
-                                <p className="text-gray-400 font-medium italic leading-relaxed">
-                                    "The Imperial Seal has been dispatched to your email. Please follow the instructions to restore your access."
+                                <h1 className="text-3xl font-black text-slate-900 font-outfit italic">Verify Your Archive</h1>
+                                <p className="text-slate-500 font-medium italic text-sm leading-relaxed">
+                                    The security seal has been dispatched. Please follow the instructions in your email to restore access.
                                 </p>
                                 <Button 
-                                    className="w-full h-16 rounded-full bg-primary text-white font-black uppercase tracking-widest text-[10px] hover:bg-accent shadow-xl mt-8" 
+                                    className="w-full h-16 rounded-[1.25rem] bg-slate-900 text-white font-black uppercase tracking-widest text-[11px] hover:bg-slate-800 shadow-xl mt-4" 
                                     onClick={() => router.push('/auth/login')}
                                 >
-                                    Return to Gates
+                                    Return to Access Gates
                                 </Button>
-                                <button onClick={() => setIsSubmitted(false)} className="text-[10px] font-black uppercase tracking-widest text-accent hover:text-primary transition-colors italic">
+                                <button onClick={() => setIsSubmitted(false)} className="text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:text-indigo-700 transition-colors italic block w-full">
                                     Attempt another restoration
                                 </button>
                             </motion.div>

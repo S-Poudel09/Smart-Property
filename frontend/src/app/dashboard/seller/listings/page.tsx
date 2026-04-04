@@ -21,9 +21,9 @@ export default function SellerListingsPage() {
 
     const loadProperties = async () => {
         try {
-            const user = getUser();
-            const data = await getProperties();
-            setProperties(data.filter(p => p.sellerId === user?.id));
+            setLoading(true);
+            const data = await getProperties(true);
+            setProperties(data);
         } catch (e) {
             toast.error("Failed to load properties");
         } finally {
@@ -121,7 +121,7 @@ export default function SellerListingsPage() {
                                             className="hover:bg-gray-50/50 transition-colors"
                                         >
                                             <td className="p-4 whitespace-nowrap">
-                                                <div className="font-bold text-gray-900 group-hover:text-primary transition-colors cursor-pointer" onClick={() => window.location.href=`/properties/${property.id}`}>
+                                                <div className="font-bold text-gray-900 group-hover:text-primary transition-colors cursor-pointer" onClick={() => window.location.href=`/dashboard/seller/listings/${property.id}`}>
                                                     {property.title}
                                                 </div>
                                                 <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
@@ -151,13 +151,22 @@ export default function SellerListingsPage() {
                                                             <Send className="w-3.5 h-3.5" /> Submit
                                                         </button>
                                                     )}
-                                                    <button className="h-8 w-8 rounded-lg text-gray-400 hover:text-primary hover:bg-gray-100 transition-all flex items-center justify-center">
+                                                    <button 
+                                                        className="h-8 w-8 rounded-lg text-gray-400 hover:text-primary hover:bg-gray-100 transition-all flex items-center justify-center"
+                                                        onClick={() => window.location.href = `/dashboard/seller/listings/${property.id}`}
+                                                    >
                                                         <Eye className="w-4 h-4" />
                                                     </button>
-                                                    <button className="h-8 w-8 rounded-lg text-gray-400 hover:text-primary hover:bg-gray-100 transition-all flex items-center justify-center">
+                                                    <button 
+                                                        className="h-8 w-8 rounded-lg text-gray-400 hover:text-primary hover:bg-gray-100 transition-all flex items-center justify-center"
+                                                        onClick={() => window.location.href = `/dashboard/seller/listings/${property.id}/edit`}
+                                                    >
                                                         <Edit className="w-4 h-4" />
                                                     </button>
-                                                    <button className="h-8 w-8 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all flex items-center justify-center">
+                                                    <button 
+                                                        className="h-8 w-8 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all flex items-center justify-center"
+                                                        onClick={() => { if(confirm('Delete listing?')) toast.error('Use detail page to delete assets'); }}
+                                                    >
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 </div>
@@ -181,11 +190,19 @@ export default function SellerListingsPage() {
                             >
                                 <div className="flex justify-between items-start mb-4">
                                     <StatusBadge status={property.status} />
-                                    <button className="text-gray-400 hover:text-primary p-1">
+                                    <button 
+                                        className="text-gray-400 hover:text-primary p-1"
+                                        onClick={() => window.location.href = `/dashboard/seller/listings/${property.id}/edit`}
+                                    >
                                         <Edit className="h-4 w-4" />
                                     </button>
                                 </div>
-                                <h3 className="font-bold text-gray-900 group-hover:text-primary transition-colors mb-1 line-clamp-1">{property.title}</h3>
+                                <h3 
+                                    className="font-bold text-gray-900 group-hover:text-primary transition-colors mb-1 line-clamp-1 cursor-pointer"
+                                    onClick={() => window.location.href = `/dashboard/seller/listings/${property.id}`}
+                                >
+                                    {property.title}
+                                </h3>
                                 <p className="text-xs text-gray-500 mb-4">{property.location}</p>
                                 <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-50">
                                     <p className="font-bold text-primary">Rs {Number(property.price).toLocaleString()}</p>
@@ -199,7 +216,10 @@ export default function SellerListingsPage() {
                                                 <Send className="h-4 w-4" />
                                             </button>
                                         )}
-                                        <button className="p-1 text-gray-400 hover:bg-gray-100 rounded transition-all">
+                                        <button 
+                                            className="p-1 text-gray-400 hover:bg-gray-100 rounded transition-all"
+                                            onClick={() => window.location.href = `/dashboard/seller/listings/${property.id}`}
+                                        >
                                             <Eye className="h-4 w-4" />
                                         </button>
                                     </div>

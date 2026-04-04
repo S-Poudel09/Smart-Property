@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django_otp',
     'django_otp.plugins.otp_static',
     'django_otp.plugins.otp_totp',
+    'django_otp.plugins.otp_email',
     'two_factor',
     'two_factor.plugins.phonenumber',
     'two_factor.plugins.email',
@@ -214,8 +215,6 @@ CORS_ALLOW_METHODS = [
 # MEDIA SETTINGS
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-# MONGO SETTINGS (Removed - Replaced by PostgreSQL models in analytics app)
 
 # API ROUTING SETTINGS
 APPEND_SLASH = True

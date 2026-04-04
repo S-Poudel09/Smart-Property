@@ -121,7 +121,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                                             {provider.city}
                                         </div>
                                         {provider.verified && (
-                                            <div className="flex items-center gap-1 text-emerald-600 border-l pl-4 font-bold">
+                                            <div className="flex items-center gap-1 text-indigo-600 border-l pl-4 font-bold">
                                                 <ShieldCheck className="h-4 w-4" />
                                                 Verified
                                             </div>
@@ -166,7 +166,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                         {/* Why choose section */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {[
-                                { title: 'Verified Background', icon: ShieldCheck, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                                { title: 'Verified Background', icon: ShieldCheck, color: 'text-indigo-600', bg: 'bg-indigo-50' },
                                 { title: 'Insurance Covered', icon: CheckCircle2, color: 'text-blue-600', bg: 'bg-blue-50' },
                                 { title: 'No Hidden Fees', icon: Sparkles, color: 'text-amber-600', bg: 'bg-amber-50' }
                             ].map((item, idx) => (

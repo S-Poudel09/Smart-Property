@@ -23,12 +23,17 @@ export const NotificationBell = () => {
 
     const fetchInitialCount = useCallback(async () => {
         if (!user) return;
+        
+        // Check for token to avoid 401 overlay if session is stale
+        const token = typeof window !== 'undefined' ? localStorage.getItem('smartproperty_token') : null;
+        if (!token) return;
+
         try {
             const data = await getNotifications();
             const notifications = Array.isArray(data) ? data : (data as any).results || [];
             updateCountFromData(notifications);
         } catch (error) {
-            console.error('Failed to fetch initial notification count:', error);
+            console.warn('Silent failure: background notification fetch failed');
         }
     }, [user?.id, updateCountFromData]);
 
@@ -56,12 +61,12 @@ export const NotificationBell = () => {
 
     return (
         <Link href="/dashboard/notifications" className="relative group p-2">
-            <div className={`relative z-10 p-2 rounded-2xl transition-all duration-300 ${
+            <div className={`relative z-10 p-2 rounded-xl transition-all duration-300 ${
                 count > 0 
-                ? 'bg-primary/10 border-primary/20 text-primary hover:bg-primary hover:text-white' 
-                : 'bg-white/50 border border-accent/10 text-gray-400 hover:bg-white hover:text-primary'
+                ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-600 hover:bg-indigo-500 hover:text-white shadow-sm' 
+                : 'bg-white/50 border border-slate-200/50 text-slate-400 hover:bg-white hover:text-indigo-600'
             }`}>
-                <Bell className={`h-6 w-6 group-hover:rotate-12 transition-transform ${count > 0 ? 'animate-pulse' : ''}`} />
+                <Bell className={`h-5 w-5 group-hover:rotate-12 transition-transform ${count > 0 ? 'animate-pulse' : ''}`} />
             </div>
             
             <AnimatePresence>
@@ -77,7 +82,7 @@ export const NotificationBell = () => {
                 )}
             </AnimatePresence>
 
-            <div className={`absolute inset-0 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none ${count > 0 ? 'bg-primary/20' : 'bg-gray-400/10'}`} />
+            <div className={`absolute inset-0 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none ${count > 0 ? 'bg-indigo-500/20' : 'bg-slate-400/10'}`} />
         </Link>
     );
 };

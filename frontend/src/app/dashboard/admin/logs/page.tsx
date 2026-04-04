@@ -152,7 +152,7 @@ export default function ActivityLogsPage() {
                                             </td>
                                             <td className="px-10 py-8">
                                                 <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border ${
-                                                    log.status === 'success' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                                    log.status === 'success' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
                                                     log.status === 'failure' ? 'bg-red-50 text-red-700 border-red-100' :
                                                     'bg-amber-50 text-amber-700 border-amber-100'
                                                 }`}>
@@ -200,7 +200,7 @@ export default function ActivityLogsPage() {
                     </div>
                     <div className="h-4 w-px bg-[#c5a059]/20" />
                     <div className="flex items-center gap-3">
-                        <Sparkles className="h-4 w-4 text-emerald-500" />
+                        <Sparkles className="h-4 w-4 text-indigo-500" />
                         <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Integrity Verified</span>
                     </div>
                 </div>

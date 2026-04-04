@@ -145,7 +145,7 @@ export default function TransactionsPage() {
                                                     </div>
                                                 </div>
                                                 <span className={`text-[9px] px-3 py-1 rounded-full font-black uppercase tracking-widest border ${
-                                                    tx.status === 'COMPLETED' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
+                                                    tx.status === 'COMPLETED' ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' :
                                                     tx.status === 'PARTIAL' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
                                                     'bg-amber-500/20 text-amber-400 border-amber-500/30'
                                                 }`}>
@@ -218,9 +218,9 @@ export default function TransactionsPage() {
                                                     <p className="text-[9px] text-gray-400 uppercase font-black tracking-widest mb-2">Total Decree</p>
                                                     <p className="text-xl font-serif text-primary leading-tight">Rs. {parseFloat(selectedTx.total_amount).toLocaleString()}</p>
                                                 </div>
-                                                <div className="p-6 bg-emerald-50/30 rounded-[2rem] border border-emerald-100/50 group hover:bg-white hover:shadow-xl transition-all">
-                                                    <p className="text-[9px] text-emerald-600 uppercase font-black tracking-widest mb-2">Wealth Transferred</p>
-                                                    <p className="text-xl font-serif text-emerald-700 leading-tight">Rs. {parseFloat(selectedTx.amount_paid).toLocaleString()}</p>
+                                                <div className="p-6 bg-indigo-50/30 rounded-[2rem] border border-indigo-100/50 group hover:bg-white hover:shadow-xl transition-all">
+                                                    <p className="text-[9px] text-indigo-600 uppercase font-black tracking-widest mb-2">Wealth Transferred</p>
+                                                    <p className="text-xl font-serif text-indigo-700 leading-tight">Rs. {parseFloat(selectedTx.amount_paid).toLocaleString()}</p>
                                                 </div>
                                                 <div className="p-6 bg-amber-50/30 rounded-[2rem] border border-amber-100/50 group hover:bg-white hover:shadow-xl transition-all">
                                                     <p className="text-[9px] text-amber-600 uppercase font-black tracking-widest mb-2">Due Balance</p>
@@ -260,7 +260,7 @@ export default function TransactionsPage() {
                                                             >
                                                                 <div className="flex items-center gap-6">
                                                                     <div className={`h-14 w-14 rounded-full flex items-center justify-center shrink-0 shadow-lg ${
-                                                                        proof.is_verified ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
+                                                                        proof.is_verified ? 'bg-indigo-50 text-indigo-600' : 'bg-amber-50 text-amber-600'
                                                                     }`}>
                                                                         <Receipt className="h-7 w-7" />
                                                                     </div>
@@ -271,7 +271,7 @@ export default function TransactionsPage() {
                                                                 </div>
                                                                 <div className="flex items-center gap-6">
                                                                     {proof.is_verified ? (
-                                                                        <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 px-4 py-1.5 rounded-full border border-emerald-100 shadow-sm">
+                                                                        <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 px-4 py-1.5 rounded-full border border-indigo-100 shadow-sm">
                                                                             <CheckCircle className="h-3.5 w-3.5" /> Verified Accord
                                                                         </span>
                                                                     ) : (

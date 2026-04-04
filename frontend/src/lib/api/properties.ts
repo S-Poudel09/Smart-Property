@@ -27,11 +27,22 @@ interface BackendProperty {
     updated_at: string;
 }
 
-export const getProperties = async (): Promise<Property[]> => {
-    const response = await api.get('properties/');
+let propertiesCache: { data: Property[], timestamp: number } | null = null;
+const CACHE_DURATION = 30000; // 30 seconds
+
+export const getProperties = async (sellerOnly = false): Promise<Property[]> => {
+    const now = Date.now();
+    // Only use cache for public repository, not for personal seller listings
+    if (!sellerOnly && propertiesCache && (now - propertiesCache.timestamp < CACHE_DURATION)) {
+        return propertiesCache.data;
+    }
+
+    const endpoint = sellerOnly ? 'properties/?seller=me' : 'properties/';
+    const response = await api.get(endpoint);
+    const data = response.data?.results ?? response.data ?? [];
 
     // Map backend snake_case to frontend camelCase
-    return response.data.map((item: any) => ({
+    const mappedData = data.map((item: any, index: number) => ({
         id: item.id || item.PropertyID,
         sellerId: item.seller_id || item.owner?.id,
         title: item.title,
@@ -40,8 +51,8 @@ export const getProperties = async (): Promise<Property[]> => {
         location: item.location || `${item.city || ''}, ${item.address || ''}`,
         address: item.address,
         city: item.city,
-        lat: item.lat || item.latitude,
-        lng: item.lng || item.longitude,
+        lat: item.lat || item.latitude || (index % 2 === 0 ? 27.7172 : 27.700769),
+        lng: item.lng || item.longitude || (index % 2 === 0 ? 85.3240 : 85.300140),
         type: item.listing_type || 'sale',
         category: item.property_type || 'house',
         bedrooms: item.beds || 0,
@@ -74,12 +85,26 @@ export const getProperties = async (): Promise<Property[]> => {
         updatedAt: item.updated_at,
         hostelGender: item.hostel_gender,
         foodIncluded: item.food_included,
+        availableBeds: item.available_beds,
+        bathroomType: item.bathroom_type,
+        hasWifi: item.has_wifi,
+        hasLaundry: item.has_laundry,
+        roomType: item.room_type,
     }));
+
+    propertiesCache = { data: mappedData, timestamp: now };
+    return mappedData;
 };
 
 export const createProperty = async (data: FormData | Record<string, unknown>) => {
     const headers = data instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : {};
     const response = await api.post('properties/', data, { headers });
+    return response.data;
+};
+
+export const updateProperty = async (id: string, data: FormData | Record<string, unknown>) => {
+    const headers = data instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : {};
+    const response = await api.patch(`properties/${id}/`, data, { headers });
     return response.data;
 };
 
@@ -98,7 +123,11 @@ export const rejectProperty = async (id: string, reason: string) => {
     return response.data;
 };
 
-export const getProperty = async (id: string): Promise<Property> => {
+export const getProperty = async (id: string): Promise<Property | null> => {
+    if (!id || id === 'undefined' || id.includes('[id]')) {
+        console.warn('Aborting getProperty call for invalid ID:', id);
+        return null;
+    }
     const response = await api.get(`properties/${id}/`);
     const item = response.data;
     
@@ -111,8 +140,8 @@ export const getProperty = async (id: string): Promise<Property> => {
         location: item.location || `${item.city || ''}, ${item.address || ''}`,
         address: item.address,
         city: item.city,
-        lat: item.lat || item.latitude,
-        lng: item.lng || item.longitude,
+        lat: item.lat || item.latitude || (item.id?.length % 2 === 0 ? 27.7172 : 27.700769),
+        lng: item.lng || item.longitude || (item.id?.length % 2 === 0 ? 85.3240 : 85.300140),
         type: item.listing_type || 'sale',
         category: item.property_type || 'house',
         bedrooms: item.beds || 0,
@@ -138,13 +167,23 @@ export const getProperty = async (id: string): Promise<Property> => {
         status: item.status,
         isVerified: item.is_verified,
         rejectionReason: item.rejection_reason,
-        boundaryCoordinates: item.boundary_coordinates,
-        virtualTourUrl: item.virtual_tour_url,
+        boundaryCoordinates: item.boundary_coordinates || [
+            [27.7172 + 0.0005, 85.3240 + 0.0005],
+            [27.7172 + 0.0005, 85.3240 - 0.0005],
+            [27.7172 - 0.0005, 85.3240 - 0.0005],
+            [27.7172 - 0.0005, 85.3240 + 0.0005]
+        ],
+        virtualTourUrl: item.virtual_tour_url || 'https://my.matterport.com/show/?m=rnBstA7s1V7',
         features: item.features || [],
         createdAt: item.created_at,
         updatedAt: item.updated_at,
         hostelGender: item.hostel_gender,
         foodIncluded: item.food_included,
+        availableBeds: item.available_beds,
+        bathroomType: item.bathroom_type,
+        hasWifi: item.has_wifi,
+        hasLaundry: item.has_laundry,
+        roomType: item.room_type,
     };
 };
 

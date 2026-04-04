@@ -126,7 +126,7 @@ export default function AdminUsersPage() {
                                                 <button 
                                                     className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border transition-all ${
                                                         user.role === 'admin' ? 'bg-primary text-white border-primary shadow-sm' :
-                                                        user.role === 'seller' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                                        user.role === 'seller' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
                                                         'bg-amber-50 text-amber-700 border-amber-100'
                                                     } hover:opacity-80 active:scale-95`}
                                                     onClick={() => handleRoleChange(user.id, user.role)}

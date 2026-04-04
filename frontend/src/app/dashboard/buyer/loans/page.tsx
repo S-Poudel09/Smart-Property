@@ -41,7 +41,7 @@ export default function BuyerLoansPage() {
                         <p className="text-gray-500 mt-1">Manage your loan applications and track repayment schedules.</p>
                     </div>
                     
-                    <Link href="/dashboard/buyer/mortgage-calculator">
+                    <Link href="/dashboard/mortgage">
                         <Button className="h-11 rounded-lg flex items-center gap-2 font-bold px-6 shadow-lg shadow-primary/20">
                             <Calculator className="h-4 w-4" /> New Application
                         </Button>
@@ -57,7 +57,7 @@ export default function BuyerLoansPage() {
                         <p className="text-sm text-gray-500 max-w-sm mx-auto mb-8 font-medium italic">
                             You haven't applied for any property financing yet. Use our calculator to see your eligibility.
                         </p>
-                        <Link href="/dashboard/buyer/mortgage-calculator">
+                        <Link href="/dashboard/mortgage">
                             <Button variant="outline" className="h-11 rounded-lg px-8 border-border text-gray-500 font-bold">Try Loan Calculator</Button>
                         </Link>
                     </div>
@@ -79,7 +79,7 @@ export default function BuyerLoansPage() {
                                             <Landmark className="h-7 w-7" />
                                         </div>
                                         <span className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${
-                                            loan.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                            loan.status === 'APPROVED' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
                                             loan.status === 'REJECTED' ? 'bg-red-50 text-red-700 border-red-100' :
                                             'bg-amber-50 text-amber-700 border-amber-100'
                                         }`}>
@@ -134,7 +134,7 @@ export default function BuyerLoansPage() {
                             <p className="text-xs text-gray-500 mt-1 font-medium">Estimate your monthly payments and interest costs with our advanced EMI calculator.</p>
                         </div>
                     </div>
-                    <Link href="/dashboard/buyer/mortgage-calculator">
+                    <Link href="/dashboard/mortgage">
                         <Button className="rounded-lg h-11 px-8 text-xs font-bold shadow-sm bg-white text-gray-500 border-border hover:bg-gray-50">Open Calculator</Button>
                     </Link>
                 </div>

@@ -220,7 +220,7 @@ export default function AdminLoansPage() {
                                         <Clock className="h-4 w-4 group-hover:rotate-45 transition-transform" /> Place Under Audit
                                     </Button>
                                     <Button
-                                        className="h-16 rounded-full bg-emerald-600 text-white font-black uppercase tracking-widest text-[10px] shadow-xl flex items-center justify-center gap-2 group"
+                                        className="h-16 rounded-full bg-indigo-600 text-white font-black uppercase tracking-widest text-[10px] shadow-xl flex items-center justify-center gap-2 group"
                                         onClick={() => handleStatusUpdate(selectedLoan.id, 'APPROVED')}
                                     >
                                         <CheckCircle className="h-4 w-4 group-hover:scale-110 transition-transform" /> Grant Endowment

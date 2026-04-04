@@ -141,14 +141,14 @@ export default function SellerTransactionDetailPage({ params }: { params: Promis
                                                     {!proof.is_verified ? (
                                                         <Button 
                                                             size="sm" 
-                                                            className="bg-emerald-600 hover:bg-emerald-700 h-9 px-6 rounded-lg text-[10px] font-black uppercase tracking-widest"
+                                                            className="bg-indigo-600 hover:bg-indigo-700 h-9 px-6 rounded-lg text-[10px] font-black uppercase tracking-widest"
                                                             onClick={() => handleVerifyProof(proof.ProofID)}
                                                             isLoading={isActionLoading}
                                                         >
                                                             Verify Proof
                                                         </Button>
                                                     ) : (
-                                                        <span className="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em]">
+                                                        <span className="flex items-center gap-2 text-indigo-600 bg-indigo-50 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em]">
                                                             <CheckCircle2 className="h-4 w-4" /> Verified
                                                         </span>
                                                     )}
@@ -163,11 +163,11 @@ export default function SellerTransactionDetailPage({ params }: { params: Promis
 
                                         {transaction.status !== 'COMPLETED' && parseFloat(transaction.amount_paid) >= parseFloat(transaction.total_amount) && (
                                             <div className="pt-8 border-t border-gray-100 flex flex-col items-center gap-6">
-                                                <div className="bg-emerald-50 border border-emerald-100 p-6 rounded-2xl flex items-start gap-4 w-full">
-                                                    <ShieldCheck className="h-6 w-6 text-emerald-500 shrink-0" />
+                                                <div className="bg-indigo-50 border border-indigo-100 p-6 rounded-2xl flex items-start gap-4 w-full">
+                                                    <ShieldCheck className="h-6 w-6 text-indigo-500 shrink-0" />
                                                     <div className="space-y-1">
-                                                        <h4 className="font-bold text-emerald-900 text-sm italic underline">Accounting Ledger Status: BALANCED</h4>
-                                                        <p className="text-xs text-emerald-700/80 leading-relaxed font-medium">
+                                                        <h4 className="font-bold text-indigo-900 text-sm italic underline">Accounting Ledger Status: BALANCED</h4>
+                                                        <p className="text-xs text-indigo-700/80 leading-relaxed font-medium">
                                                             The full negotiated amount has been verified. You may now finalize the sale to transfer digital ownership credentials to the buyer.
                                                         </p>
                                                     </div>
@@ -186,13 +186,13 @@ export default function SellerTransactionDetailPage({ params }: { params: Promis
                             )}
 
                             {transaction.status === 'COMPLETED' && (
-                                <div className="bg-emerald-50 border border-emerald-100 rounded-3xl p-10 flex flex-col md:flex-row items-center gap-8 animate-in fade-in zoom-in">
-                                    <div className="h-20 w-20 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-xl shadow-emerald-500/20 shrink-0">
+                                <div className="bg-indigo-50 border border-indigo-100 rounded-3xl p-10 flex flex-col md:flex-row items-center gap-8 animate-in fade-in zoom-in">
+                                    <div className="h-20 w-20 rounded-2xl bg-indigo-500 text-white flex items-center justify-center shadow-xl shadow-indigo-500/20 shrink-0">
                                         <CheckCircle2 className="h-10 w-10" />
                                     </div>
                                     <div>
-                                        <h3 className="text-2xl font-bold text-emerald-900 mb-2 italic">Sale Successfully Archived</h3>
-                                        <p className="text-emerald-700 font-medium max-w-md">
+                                        <h3 className="text-2xl font-bold text-indigo-900 mb-2 italic">Sale Successfully Archived</h3>
+                                        <p className="text-indigo-700 font-medium max-w-md">
                                             The ledger is closed. Total valuation of {formatNPR(parseFloat(transaction.total_amount))} has been reconciled. This asset is now marked as Sold across all systems.
                                         </p>
                                     </div>
@@ -222,7 +222,7 @@ export default function SellerTransactionDetailPage({ params }: { params: Promis
                                     </div>
                                     <div className="flex justify-between items-center text-sm font-medium">
                                         <span className="text-gray-400">Total Verified Payout</span>
-                                        <span className="font-bold text-emerald-600">{formatNPR(parseFloat(transaction.amount_paid || '0'))}</span>
+                                        <span className="font-bold text-indigo-600">{formatNPR(parseFloat(transaction.amount_paid || '0'))}</span>
                                     </div>
                                     <div className="border-t border-dashed pt-5 flex justify-between items-center">
                                         <span className="font-bold text-gray-900">Pending Reconciliation</span>
@@ -249,7 +249,7 @@ export default function SellerTransactionDetailPage({ params }: { params: Promis
                                         </div>
                                         <div>
                                             <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-0.5">ID Verification</p>
-                                            <p className="text-sm font-bold text-emerald-600 uppercase tracking-widest text-[10px]">KYC Verified (Govt of Nepal)</p>
+                                            <p className="text-sm font-bold text-indigo-600 uppercase tracking-widest text-[10px]">KYC Verified (Govt of Nepal)</p>
                                         </div>
                                     </div>
                                 </div>

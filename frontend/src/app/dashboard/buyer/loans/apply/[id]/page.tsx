@@ -38,15 +38,19 @@ export default function ApplyLoanPage({ params }: { params: Promise<{ id: string
 
         setIsPredicting(true);
         try {
-            const res = await predictLoan(form);
+            const predictionPayload = {
+                ...form,
+                loan_term: parseInt(form.loan_term) * 12 // ML requires months
+            };
+            const res = await predictLoan(predictionPayload);
             setPrediction(res.prediction);
             if (res.prediction === 'Loan Approved') {
                 toast.success('High probability of approval!');
             } else {
                 toast.error('Low probability of approval, you can still apply.');
             }
-        } catch (e) {
-            toast.error('Failed to run AI prediction.');
+        } catch (e: any) {
+            toast.error(e.response?.data?.error || 'Failed to run AI prediction.');
         } finally {
             setIsPredicting(false);
         }
@@ -55,11 +59,19 @@ export default function ApplyLoanPage({ params }: { params: Promise<{ id: string
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await applyForLoan({ ...form, property: id });
+            await applyForLoan({ 
+                PropertyID: id,
+                LoanAmount: form.loan_amount,
+                InterestRate: form.interest_rate,
+                Age: form.age,
+                CreditScore: form.credit_score,
+                LoanTerm: parseInt(form.loan_term) * 12
+            });
             toast.success('Loan Application Submitted!');
             router.push('/dashboard/buyer/loans');
-        } catch (e) {
-            toast.error('Failed to submit application');
+        } catch (e: any) {
+            console.error('Submission failed', e.response?.data);
+            toast.error(JSON.stringify(e.response?.data) || 'Failed to submit application');
         }
     };
 
@@ -110,7 +122,7 @@ export default function ApplyLoanPage({ params }: { params: Promise<{ id: string
                     <div className="flex gap-4 p-4 bg-gray-50 rounded-lg justify-between items-center border">
                         <div>
                             <p className="text-sm font-medium text-gray-700">Test AI Approval Predictor</p>
-                            <p className={`text-sm mt-1 font-bold ${prediction === 'Loan Approved' ? 'text-green-600' : prediction === 'Loan Rejected' ? 'text-red-600' : 'text-gray-500'}`}>
+                            <p className={`text-sm mt-1 font-bold ${prediction === 'Loan Approved' ? 'text-indigo-700' : prediction === 'Loan Rejected' ? 'text-red-600' : 'text-gray-500'}`}>
                                 {prediction || 'No prediction run yet'}
                             </p>
                         </div>

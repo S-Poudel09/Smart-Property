@@ -188,7 +188,7 @@ export default function AdminReviewPage({ params }: { params: Promise<{ id: stri
                                         <h3 className="text-2xl font-serif text-[#1a1a2e]">Sovereign Deeds</h3>
                                         <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mt-1">Verification Documents</p>
                                     </div>
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 px-4 py-2 rounded-full border border-emerald-100">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 px-4 py-2 rounded-full border border-indigo-100">
                                         Mandatory for Approval
                                     </span>
                                 </div>
@@ -257,7 +257,7 @@ export default function AdminReviewPage({ params }: { params: Promise<{ id: stri
                                         {property.status === 'submitted' ? (
                                             <div className="space-y-4 pt-4">
                                                 <Button
-                                                    className="w-full h-16 bg-emerald-600 hover:bg-emerald-700 rounded-full font-black uppercase tracking-widest text-[10px] text-white shadow-xl shadow-emerald-900/10 flex items-center justify-center gap-3 transition-all"
+                                                    className="w-full h-16 bg-indigo-600 hover:bg-indigo-700 rounded-full font-black uppercase tracking-widest text-[10px] text-white shadow-xl shadow-indigo-900/10 flex items-center justify-center gap-3 transition-all"
                                                     onClick={handleApprove}
                                                     disabled={isActionLoading}
                                                 >

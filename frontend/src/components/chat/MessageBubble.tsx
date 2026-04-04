@@ -16,19 +16,19 @@ interface MessageBubbleProps {
 export const MessageBubble = ({ message, isOwn }: MessageBubbleProps) => {
     return (
         <div className={cn(
-            "flex w-full mb-3",
+            "flex w-full mb-4",
             isOwn ? "justify-end" : "justify-start"
         )}>
             <div className={cn(
-                "relative max-w-[70%] rounded-2xl px-3.5 py-2 shadow-sm transition-all text-[15px] font-medium leading-relaxed tracking-wide",
+                "relative max-w-[70%] rounded-[1.25rem] px-5 py-3 shadow-md transition-all text-sm font-medium leading-relaxed",
                 isOwn ?
-                    "bg-[#E7F8CB] text-gray-800 rounded-br-sm border border-[#D1EEA8]" :
-                    "bg-white text-gray-800 border border-gray-200 rounded-bl-sm"
+                    "bg-indigo-500 text-white rounded-br-none shadow-indigo-500/10" :
+                    "bg-white text-slate-800 border border-slate-100 rounded-bl-none shadow-slate-200/50"
             )}>
                 <p className="whitespace-pre-wrap">{message.text}</p>
                 <div className={cn(
-                    "mt-1 text-[10px] uppercase font-bold opacity-60",
-                    isOwn ? "text-right text-gray-500" : "text-left text-gray-400"
+                    "mt-1.5 text-[9px] font-black uppercase tracking-widest",
+                    isOwn ? "text-indigo-100/80 text-right" : "text-slate-400 text-left"
                 )}>
                     {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </div>

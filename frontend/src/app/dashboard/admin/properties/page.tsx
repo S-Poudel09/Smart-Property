@@ -79,7 +79,7 @@ export default function AdminPropertiesPage() {
                             </Button>
                         </Link>
                         <div className={`px-4 py-2 rounded-lg flex items-center gap-2 border text-sm font-medium ${
-                            pendingCount > 0 ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                            pendingCount > 0 ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-indigo-50 border-indigo-200 text-indigo-700'
                         }`}>
                             <AlertCircle className="h-4 w-4" />
                             <span>{pendingCount} Pending</span>
@@ -227,7 +227,7 @@ export default function AdminPropertiesPage() {
                                                                     Verify
                                                                 </Button>
                                                             ) : (
-                                                                <div className="text-[10px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-1 rounded border border-emerald-100 flex items-center gap-1">
+                                                                <div className="text-[10px] text-indigo-600 font-semibold bg-indigo-50 px-2 py-1 rounded border border-indigo-100 flex items-center gap-1">
                                                                     <Check className="w-3 h-3" /> VERIFIED
                                                                 </div>
                                                             )}
@@ -236,7 +236,7 @@ export default function AdminPropertiesPage() {
                                                             <div className="p-3 bg-gray-900 rounded-lg text-[11px] text-gray-300 ml-2">
                                                                 <div className="font-bold text-white mb-2 flex justify-between border-b border-gray-700 pb-1">
                                                                     <span>OCR Result</span>
-                                                                    <span className="text-emerald-400">{Math.round(doc.ocr_data.confidence_score * 100)}% match</span>
+                                                                    <span className="text-indigo-400">{Math.round(doc.ocr_data.confidence_score * 100)}% match</span>
                                                                 </div>
                                                                 <div className="space-y-1">
                                                                     <div className="flex justify-between"><span>Deed #:</span> <span>{doc.ocr_data.document_number}</span></div>
@@ -252,7 +252,7 @@ export default function AdminPropertiesPage() {
                                         {selectedProperty.status?.toLowerCase() === 'submitted' && (
                                             <div className="pt-6 border-t border-gray-100 flex flex-col gap-3">
                                                 <Button 
-                                                    className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-200 flex items-center justify-center gap-2" 
+                                                    className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg shadow-indigo-200 flex items-center justify-center gap-2" 
                                                     onClick={() => handleApprove(selectedProperty.id)}
                                                 >
                                                     <Check className="w-5 h-5" /> Approve & Publish

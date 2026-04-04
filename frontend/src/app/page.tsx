@@ -1,14 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
+import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
 import Container from '@/components/layout/Container';
 import { Button } from '@/components/common/Button';
 import api from '@/lib/api/http';
 import { 
     Search, 
-    Home, 
     ShieldCheck, 
     ArrowRight, 
     MapPin, 
@@ -16,8 +17,11 @@ import {
     Building, 
     Users, 
     ChevronRight,
-    PlayCircle,
-    CheckCircle2
+    TrendingUp,
+    Navigation,
+    Sparkles,
+    Landmark,
+    CheckCircle
 } from 'lucide-react';
 import PropertyCard from '@/components/property/PropertyCard';
 
@@ -34,32 +38,20 @@ interface FeaturedProperty {
     description?: string;
 }
 
-const fadeInUp = {
-    initial: { opacity: 0, y: 30 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.8, ease: "easeOut" as const }
-};
-
 export default function HomePage() {
     const [featuredProperties, setFeaturedProperties] = useState<FeaturedProperty[]>([]);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('smartproperty_token') : null;
-        setIsLoggedIn(!!token);
-
         api.get('/properties/')
             .then(res => {
                 const data = Array.isArray(res.data) ? res.data : res.data?.results ?? [];
                 const published = data.filter((p: any) => p.status === 'published' || !p.status);
                 setFeaturedProperties(published.slice(0, 3).map((p: any, index: number) => {
-                    // Support multiple ID formats and generate a stable fallback
                     const rawId = p.id || p._id || p.PropertyID || p.property_id;
                     const fallbackId = `${(p.title || 'estate').replace(/\s+/g, '-').toLowerCase()}-${(p.location || 'nepal').replace(/\s+/g, '-').toLowerCase()}-${index}`;
-                    const finalId = rawId ? String(rawId) : fallbackId;
-
                     return {
-                        id: finalId,
+                        id: rawId ? String(rawId) : fallbackId,
                         title: p.title ?? 'Untitled Estate',
                         price: Number(p.price) || Number(p.total_amount) || 0,
                         location: p.location ?? p.address ?? 'Nepal',
@@ -72,186 +64,183 @@ export default function HomePage() {
                     };
                 }));
             })
-            .catch(() => { });
+            .catch(() => { })
+            .finally(() => setLoading(false));
     }, []);
 
     return (
-        <div className="min-h-screen bg-background">
-            {/* Immersive Hero Section */}
-            <section className="relative pt-48 pb-32 lg:pt-64 lg:pb-48 overflow-hidden">
-                <div className="absolute inset-0 z-0">
-                    <img 
-                        src="https://images.unsplash.com/photo-1600585154340-be6191da010e?auto=format&fit=crop&q=80&w=2000" 
-                        alt="Premium Real Estate" 
-                        className="w-full h-full object-cover brightness-[0.3]"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#F8F9FA] via-transparent to-black/40" />
-                </div>
-
+        <div className="min-h-screen bg-[#fafafa] selection:bg-indigo-100 selection:text-indigo-900">
+            <Navbar />
+            
+            {/* Massive Hero Section */}
+            <section className="relative pt-40 pb-32 overflow-hidden">
+                <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-indigo-600/5 rounded-full blur-[120px] -mr-96 -mt-96 pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-indigo-600/5 rounded-full blur-[100px] -ml-48 -mb-48 pointer-events-none" />
+                
                 <Container className="relative z-10">
-                    <div className="max-w-4xl mx-auto text-center lg:text-left lg:mx-0">
-                        <motion.div 
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6 }}
-                            className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-primary/20 backdrop-blur-md border border-primary/30 text-[11px] font-bold uppercase tracking-[0.2em] text-white mb-10 shadow-xl shadow-primary/10"
+                    <div className="text-center max-w-5xl mx-auto space-y-12">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="inline-flex items-center gap-3 px-6 py-2.5 bg-white border border-slate-100 rounded-full shadow-xl shadow-slate-200/50"
                         >
-                            <span className="h-2 w-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(var(--primary-rgb),0.8)]" />
-                            Nepal's Trusted Property Registry
+                            <Sparkles className="h-4 w-4 text-indigo-500" />
+                            <span className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-500">Nepal's Premier Property Registry</span>
                         </motion.div>
                         
                         <motion.h1 
-                            initial={{ opacity: 0, y: 20 }}
+                            initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8, delay: 0.1 }}
-                            className="text-6xl md:text-7xl lg:text-8xl font-bold text-white leading-[1.05] mb-10 tracking-tight font-outfit"
+                            className="text-6xl md:text-8xl lg:text-9xl font-black text-slate-900 font-outfit tracking-tighter leading-[0.85] italic mb-10"
                         >
-                            Find Your <br />
-                            <span className="text-primary italic font-medium">Elevated Living.</span>
+                            Acquire Premium <br />
+                            <span className="text-indigo-600">Property Nodes.</span>
                         </motion.h1>
-
+                        
                         <motion.p 
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8, delay: 0.2 }}
-                            className="text-white/80 text-xl md:text-2xl mb-14 leading-relaxed max-w-2xl font-medium"
+                            transition={{ delay: 0.1 }}
+                            className="text-xl md:text-2xl text-slate-500 font-medium italic max-w-3xl mx-auto leading-relaxed"
                         >
-                            SmartProperty is the premier digital ecosystem for real estate in Nepal, facilitating secure, verified, and direct property transitions.
+                            "Navigate the elite landscape of verified assets, secure transactions, and institutional-grade real estate governance."
                         </motion.p>
                         
                         <motion.div 
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8, delay: 0.3 }}
-                            className="flex flex-wrap items-center justify-center lg:justify-start gap-6"
+                            transition={{ delay: 0.2 }}
+                            className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-8"
                         >
-                            <Link href="/properties">
-                                <Button size="lg" className="rounded-2xl h-16 px-12 group shadow-2xl shadow-primary/30 transition-all hover:scale-105">
-                                    Browse Listings
-                                    <ArrowRight className="h-5 w-5 ml-3 transition-transform group-hover:translate-x-1" />
-                                </Button>
+                            <Link href="/dashboard/properties">
+                                <button className="h-16 px-12 bg-slate-900 text-white text-sm font-black uppercase tracking-widest rounded-2xl hover:bg-indigo-600 transition-all shadow-2xl shadow-slate-900/10 active:scale-95 flex items-center gap-3">
+                                    Explore Index <ArrowRight className="h-4 w-4" />
+                                </button>
                             </Link>
                             <Link href="/auth/register">
-                                <Button variant="outline" size="lg" className="rounded-2xl h-16 px-12 border-white/20 text-white backdrop-blur-md bg-white/5 hover:bg-white/10 transition-all">
-                                    Join the Network
-                                </Button>
+                                <button className="h-16 px-12 bg-white border border-slate-200 text-slate-900 text-sm font-black uppercase tracking-widest rounded-2xl hover:bg-slate-50 transition-all active:scale-95">
+                                    Join Network
+                                </button>
                             </Link>
                         </motion.div>
                     </div>
-                </Container>
-
-                {/* Stat Cards */}
-                <div className="absolute bottom-0 right-0 left-0 hidden lg:block">
-                    <div className="max-w-[1400px] mx-auto px-12 translate-y-1/2">
-                        <div className="grid grid-cols-4 gap-8">
-                            {[
-                                { label: "Verified Assets", val: "5K+", icon: ShieldCheck },
-                                { label: "Total Transactions", val: "Rs 15B+", icon: Building },
-                                { label: "Active Members", val: "12K+", icon: Users },
-                                { label: "Expert Advisors", val: "150+", icon: Star }
-                            ].map((stat, i) => (
-                                <motion.div 
-                                    key={i}
-                                    initial={{ opacity: 0, y: 40 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.6, delay: 0.4 + i * 0.1 }}
-                                    className="bg-white p-8 rounded-[2rem] shadow-2xl border border-gray-100 flex items-center gap-6"
-                                >
-                                    <div className="h-14 w-14 bg-primary/5 rounded-2xl flex items-center justify-center text-primary border border-primary/10">
-                                        <stat.icon className="h-6 w-6" />
-                                    </div>
-                                    <div>
-                                        <div className="text-3xl font-bold text-foreground font-outfit">{stat.val}</div>
-                                        <div className="text-[10px] font-bold uppercase tracking-widest text-muted mt-1">{stat.label}</div>
-                                    </div>
-                                </motion.div>
-                            ))}
-                        </div>
+                    
+                    {/* Floating Stats */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-32 border-y border-slate-100 py-16">
+                        {[
+                            { label: 'Asset Vol', val: 'Rs 40B+', icon: Building },
+                            { label: 'Active nodes', val: '15k+', icon: Users },
+                            { label: 'Security Score', val: '100%', icon: ShieldCheck },
+                            { label: 'Market Index', val: '+14.2%', icon: TrendingUp },
+                        ].map((stat, i) => (
+                            <div key={i} className="text-center group">
+                                <div className="h-12 w-12 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center mx-auto mb-5 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500 border border-slate-100">
+                                    <stat.icon className="h-5 w-5" />
+                                </div>
+                                <div className="text-3xl font-black text-slate-900 font-outfit uppercase italic">{stat.val}</div>
+                                <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1.5 italic">{stat.label}</div>
+                            </div>
+                        ))}
                     </div>
-                </div>
+                </Container>
             </section>
 
-            {/* Featured Section */}
-            <section className="pt-48 pb-32 bg-background">
+            {/* Featured Registry Section */}
+            <section className="py-32 bg-white relative">
+                 <div className="absolute top-1/2 left-0 w-64 h-64 bg-indigo-50 rounded-full blur-3xl -ml-32 opacity-50" />
                 <Container>
                     <div className="flex flex-col md:flex-row justify-between items-end gap-10 mb-20">
-                        <div className="max-w-2xl">
-                            <motion.div 
-                                {...fadeInUp}
-                                className="h-1.5 w-12 bg-primary rounded-full mb-8"
-                            />
-                            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6 font-outfit">Exclusive Property Registry</h2>
-                            <p className="text-muted text-xl">Curated premium listings representing the finest real estate available in Nepal today.</p>
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 border border-indigo-100">
+                                    <Sparkles className="h-5 w-5" />
+                                </div>
+                                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-600">Featured Streams</span>
+                            </div>
+                            <h2 className="text-5xl font-black text-slate-900 font-outfit tracking-tighter leading-tight italic">Elite Properties</h2>
+                            <p className="text-slate-500 font-medium italic border-l-4 border-indigo-600/20 pl-8 max-w-xl text-lg">
+                                Discover high-liquidity assets optimized for portfolio growth and structural integrity across the capital.
+                            </p>
                         </div>
-                        <Link href="/properties">
-                            <Button variant="outline" className="rounded-2xl h-14 px-8 font-bold border-border shadow-sm hover:border-primary/50 transition-all">
-                                View Entire Portfolio <ChevronRight className="h-4 w-4 ml-2" />
-                            </Button>
+                        <Link href="/dashboard/properties">
+                            <button className="h-14 px-8 border border-slate-200 text-slate-900 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-50 hover:border-indigo-600 transition-all">
+                                Expanded Index →
+                            </button>
                         </Link>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                        {featuredProperties.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+                        {loading ? (
+                            Array(3).fill(0).map((_, i) => (
+                                <div key={i} className="h-96 bg-slate-50 rounded-[2.5rem] animate-pulse" />
+                            ))
+                        ) : featuredProperties.length > 0 ? (
                             featuredProperties.map((property, i) => (
                                 <motion.div 
                                     key={property.id}
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ duration: 0.5, delay: i * 0.1 }}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ duration: 0.6, delay: i * 0.1 }}
                                 >
                                     <PropertyCard property={property as any} />
                                 </motion.div>
                             ))
                         ) : (
-                            <div className="col-span-3 py-32 text-center">
-                                <span className="text-muted text-lg animate-pulse">Syncing with registry...</span>
+                            <div className="col-span-1 md:col-span-3 py-32 text-center bg-slate-50 rounded-[3rem] border border-dashed border-slate-200">
+                                <span className="text-slate-500 text-[10px] font-black tracking-[0.3em] uppercase italic">Initial Registry Scan Node Active... Discovered 0 Properties</span>
                             </div>
                         )}
                     </div>
                 </Container>
             </section>
 
-            {/* Modern Standard Grid */}
-            <section className="py-40 bg-card relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-[40%] h-[100%] bg-primary/5 rounded-l-[10rem] pointer-events-none blur-3xl opacity-50" />
+            {/* Infrastructure & The Smart Standard */}
+            <section className="py-40 bg-slate-950 text-white relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-500/10 rounded-full blur-[100px] -mr-48 -mt-48" />
+                <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-500/10 rounded-full blur-[100px] -ml-24 -mb-24" />
                 
-                <Container>
-                    <div className="text-center max-w-3xl mx-auto mb-28">
-                        <h2 className="text-4xl md:text-6xl font-bold text-foreground mb-8 tracking-tight font-outfit">The Modern Standard</h2>
-                        <p className="text-muted text-xl leading-relaxed">SmartProperty transcends traditional listing sites by integrating rigorous authentication and legal integrity into every step.</p>
+                <Container className="relative z-10 text-center">
+                    <div className="inline-flex items-center gap-3 px-6 py-2.5 bg-white/5 border border-white/10 rounded-full mb-12 backdrop-blur-md">
+                        <ShieldCheck className="h-4 w-4 text-indigo-400" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.25em] text-indigo-300">Operational Integrity</span>
                     </div>
-  
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                    <h2 className="text-5xl md:text-8xl font-black font-outfit tracking-tighter leading-[0.85] mb-12 italic">Advanced Registry <br /> Infrastructure.</h2>
+                    <p className="text-xl text-slate-400 font-medium italic max-w-2xl mx-auto mb-24">
+                        "We integrate rigorous authentication and legal integrity into every step of the high-stakes property journey."
+                    </p>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mt-20 text-left">
                         {[
-                            {
+                             {
                                 icon: ShieldCheck,
-                                title: "Verified Assets",
-                                desc: "Every listing undergoes a multi-layer verification process to ensure legal compliance and ownership authenticity."
+                                title: "Full Verification",
+                                desc: "Every listing undergoes multiple layers of verification to ensure legal compliance and ownership authenticity."
                             },
                             {
-                                icon: Search,
-                                title: "P2P Transactions",
-                                desc: "Direct connections between verified buyers and sellers facilitate transparent negotiations with zero intermediary friction."
+                                icon: Landmark,
+                                title: "Secure P2P",
+                                desc: "Direct connections between agents and investors facilitate transparent negotiations with institutional security."
                             },
                             {
-                                icon: Building,
-                                title: "Smart Contracts",
-                                desc: "Proprietary digital workflows manage the complete transaction lifecycle, from commitment to final registry transfer."
+                                icon: Navigation,
+                                title: "Smart Workflow",
+                                desc: "Our digital workflow manages the complete transaction lifecycle, from discovery to final deed transfer."
                             }
                         ].map((feature, i) => (
                             <motion.div 
-                                key={i}
+                                key={feature.title}
                                 initial={{ opacity: 0, y: 30 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.6, delay: i * 0.1 }}
                                 viewport={{ once: true }}
-                                className="group p-12 rounded-[2.5rem] bg-background border border-border/50 transition-all hover:bg-card hover:shadow-2xl hover:shadow-primary/5"
+                                className="group p-10 bg-white/5 border border-white/10 rounded-[2.5rem] backdrop-blur-sm transition-all hover:bg-white/10"
                             >
-                                <div className="h-16 w-16 bg-card rounded-2xl flex items-center justify-center text-primary mb-10 shadow-lg shadow-black/[0.02] border border-border/40 transition-transform group-hover:scale-110 group-hover:rotate-3">
-                                    <feature.icon className="h-8 w-8" />
+                                <div className="h-14 w-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white mb-8 shadow-xl shadow-indigo-600/20 group-hover:scale-110 transition-transform">
+                                    <feature.icon className="h-6 w-6" />
                                 </div>
-                                <h3 className="text-2xl font-bold text-foreground mb-6 font-outfit">{feature.title}</h3>
-                                <p className="text-muted leading-relaxed text-lg font-medium">{feature.desc}</p>
+                                <h3 className="text-xl font-black font-outfit uppercase tracking-tight italic mb-4">{feature.title}</h3>
+                                <p className="text-slate-400 font-medium italic leading-relaxed text-sm">"{feature.desc}"</p>
                             </motion.div>
                         ))}
                     </div>
@@ -259,39 +248,39 @@ export default function HomePage() {
             </section>
 
             {/* Premium CTA */}
-            <section className="py-40 bg-background">
+            <section className="py-48 bg-[#fafafa]">
                 <Container>
-                    <div className="bg-foreground rounded-[4rem] p-16 md:p-32 text-center text-white relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-[50%] h-[100%] bg-primary/20 rounded-full blur-[120px] -mr-32 -mt-32 transition-all group-hover:bg-primary/30" />
-                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20 pointer-events-none" />
+                    <div className="bg-slate-900 rounded-[4rem] p-16 md:p-32 text-center text-white relative overflow-hidden group shadow-2xl">
+                        <div className="absolute top-0 right-0 w-[50%] h-[100%] bg-indigo-500/20 rounded-full blur-[120px] -mr-32 -mt-32 transition-all group-hover:bg-indigo-500/30" />
                         
-                        <div className="relative z-10 max-w-3xl mx-auto">
+                        <div className="relative z-10 max-w-4xl mx-auto">
                             <motion.h2 
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 whileInView={{ opacity: 1, scale: 1 }}
-                                className="text-5xl md:text-7xl font-bold mb-10 leading-[1.1] font-outfit"
+                                className="text-5xl md:text-8xl font-black mb-10 leading-[0.85] font-outfit italic"
                             >
-                                Experience the <span className="text-primary italic">Transformation.</span>
+                                Initialize Your <br/><span className="text-indigo-400">Digital Registry.</span>
                             </motion.h2>
-                            <p className="text-white/60 text-xl mb-16 leading-relaxed">Join the most advanced property network in Nepal. Secure, seamless, and sophisticated.</p>
+                            <p className="text-slate-400 text-xl md:text-2xl italic font-medium mb-16 max-w-2xl mx-auto leading-relaxed">Join the most advanced property network in the region. Built for speed, secured by protocol.</p>
                             
                             <div className="flex flex-wrap justify-center gap-8">
-                                <Link href="/properties">
-                                    <Button size="lg" className="rounded-2xl h-16 px-14 bg-white text-primary hover:bg-gray-100 font-bold shadow-2xl">
-                                        Explore the Registry
-                                    </Button>
+                                <Link href="/dashboard/properties">
+                                    <button className="h-20 px-16 bg-white text-slate-900 text-base font-black uppercase tracking-widest rounded-3xl hover:bg-indigo-400 hover:text-white transition-all shadow-xl group">
+                                        Exploration Hub
+                                    </button>
                                 </Link>
                                 <Link href="/auth/register">
-                                    <Button size="lg" variant="outline" className="rounded-2xl h-16 px-14 border-white/20 text-white hover:bg-white/10 font-bold backdrop-blur-sm">
-                                        Start Your Journey
-                                    </Button>
+                                    <button className="h-20 px-16 bg-white/5 border border-white/20 text-white text-base font-black uppercase tracking-widest rounded-3xl hover:bg-white/10 transition-all backdrop-blur-sm">
+                                        Establish Node
+                                    </button>
                                 </Link>
                             </div>
                         </div>
                     </div>
                 </Container>
             </section>
+
+            <Footer />
         </div>
     );
 }
-

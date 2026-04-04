@@ -51,7 +51,7 @@ export default function KYCUpload({ currentStatus, onSuccess }: KYCUploadProps) 
     if (currentStatus === 'verified') {
         return (
             <div className="p-12 text-center group">
-                <div className="h-20 w-20 bg-emerald-50 rounded-[2rem] flex items-center justify-center text-emerald-600 mx-auto mb-8 border border-emerald-100 shadow-xl shadow-emerald-500/10 group-hover:scale-110 transition-transform duration-500">
+                <div className="h-20 w-20 bg-indigo-50 rounded-[2rem] flex items-center justify-center text-indigo-600 mx-auto mb-8 border border-indigo-100 shadow-xl shadow-indigo-500/10 group-hover:scale-110 transition-transform duration-500">
                     <CheckCircle className="h-10 w-10" />
                 </div>
                 <h3 className="text-3xl font-serif text-primary mb-4">Identity Sealed</h3>

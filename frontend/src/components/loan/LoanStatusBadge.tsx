@@ -16,7 +16,7 @@ export const LoanStatusBadge = ({ status }: LoanStatusBadgeProps) => {
     const config = {
         SUBMITTED: { label: 'Submitted', color: 'bg-blue-100 text-blue-700 border-blue-200' },
         UNDER_REVIEW: { label: 'Under Review', color: 'bg-amber-100 text-amber-700 border-amber-200' },
-        APPROVED: { label: 'Approved', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+        APPROVED: { label: 'Approved', color: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
         REJECTED: { label: 'Rejected', color: 'bg-rose-100 text-rose-700 border-rose-200' },
     };
 

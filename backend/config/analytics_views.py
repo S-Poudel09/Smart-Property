@@ -59,7 +59,7 @@ class SystemAnalyticsView(APIView):
                 'revenue': float(total_revenue),
                 'userGrowth': round(user_growth, 1),
                 'transactionData': chart_data,
-                'snapshot': snapshot # Live snapshot from MongoDB
+                'snapshot': snapshot # Live snapshot from PostgreSQL
             })
         except Exception as e:
             return Response({"error": f"Analytics engine failure: {str(e)}"}, status=500)

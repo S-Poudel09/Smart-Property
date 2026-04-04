@@ -7,7 +7,8 @@ import { Loader } from '@/components/common/Loader';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/common/Button';
-import { Users, CreditCard, Home, Search, Filter, ShieldCheck, History, Download, ExternalLink, IndianRupee } from 'lucide-react';
+import { Users, CreditCard, Home, Search, Filter, ShieldCheck, History, Download, ExternalLink, IndianRupee, ChevronRight } from 'lucide-react';
+import Link from 'next/link';
 import { formatNPR } from '@/lib/utils/currency';
 import { motion, AnimatePresence } from 'framer-motion';
 import Container from '@/components/layout/Container';
@@ -123,27 +124,27 @@ export default function AdminTransactionsPage() {
                                                 </td>
                                                 <td className="p-4 font-bold text-gray-900">
                                                     <div>{formatNPR(tx.total_amount)}</div>
-                                                    <div className="text-[10px] text-emerald-600 font-medium">Reconciled: {formatNPR(tx.amount_paid || '0')}</div>
+                                                    <div className="text-[10px] text-indigo-600 font-medium">Reconciled: {formatNPR(tx.amount_paid || '0')}</div>
                                                 </td>
                                                 <td className="p-4">
                                                     <StatusBadge status={tx.status} />
                                                 </td>
                                                 <td className="p-4 text-right">
                                                     <div className="flex justify-end gap-2">
-                                                        {tx.status === 'PARTIAL' || (tx.Proofs?.some((p: any) => !p.is_verified)) ? (
-                                                            <button 
-                                                                className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 shadow-lg shadow-emerald-500/10 transition-all border border-emerald-500"
-                                                                onClick={() => {
-                                                                    // Navigate to a detail or open verify dialog
-                                                                    toast.success("Ready for audit sequence");
-                                                                }}
+                                                        {tx.status === 'PARTIAL' || tx.status === 'PENDING' || (tx.Proofs?.some((p: any) => !p.is_verified)) ? (
+                                                            <Link 
+                                                                href={`/dashboard/admin/transactions/${tx.TransactionID || tx.id}`}
+                                                                className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 shadow-lg shadow-indigo-500/10 transition-all border border-indigo-500 flex items-center gap-2"
                                                             >
-                                                                Audit Proofs
-                                                            </button>
+                                                                Audit Sequence <ChevronRight className="h-3 w-3" />
+                                                            </Link>
                                                         ) : (
-                                                            <button className="h-8 w-8 rounded-lg text-gray-400 hover:text-primary transition-all flex items-center justify-center border border-border">
+                                                            <Link 
+                                                                href={`/dashboard/admin/transactions/${tx.TransactionID || tx.id}`}
+                                                                className="h-8 w-8 rounded-lg text-gray-400 hover:text-primary transition-all flex items-center justify-center border border-border"
+                                                            >
                                                                 <ExternalLink className="w-4 h-4" />
-                                                            </button>
+                                                            </Link>
                                                         )}
                                                     </div>
                                                 </td>

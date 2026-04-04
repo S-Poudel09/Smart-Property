@@ -50,13 +50,26 @@ export interface Property {
     
     // Hostel Support
     propertyType?: PropertyCategory;
+    property_type?: PropertyCategory;
     hostelGender?: 'boys' | 'girls' | 'mixed';
-    room_type?: string;
+    hostel_gender?: 'boys' | 'girls' | 'mixed';
     foodIncluded?: boolean;
+    food_included?: boolean;
     hasWifi?: boolean;
+    has_wifi?: boolean;
     hasLaundry?: boolean;
+    has_laundry?: boolean;
     bathroomType?: 'attached' | 'shared';
+    bathroom_type?: 'attached' | 'shared';
     availableBeds?: number;
+    available_beds?: number;
+    roomType?: string;
+    room_type?: string;
+    
+    // Dataset compatibility
+    beds?: number;
+    baths?: number;
+    area_sqft?: number;
     
     // Workflow Tracking
     workflowStep?: number;

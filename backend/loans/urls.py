@@ -6,7 +6,7 @@ router = DefaultRouter(trailing_slash=True)
 router.register(r'', LoanViewSet, basename='loan')
 
 urlpatterns = [
-    path('predict', loan_prediction, name='loan-predict'),
+    path('predict/', loan_prediction, name='loan-predict'),
 ]
 
 urlpatterns += router.urls

@@ -15,12 +15,12 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ({ className, variant = 'primary', size = 'md', isLoading, children, disabled, ...props }, ref) => {
         const variants = {
-            primary: 'bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary/90 hover:shadow-primary/30 active:scale-[0.98]',
-            secondary: 'bg-white text-primary border border-primary/20 hover:bg-primary/5 hover:border-primary/30 active:scale-[0.98]',
-            outline: 'bg-transparent text-foreground border border-border hover:bg-gray-50 hover:border-muted active:scale-[0.98]',
-            ghost: 'bg-transparent text-muted hover:bg-gray-100 hover:text-foreground active:scale-[0.98]',
-            danger: 'bg-danger text-white shadow-lg shadow-danger/20 hover:bg-danger/90 hover:shadow-danger/30 active:scale-[0.98]',
-            success: 'bg-success text-white shadow-lg shadow-success/20 hover:bg-success/90 hover:shadow-success/30 active:scale-[0.98]',
+            primary: 'bg-primary text-white shadow-lg lg:shadow-primary/20 hover:bg-primary-hover hover:shadow-primary/40 active:scale-[0.97] border border-primary/10',
+            secondary: 'bg-white text-primary border border-primary/20 hover:bg-primary/5 hover:border-primary/40 active:scale-[0.97] shadow-sm',
+            outline: 'bg-transparent text-foreground border-2 border-border/60 hover:bg-primary/5 hover:border-primary/30 active:scale-[0.97]',
+            ghost: 'bg-transparent text-muted hover:bg-primary/5 hover:text-primary active:scale-[0.97]',
+            danger: 'bg-danger text-white shadow-lg shadow-danger/20 hover:opacity-90 active:scale-[0.97]',
+            success: 'bg-success text-white shadow-lg shadow-success/20 hover:opacity-90 active:scale-[0.97]',
         };
 
         const sizes = {

@@ -64,7 +64,7 @@ export const ListingTable = ({ listings, onDelete, onSubmit }: ListingTableProps
                                 </td>
                                 <td className="px-6 py-4">
                                     {p.isVerified ? (
-                                        <span className="flex items-center gap-1 text-xs font-bold text-green-600">
+                                        <span className="flex items-center gap-1 text-xs font-bold text-indigo-700">
                                             <CheckCircle2 className="h-3 w-3" /> Verified
                                         </span>
                                     ) : (

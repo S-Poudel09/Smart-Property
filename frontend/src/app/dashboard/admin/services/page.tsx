@@ -122,7 +122,7 @@ export default function AdminServicesPage() {
                                             <td className="px-8 py-6">
                                                 <div className="flex justify-center">
                                                     {provider.verified ? (
-                                                        <span className="inline-flex items-center gap-2 text-emerald-600 bg-emerald-50 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-100 shadow-sm">
+                                                        <span className="inline-flex items-center gap-2 text-indigo-600 bg-indigo-50 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-indigo-100 shadow-sm">
                                                             <ShieldCheck className="h-4 w-4" /> Imperial Partner
                                                         </span>
                                                     ) : (

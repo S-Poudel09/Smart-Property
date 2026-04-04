@@ -39,27 +39,26 @@ export default function PropertyMap({ center, zoom = 15, boundary, title }: Prop
     const [mapLayer, setMapLayer] = useState<'street' | 'satellite'>('satellite');
 
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMounted(true);
     }, []);
 
-    if (!mounted) return <div className="h-[500px] w-full bg-[#1a1a2e]/5 animate-pulse rounded-[2.5rem] border border-royal-silk/50" />;
+    if (!mounted) return <div className="h-[500px] w-full bg-slate-900/5 animate-pulse rounded-[2.5rem] border border-slate-200" />;
 
     return (
-        <div className="h-[500px] w-full rounded-[2.5rem] overflow-hidden border border-royal-silk/50 shadow-inner relative z-0 group">
+        <div className="h-[500px] w-full rounded-[2.5rem] overflow-hidden border border-slate-200 shadow-inner relative z-0 group">
             {/* Map Controls HUD */}
             <div className="absolute top-6 left-6 z-[1000] flex flex-col gap-3">
                 <motion.button 
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setMapLayer(mapLayer === 'street' ? 'satellite' : 'street')}
-                    className="h-12 w-12 bg-white/90 backdrop-blur-xl rounded-2xl flex items-center justify-center shadow-2xl border border-white/50 text-[#1a1a2e] transition-all hover:bg-white"
+                    className="h-12 w-12 bg-white/90 backdrop-blur-xl rounded-2xl flex items-center justify-center shadow-2xl border border-white/50 text-slate-900 transition-all hover:bg-indigo-500 hover:text-white"
                 >
                     <Layers className="h-5 w-5" />
                 </motion.button>
-                <div className="h-12 px-6 bg-[#1a1a2e]/90 backdrop-blur-xl rounded-2xl flex items-center gap-3 shadow-2xl border border-white/10 text-white">
-                    <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Live GIS Sync</span>
+                <div className="h-12 px-6 bg-slate-900/90 backdrop-blur-xl rounded-2xl flex items-center gap-3 shadow-2xl border border-white/10 text-white">
+                    <div className="h-2 w-2 rounded-full bg-indigo-400 animate-pulse" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Active GIS Sync</span>
                 </div>
             </div>
 
@@ -86,10 +85,10 @@ export default function PropertyMap({ center, zoom = 15, boundary, title }: Prop
                 
                 {/* Property Marker */}
                 <Marker position={center}>
-                    <Popup className="royal-popup">
+                    <Popup>
                         <div className="p-2">
-                            <div className="text-[10px] font-black uppercase tracking-widest text-royal-gold mb-1">Authenticated Site</div>
-                            <div className="text-sm font-serif text-[#1a1a2e]">{title || 'Property Location'}</div>
+                            <div className="text-[10px] font-black uppercase tracking-widest text-indigo-600 mb-1">Verified Location</div>
+                            <div className="text-sm font-bold text-slate-900">{title || 'Property Site'}</div>
                         </div>
                     </Popup>
                 </Marker>
@@ -99,10 +98,10 @@ export default function PropertyMap({ center, zoom = 15, boundary, title }: Prop
                     <Polygon 
                         positions={boundary} 
                         pathOptions={{ 
-                            color: '#c5a059', 
-                            fillColor: '#c5a059', 
+                            color: '#10b981', 
+                            fillColor: '#10b981', 
                             fillOpacity: 0.15,
-                            weight: 4,
+                            weight: 3,
                             dashArray: '8, 8'
                         }} 
                     />
@@ -111,14 +110,17 @@ export default function PropertyMap({ center, zoom = 15, boundary, title }: Prop
 
             {/* Bottom HUD */}
             <div className="absolute bottom-6 left-6 right-6 z-[1000] flex justify-between items-end pointer-events-none">
-                <div className="pointer-events-auto p-4 bg-white/90 backdrop-blur-xl rounded-2xl border border-white/50 shadow-2xl max-w-xs">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[#1a1a2e] mb-2 flex items-center gap-2">
-                        <MapIcon className="h-3 w-3 text-royal-gold" /> GIS DATA VERIFIED 
+                <div className="pointer-events-auto p-5 bg-white/95 backdrop-blur-xl rounded-2xl border border-slate-100 shadow-2xl max-w-xs transition-all hover:bg-white">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-900 mb-2 flex items-center gap-2">
+                        <MapIcon className="h-3 w-3 text-indigo-500" /> GIS GEOMETRY VERIFIED 
                     </p>
-                    <p className="text-[11px] text-gray-500 font-medium leading-relaxed">
-                        Coordinates: {center[0].toFixed(6)}, {center[1].toFixed(6)} <br />
-                        Kitta Number Match: <span className="text-royal-gold font-black">CONFIRMED</span>
-                    </p>
+                    <div className="space-y-1">
+                        <p className="text-[11px] text-slate-500 font-bold leading-relaxed">
+                            Lat: <span className="text-slate-900">{center[0].toFixed(6)}</span> <br />
+                            Lng: <span className="text-slate-900">{center[1].toFixed(6)}</span>
+                        </p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-indigo-600">Land Revenue Status: Matched</p>
+                    </div>
                 </div>
             </div>
         </div>

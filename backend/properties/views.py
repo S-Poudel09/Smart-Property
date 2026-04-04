@@ -71,14 +71,20 @@ class PropertyViewSet(viewsets.ModelViewSet):
         )
 
     def get_queryset(self):
-        queryset = Property.objects.all()
+        queryset = Property.objects.all().order_by('-created_at')
         user = self.request.user
         
-        # Apply visibility rules universally to ALL actions (list, retrieve, update, etc.)
+        # Check for specific seller filter (?seller=me)
+        is_seller_me = self.request.query_params.get('seller') == 'me'
+        
+        # Apply visibility rules universally
         if user.is_authenticated and user.role == 'admin':
             return queryset
         elif user.is_authenticated:
-            # Sellers clearly see their own, plus securely see published properties
+            if is_seller_me:
+                # Strictly only the user's OWN properties
+                return queryset.filter(owner=user)
+            # Standard visibility: own properties + all published ones
             return queryset.filter(models.Q(status__iexact="published") | models.Q(owner=user))
         else:
             # Complete public anon visibility strictly bound to published
@@ -95,10 +101,18 @@ class PropertyViewSet(viewsets.ModelViewSet):
         return super().retrieve(request, *args, **kwargs)
 
     def perform_update(self, serializer):
-        # Only admin can approve or reject a property
-        if self.request.user.role != 'admin':
-            from rest_framework.exceptions import PermissionDenied
-            raise PermissionDenied("Only admins can approve/reject properties.")
+        # Admins can update anything.
+        # Sellers can update their own properties, but cannot manually set status to 'approved' or 'published'
+        # without using the admin approval flow.
+        user = self.request.user
+        
+        # If the user is trying to change status to protected states without being admin
+        if user.role != 'admin' and 'status' in serializer.validated_data:
+            target_status = serializer.validated_data['status']
+            if target_status in ['approved', 'published']:
+                from rest_framework.exceptions import PermissionDenied
+                raise PermissionDenied("Only admins can approve/publish properties.")
+        
         serializer.save()
 
     def update(self, request, *args, **kwargs):

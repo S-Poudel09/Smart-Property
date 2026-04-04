@@ -16,23 +16,46 @@ export const getLoans = async (): Promise<Loan[]> => {
 };
 
 export const applyForLoan = async (data: any) => {
-    const response = await api.post('loans/', data);
+    // Transform to PascalCase for backend protocol integrity
+    const payload = {
+        PropertyID: data.property,
+        LoanAmount: data.loan_amount,
+        InterestRate: data.interest_rate,
+        Status: 'SUBMITTED',
+        ApplicationDate: new Date().toISOString().split('T')[0]
+    };
+    const response = await api.post('loans/', payload);
     return response.data;
 };
 
 export const predictLoan = async (data: any) => {
-    const response = await api.post('loans/predict/', data);
+    // Prediction matrix expects standardized signal
+    const payload = {
+        Income: data.income,
+        LoanAmount: data.amount,
+        Term: data.term,
+        CreditScore: data.credit_score || 750
+    };
+    // If backend returns 405 on trailing slash, try without
+    const response = await api.post('loans/predict', payload).catch(err => {
+        if (err.response?.status === 405) return api.post('loans/predict/', payload);
+        throw err;
+    });
     return response.data;
 };
 
 export const calculateEMI = async (amount: number, rate: number, tenure: number) => {
-    const response = await api.post('loans/calculate-emi/', { amount, rate, tenure });
+    const payload = { Amount: amount, Rate: rate, Tenure: tenure };
+    const response = await api.post('loans/calculate-emi/', payload);
     return response.data;
 };
 
 export const checkEligibility = async (income: number, loanAmount: number, existingEmis: number = 0) => {
-    const response = await api.post('loans/check-eligibility/', { 
-        income, loan_amount: loanAmount, existing_emis: existingEmis 
-    });
+    const payload = { 
+        Income: income, 
+        LoanAmount: loanAmount, 
+        ExistingEmis: existingEmis 
+    };
+    const response = await api.post('loans/check-eligibility/', payload);
     return response.data;
 };

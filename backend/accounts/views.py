@@ -120,34 +120,40 @@ class RegisterView(APIView):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
+            if not isinstance(user, User):
+                return Response({"error": "Registration failed."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
             otp_sent, otp_error = generate_and_send_otp(user)
 
             if not otp_sent:
-                # Optionally delete the user if email is mandatory for reg
-                # user.delete() 
                 return Response(
-                    {"error": f"Imperial Herald Error: {otp_error}"},
+                    {"error": f"MFA Dispatch Error: {otp_error}"},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
 
             # PostgreSQL activity log
-            from analytics.utils import log_activity
-            log_activity(user.email, 'register', details={'role': user.role}, status='success')
+            try:
+                from analytics.utils import log_activity
+                log_activity(user.email, 'register', details={'role': user.role}, status='success')
+            except Exception:
+                pass
 
             # Welcome email
-            send_mail(
-                subject="Welcome to SmartProperty! | स्मार्ट प्रोपर्टीमा स्वागत छ!",
-                message=f"Hi {user.full_name},\n\nThank you for joining SmartProperty. Your account has been created with the role: {user.role}.\n\nPlease verify your email to get started.\n\nनमस्ते {user.full_name},\nस्मार्ट प्रोपर्टीमा जोडिनुभएकोमा धन्यवाद। तपाईंको खाता '{user.role}' भूमिकाका साथ सफलतापूर्वक सिर्जना गरिएको छ।\n\nकृपया सुरु गर्नको लागि आफ्नो इमेल प्रमाणीकरण गर्नुहोस्।\n\n— SmartProperty Team",
-                from_email=None,
-                recipient_list=[user.email],
-                fail_silently=True,
-            )
+            try:
+                send_mail(
+                    subject="Welcome to SmartProperty!",
+                    message=f"Hi {user.full_name},\n\nThank you for joining. Your account role is: {user.role}.\n\nPlease verify your email to get started.",
+                    from_email=None,
+                    recipient_list=[user.email],
+                    fail_silently=True,
+                )
+            except Exception:
+                pass
 
             return Response(
                 {"message": "User registered successfully. Please verify your email.", "user": UserSerializer(user).data},
                 status=status.HTTP_201_CREATED
             )
-        logger.warning(f"Registration 400 Errors for data: {request.data} - {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class VerifyOTPView(APIView):
@@ -156,8 +162,12 @@ class VerifyOTPView(APIView):
     def post(self, request):
         serializer = VerifyOTPSerializer(data=request.data)
         if serializer.is_valid():
-            email = serializer.validated_data['email']
-            otp_code = serializer.validated_data['otp_code']
+            validated_data = serializer.validated_data
+            if not isinstance(validated_data, dict):
+                return Response({"error": "Invalid format."}, status=status.HTTP_400_BAD_REQUEST)
+                
+            email = validated_data.get('email')
+            otp_code = validated_data.get('otp_code')
 
             try:
                 user = User.objects.get(email=email)
@@ -177,7 +187,7 @@ class VerifyOTPView(APIView):
             user.is_verified = True
             user.save()
             
-            # MongoDB activity log
+            # PostgreSQL activity log
             try:
                 from analytics.utils import log_activity
                 log_activity(user.email, 'verify_email', details={'method': 'otp'}, status='success')
@@ -206,11 +216,11 @@ class ResendOTPView(APIView):
         if user.is_verified:
             return Response({"message": "This lineage is already verified."}, status=status.HTTP_400_BAD_REQUEST)
             
-        otp_sent, otp_error = generate_and_send_otp(user)
+        otp_sent, _ = generate_and_send_otp(user)
         if otp_sent:
-            return Response({"message": "A new Imperial Seal has been dispatched to your email."}, status=status.HTTP_200_OK)
+            return Response({"message": "A new verification code has been dispatched."}, status=status.HTTP_200_OK)
         else:
-            return Response({"error": f"Herald Dispatch Error: {otp_error}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error": "Verification dispatch failed."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
@@ -218,53 +228,40 @@ class LoginView(APIView):
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
-            # Now serializer.validated_data is a dict containing {"user": user_obj}
-            user_data_wrap = serializer.validated_data
-            user = user_data_wrap.get('user')
-            
-            if not user:
-                print("[AUTH DEBUG] Critical failure: Login serializer returned success but no user object.")
-                return Response({"error": "Identity resolution failed. Contact support."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            validated_data = serializer.validated_data
+            if not isinstance(validated_data, dict):
+                return Response({"error": "Invalid login data format."}, status=status.HTTP_400_BAD_REQUEST)
+                
+            user = validated_data.get('user')
+            if not isinstance(user, User):
+                logger.error("[AUTH] Login successful but user object is missing or invalid.")
+                return Response({"error": "Identity resolution failed."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-            print(f"[AUTH DEBUG] LoginView - Authenticated User: {user.email}")
+            logger.info(f"[AUTH] Authenticated user: {user.email}")
             
-            # Use lower() to be case-insensitive for our custom roles
-            try:
-                role = getattr(user, 'role', '').lower()
-                print(f"[AUTH DEBUG] User role identified as: {role}")
-            except Exception as role_err:
-                print(f"[AUTH DEBUG] Role attribute access failure: {role_err}")
-                return Response({"error": "Profile integrity check failed. Admin has been notified."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            role = str(getattr(user, 'role', '')).lower()
             
             if role == 'admin' or user.is_superuser:
                 logger.info(f"Admin MFA flow triggered for: {user.email}")
-                # Issue OTP every time admin logs in
                 otp_sent, otp_error = generate_and_send_otp(user, reason="admin_login")
                 if not otp_sent:
-                    logger.error(f"Admin OTP dispatch failure for {user.email}: {otp_error}")
-                    return Response({"error": f"Imperial Multi-Factor Dispatch Error: {otp_error}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    return Response({"error": f"MFA Dispatch Error: {otp_error}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                 
                 return Response({
                     "requires_otp": True,
                     "email": user.email,
-                    "message": "Double-layered security check: Enter the code sent to your email to descend into the administration hall."
+                    "message": "Enter code sent to your email to access administration hall."
                 }, status=status.HTTP_200_OK)
             
-            # Standard login for buyers and sellers
             try:
-                logger.info(f"Proceeding with standard login for {user.email}")
                 data = get_tokens_for_user(user)
-                
-                # PostgreSQL activity log
                 from analytics.utils import log_activity
                 log_activity(user.email, 'login', ip_address=request.META.get('REMOTE_ADDR', ''))
-                    
                 return Response(data, status=status.HTTP_200_OK)
             except Exception as e:
-                logger.error(f"CRITICAL LOGIN ERROR for {user.email}: {e}")
-                return Response({"error": "Login failed during token generation. See server logs."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                logger.error(f"Login token error for {user.email}: {e}")
+                return Response({"error": "Token generation failed."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-        logger.warning(f"Login 400 Validation Errors: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class AdminLoginVerifyOTPView(APIView):
@@ -478,3 +475,8 @@ class AdminKYCVerifyView(APIView):
 
             return Response({"message": f"User KYC status updated to {kyc_status}."}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserCountView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    def get(self, request):
+        return Response({"count": User.objects.count()}, status=status.HTTP_200_OK)

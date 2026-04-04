@@ -42,7 +42,9 @@ export const ChatWindow = ({ threadId, propertyTitle, otherUserLabel }: ChatWind
     }, [threadId]);
 
     useEffect(() => {
-        const interval = setInterval(fetchMessages, 3000);
+        const interval = setInterval(() => {
+            if (!document.hidden) fetchMessages();
+        }, 3000);
         return () => clearInterval(interval);
     }, [fetchMessages]);
 

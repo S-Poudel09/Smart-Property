@@ -14,18 +14,20 @@ interface StatusBadgeProps {
 
 const StatusBadge = ({ status, className }: StatusBadgeProps) => {
     const styles: Record<string, string> = {
-        PENDING: 'bg-amber-50 text-amber-700 border-amber-100/50',
-        APPROVED: 'bg-emerald-50 text-emerald-700 border-emerald-100/50',
-        REJECTED: 'bg-rose-50 text-rose-700 border-rose-100/50',
-        SUBMITTED: 'bg-indigo-50 text-indigo-700 border-indigo-100/50',
-        PARTIAL: 'bg-orange-50 text-orange-700 border-orange-100/50',
-        COMPLETED: 'bg-emerald-50 text-emerald-700 border-emerald-100/50 shadow-sm shadow-emerald-100/20',
-        FAILED: 'bg-rose-50 text-rose-700 border-rose-100/50',
-        REFUNDED: 'bg-indigo-50 text-indigo-700 border-indigo-100/50',
-        AWAITING_PROOF: 'bg-orange-50 text-orange-700 border-orange-100/50',
-        PROOF_UPLOADED: 'bg-blue-50 text-blue-700 border-blue-100/50',
-        CONFIRMED: 'bg-emerald-50 text-emerald-700 border-emerald-100/50 shadow-sm shadow-emerald-100/20',
-        CANCELLED: 'bg-rose-50 text-rose-700 border-rose-100/50',
+        PENDING: 'bg-amber-50 text-amber-700 border-amber-200/50',
+        APPROVED: 'bg-success/10 text-success border-success/20',
+        REJECTED: 'bg-danger/10 text-danger border-danger/20',
+        SUBMITTED: 'bg-blue-50 text-blue-700 border-blue-200/50',
+        PARTIAL: 'bg-orange-50 text-orange-700 border-orange-200/50',
+        COMPLETED: 'bg-success/10 text-success border-success/20 shadow-sm shadow-success/10',
+        FAILED: 'bg-danger/10 text-danger border-danger/20',
+        PAID: 'bg-blue-50 text-blue-700 border-blue-200/50',
+        VERIFIED: 'bg-success/10 text-success border-success/20',
+        REFUNDED: 'bg-slate-50 text-slate-700 border-slate-200/50',
+        AWAITING_PROOF: 'bg-orange-50 text-orange-700 border-orange-200/50',
+        PROOF_UPLOADED: 'bg-blue-50 text-blue-700 border-blue-200/50',
+        CONFIRMED: 'bg-success/10 text-success border-success/20 shadow-sm shadow-success/10',
+        CANCELLED: 'bg-danger/10 text-danger border-danger/20',
     };
 
     const statusLabel = styles[status] ? status : 'PENDING';
@@ -38,7 +40,7 @@ const StatusBadge = ({ status, className }: StatusBadgeProps) => {
                 className
             )}
         >
-            <span className={cn("mr-1.5 h-1 w-1 rounded-full", (statusLabel === 'APPROVED' || statusLabel === 'COMPLETED' || statusLabel === 'CONFIRMED') ? 'bg-emerald-500' : 'bg-current')} />
+            <span className={cn("mr-1.5 h-1 w-1 rounded-full", (statusLabel === 'APPROVED' || statusLabel === 'COMPLETED' || statusLabel === 'CONFIRMED') ? 'bg-indigo-500' : 'bg-current')} />
             {status.replace('_', ' ')}
         </span>
     );

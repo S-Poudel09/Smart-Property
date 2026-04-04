@@ -42,7 +42,7 @@ export const LoanTimeline = ({ status, updatedAt }: LoanTimelineProps) => {
                         <div key={step.id} className="relative flex items-start gap-4">
                             <div className={cn(
                                 "relative z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 transition-colors",
-                                isCompleted ? "bg-emerald-500 border-emerald-500 text-white" :
+                                isCompleted ? "bg-indigo-500 border-indigo-500 text-white" :
                                     isActive ? (status === 'REJECTED' ? "bg-rose-500 border-rose-500 text-white" : "bg-blue-600 border-blue-600 text-white") :
                                         "bg-white border-gray-200 text-gray-400"
                             )}>
