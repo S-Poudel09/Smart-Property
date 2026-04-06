@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Smart Property System
 
-## Getting Started
+Smart Property is a full-stack web and mobile application designed to simplify property buying, selling, and management with secure verification and smart features.
 
-First, run the development server:
+---
+
+## Features
+
+* User Authentication with KYC Verification
+* Role-based system (Admin, Seller, Buyer)
+* Property listing with admin approval
+* Real-time chat between users
+* Loan eligibility and EMI prediction
+* Notifications system
+* Transaction management
+* GIS-based property location
+
+---
+
+## Tech Stack
+
+### Backend
+
+* Django
+* Django REST Framework
+
+### Frontend
+
+* Next.js (React)
+* TypeScript
+
+### Mobile App
+
+* React Native
+
+### Database
+
+* PostgreSQL
+
+---
+
+## Project Structure
+
+* backend/ → Django backend API
+* frontend/ → Web application (Next.js)
+* mobile/ → Mobile application
+
+---
+
+## How to Run
+
+### Backend
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cd backend
+pip install -r requirements.txt
+python manage.py runserver
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Frontend
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Author
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Princess Poudel**
