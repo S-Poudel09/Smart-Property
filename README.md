@@ -1,55 +1,51 @@
 # Smart Property System
 
-Smart Property is a full-stack web and mobile application designed to simplify property buying, selling, and management with secure verification and smart features.
+Smart Property is a web and mobile application developed to make buying, selling, and managing properties easier and more secure. The system includes features like user verification, property approval, and communication between users.
 
 
 
 ## Features
 
-* User Authentication with KYC Verification
-* Role-based system (Admin, Seller, Buyer)
-* Property listing with admin approval
-* Real-time chat between users
-* Loan eligibility and EMI prediction
-* Notifications system
-* Transaction management
-* GIS-based property location
+- User registration and login with KYC verification  
+- Different user roles (Admin, Seller, Buyer)  
+- Property listing with admin approval system  
+- Chat system for communication between users  
+- Loan eligibility and EMI calculation  
+- Notification system  
+- Transaction handling  
+- Property location using map integration  
+
 
 
 ## Tech Stack
 
 ### Backend
-
-* Django
-* Django REST Framework
+- Django  
+- Django REST Framework  
 
 ### Frontend
-
-* Next.js (React)
-* TypeScript
+- Next.js (React)  
+- TypeScript  
 
 ### Mobile App
-
-* React Native
+- React Native  
 
 ### Database
-
-* PostgreSQL
+- PostgreSQL  
 
 
 
 ## Project Structure
 
-* backend/ → Django backend API
-* frontend/ → Web application (Next.js)
-* mobile/ → Mobile application
+- backend/ – contains Django backend and APIs  
+- frontend/ – contains web application (Next.js)  
+- mobile/ – contains mobile application  
 
 
 
 ## How to Run
 
 ### Backend
-
 ```bash
 cd backend
 pip install -r requirements.txt
@@ -57,7 +53,6 @@ python manage.py runserver
 ```
 
 ### Frontend
-
 ```bash
 cd frontend
 npm install
@@ -68,4 +63,4 @@ npm run dev
 
 ## Author
 
-**Princess Poudel**
+Princess Poudel
