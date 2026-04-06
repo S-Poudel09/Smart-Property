@@ -216,6 +216,48 @@ class PropertyViewSet(viewsets.ModelViewSet):
 
         return Response({"message": "Property rejected", "reason": reason})
 
+    @action(detail=True, methods=['post'], url_path='predict-price', permission_classes=[permissions.IsAuthenticated])
+    def predict_price(self, request, pk=None):
+        """
+        Use rule-based logic to estimate property value based on node telemetry.
+        """
+        from .ml_utils import PropertyPricePredictor
+        try:
+            property_obj = self.get_object()
+        except Exception:
+            return Response({"error": "Property node not found"}, status=status.HTTP_404_NOT_FOUND)
+            
+        # Extract features for prediction
+        data = {
+            'area_sqft': property_obj.area_sqft or 0,
+            'bedrooms': property_obj.beds or 1,
+            'bathrooms': property_obj.baths or 1,
+            'property_type': property_obj.property_type,
+            'location': property_obj.location,
+            'stories': property_obj.stories or 1,
+            'mainroad': property_obj.mainroad,
+            'airconditioning': property_obj.airconditioning,
+            'parking_spaces': property_obj.parking_spaces or 0
+        }
+        
+        # Override with request data if provided (user can play with variables)
+        if request.data:
+            data.update(request.data)
+            
+        predicted_price = PropertyPricePredictor.predict(data)
+        
+        return Response({
+            "status": "success",
+            "prediction": {
+                "estimated_price": predicted_price,
+                "confidence": 0.85, # Rule-based confidence
+                "model_type": "SmartProperty-V1-RuleBased",
+                "features_analyzed": list(data.keys()),
+                "market_trend": "stable"
+            },
+            "system_audit": "Automated valuation based on registry historical weights."
+        })
+
     @action(detail=True, methods=['post'], url_path='verify-document/(?P<doc_id>[^/.]+)', permission_classes=[permissions.IsAuthenticated, IsSellerUser])
     def ocr_verify(self, request, pk=None, doc_id=None):
         """
@@ -227,9 +269,6 @@ class PropertyViewSet(viewsets.ModelViewSet):
                 return Response({"error": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
             
             # Simulate OCR logic
-            import time
-            # time.sleep(1) # Simulating processing delay
-            
             doc.is_verified = True
             doc.ocr_data = {
                 "document_number": "DOC-123456",
@@ -247,3 +286,50 @@ class PropertyViewSet(viewsets.ModelViewSet):
             })
         except PropertyDocument.DoesNotExist:
             return Response({"error": "Document not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=True, methods=['post'], url_path='add-review', permission_classes=[permissions.IsAuthenticated])
+    def add_review(self, request, pk=None):
+        """
+        Add a social proof review for this property node.
+        """
+        from .models import Review
+        # Importing ReviewSerializer locally to avoid circulars if any
+        from .serializers import ReviewSerializer
+        from transactions.models import Transaction
+
+        property_obj = self.get_object()
+        user = request.user
+        
+        rating = request.data.get('rating', 5)
+        comment = request.data.get('comment', '')
+        
+        if not comment:
+            return Response({"error": "Comment required"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            rating = int(rating)
+            if not (1 <= rating <= 5): raise ValueError()
+        except ValueError:
+            return Response({"error": "Rating must be between 1 and 5"}, status=400)
+            
+        # Check if verified purchase
+        is_verified = Transaction.objects.filter(
+            property=property_obj, 
+            buyer=user, 
+            status='COMPLETED'
+        ).exists()
+        
+        review, created = Review.objects.update_or_create(
+            property=property_obj,
+            user=user,
+            defaults={
+                'rating': rating,
+                'comment': comment,
+                'is_verified_purchase': is_verified
+            }
+        )
+        
+        return Response({
+            "message": "Review synchronized",
+            "review": ReviewSerializer(review).data
+        })

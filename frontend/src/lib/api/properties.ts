@@ -140,8 +140,8 @@ export const getProperty = async (id: string): Promise<Property | null> => {
         location: item.location || `${item.city || ''}, ${item.address || ''}`,
         address: item.address,
         city: item.city,
-        lat: item.lat || item.latitude || (item.id?.length % 2 === 0 ? 27.7172 : 27.700769),
-        lng: item.lng || item.longitude || (item.id?.length % 2 === 0 ? 85.3240 : 85.300140),
+        lat: item.lat || item.latitude || (27.7000 + (parseInt(item.id?.substring(0, 8) || '0', 16) % 1000) / 10000),
+        lng: item.lng || item.longitude || (85.3000 + (parseInt(item.id?.substring(8, 16) || '0', 16) % 1000) / 10000),
         type: item.listing_type || 'sale',
         category: item.property_type || 'house',
         bedrooms: item.beds || 0,
@@ -167,13 +167,8 @@ export const getProperty = async (id: string): Promise<Property | null> => {
         status: item.status,
         isVerified: item.is_verified,
         rejectionReason: item.rejection_reason,
-        boundaryCoordinates: item.boundary_coordinates || [
-            [27.7172 + 0.0005, 85.3240 + 0.0005],
-            [27.7172 + 0.0005, 85.3240 - 0.0005],
-            [27.7172 - 0.0005, 85.3240 - 0.0005],
-            [27.7172 - 0.0005, 85.3240 + 0.0005]
-        ],
-        virtualTourUrl: item.virtual_tour_url || 'https://my.matterport.com/show/?m=rnBstA7s1V7',
+        boundaryCoordinates: item.boundary_coordinates,
+        virtualTourUrl: item.virtual_tour_url,
         features: item.features || [],
         createdAt: item.created_at,
         updatedAt: item.updated_at,
@@ -189,5 +184,10 @@ export const getProperty = async (id: string): Promise<Property | null> => {
 
 export const verifyDocument = async (propertyId: string, docId: string) => {
     const response = await api.post(`properties/${propertyId}/verify-document/${docId}/`);
+    return response.data;
+};
+
+export const predictPrice = async (id: string, customData?: any) => {
+    const response = await api.post(`properties/${id}/predict-price/`, customData || {});
     return response.data;
 };

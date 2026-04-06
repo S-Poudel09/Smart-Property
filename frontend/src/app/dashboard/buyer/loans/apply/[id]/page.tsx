@@ -58,20 +58,32 @@ export default function ApplyLoanPage({ params }: { params: Promise<{ id: string
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        const pAmount = parseFloat(form.loan_amount);
+        const pRate = parseFloat(form.interest_rate);
+        const pAge = parseInt(form.age);
+        const pScore = parseInt(form.credit_score);
+        const pTermYears = parseInt(form.loan_term);
+
+        if (isNaN(pAmount) || pAmount <= 0 || isNaN(pRate) || pRate <= 0 || isNaN(pAge) || pAge < 18 || isNaN(pScore) || isNaN(pTermYears)) {
+            toast.error('Please verify all numeric parameters are valid and positive.');
+            return;
+        }
+
         try {
             await applyForLoan({ 
                 PropertyID: id,
-                LoanAmount: form.loan_amount,
-                InterestRate: form.interest_rate,
-                Age: form.age,
-                CreditScore: form.credit_score,
-                LoanTerm: parseInt(form.loan_term) * 12
+                LoanAmount: pAmount,
+                InterestRate: pRate,
+                Age: pAge,
+                CreditScore: pScore,
+                LoanTerm: pTermYears * 12
             });
             toast.success('Loan Application Submitted!');
             router.push('/dashboard/buyer/loans');
         } catch (e: any) {
-            console.error('Submission failed', e.response?.data);
-            toast.error(JSON.stringify(e.response?.data) || 'Failed to submit application');
+            const msg = e.response?.data ? JSON.stringify(e.response.data) : 'Failed to submit application';
+            toast.error(msg);
         }
     };
 

@@ -134,3 +134,20 @@ class PropertyDocument(models.Model):
 
     def __str__(self):
         return f"{self.get_doc_type_display()} for {self.property.title}"
+
+
+class Review(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='reviews')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reviews')
+    rating = models.IntegerField(default=5) # 1-5 stars
+    comment = models.TextField()
+    is_verified_purchase = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ('property', 'user') # One review per user per property
+
+    def __str__(self):
+        return f"Review by {self.user.email} on {self.property.title}"

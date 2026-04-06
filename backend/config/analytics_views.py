@@ -31,25 +31,34 @@ class SystemAnalyticsView(APIView):
             total_transactions = Transaction.objects.count()
             
             # Revenue from transactions
-            total_revenue = Transaction.objects.filter(status='COMPLETED').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+            completed_txns = Transaction.objects.filter(status='COMPLETED')
+            total_revenue = completed_txns.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+            
+            # Category Distribution
+            category_data = Property.objects.values('property_type').annotate(count=Count('id')).order_by('-count')
+            category_distribution = {item['property_type']: item['count'] for item in category_data}
             
             # Growth (last 30 days)
             last_month = timezone.now() - timedelta(days=30)
             new_users_month = User.objects.filter(date_joined__gte=last_month).count()
             user_growth = (new_users_month / total_users * 100) if total_users > 0 else 0
             
-            # Try to fetch historical data from PostgreSQL snapshot if available
-            from analytics.utils import get_analytics_snapshot
-            snapshot = get_analytics_snapshot()
+            # Fraud metrics
+            from analytics.models import AnalyticsSnapshot
+            snapshot = AnalyticsSnapshot.objects.order_by('-date').first()
+            active_fraud = snapshot.active_fraud_alerts if snapshot else 0
             
-            # Chart Data (Past 7 days) - Daily Transaction Count
+            # Chart Data (Past 7 days) - Volume and Revenue
             chart_data = []
-            for i in range(6, -1, -1):
+            for i in range(11, -1, -1): # Past 12 days for better view
                 date = timezone.now() - timedelta(days=i)
-                count = Transaction.objects.filter(created_at__date=date.date()).count()
+                day_txns = Transaction.objects.filter(created_at__date=date.date())
+                count = day_txns.count()
+                daily_revenue = day_txns.filter(status='COMPLETED').aggregate(Sum('total_amount'))['total_amount__sum'] or 0
                 chart_data.append({
-                    'name': date.strftime('%a'),
-                    'amount': count
+                    'name': date.strftime('%b %d'),
+                    'count': count,
+                    'revenue': float(daily_revenue)
                 })
 
             return Response({
@@ -58,8 +67,9 @@ class SystemAnalyticsView(APIView):
                 'totalTransactions': total_transactions,
                 'revenue': float(total_revenue),
                 'userGrowth': round(user_growth, 1),
-                'transactionData': chart_data,
-                'snapshot': snapshot # Live snapshot from PostgreSQL
+                'activeFraudAlerts': active_fraud,
+                'categoryDistribution': category_distribution,
+                'performanceData': chart_data,
             })
         except Exception as e:
             return Response({"error": f"Analytics engine failure: {str(e)}"}, status=500)

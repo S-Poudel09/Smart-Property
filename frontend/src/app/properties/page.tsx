@@ -136,6 +136,7 @@ export default function PropertiesPage() {
                                     onFilterChange={setFilters}
                                     onApply={handleApply}
                                     onReset={handleReset}
+                                    properties={properties}
                                 />
                             </div>
                         </div>

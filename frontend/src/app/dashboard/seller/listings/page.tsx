@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { getProperties, submitProperty } from '@/lib/api/properties';
 import { Property } from '@/types/property';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -14,6 +15,7 @@ import { Plus, Eye, Edit, Trash2, Search, Filter, Send, MoreVertical, LayoutGrid
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function SellerListingsPage() {
+    const router = useRouter();
     const [properties, setProperties] = useState<Property[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -38,12 +40,24 @@ export default function SellerListingsPage() {
     const handleSubmitForReview = async (id: string) => {
         try {
             await submitProperty(id);
-            toast.success("Property submitted for review");
+            toast.success('Property submitted for review');
             loadProperties();
         } catch (e) {
-            toast.error("Failed to submit property");
+            toast.error('Failed to submit property');
         }
-    }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('Are you sure you want to delete this listing? This cannot be undone.')) return;
+        try {
+            const api = (await import('@/lib/api/http')).default;
+            await api.delete(`properties/${id}/`);
+            toast.success('Listing deleted successfully');
+            loadProperties();
+        } catch (e) {
+            toast.error('Failed to delete listing');
+        }
+    };
 
     const filtered = properties.filter(p => 
         p.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -121,7 +135,7 @@ export default function SellerListingsPage() {
                                             className="hover:bg-gray-50/50 transition-colors"
                                         >
                                             <td className="p-4 whitespace-nowrap">
-                                                <div className="font-bold text-gray-900 group-hover:text-primary transition-colors cursor-pointer" onClick={() => window.location.href=`/dashboard/seller/listings/${property.id}`}>
+                                                <div className="font-bold text-gray-900 group-hover:text-primary transition-colors cursor-pointer" onClick={() => router.push(`/dashboard/seller/listings/${property.id}`)}>
                                                     {property.title}
                                                 </div>
                                                 <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
@@ -153,19 +167,19 @@ export default function SellerListingsPage() {
                                                     )}
                                                     <button 
                                                         className="h-8 w-8 rounded-lg text-gray-400 hover:text-primary hover:bg-gray-100 transition-all flex items-center justify-center"
-                                                        onClick={() => window.location.href = `/dashboard/seller/listings/${property.id}`}
+                                                        onClick={() => router.push(`/dashboard/seller/listings/${property.id}`)}
                                                     >
                                                         <Eye className="w-4 h-4" />
                                                     </button>
                                                     <button 
                                                         className="h-8 w-8 rounded-lg text-gray-400 hover:text-primary hover:bg-gray-100 transition-all flex items-center justify-center"
-                                                        onClick={() => window.location.href = `/dashboard/seller/listings/${property.id}/edit`}
+                                                        onClick={() => router.push(`/dashboard/seller/listings/${property.id}/edit`)}
                                                     >
                                                         <Edit className="w-4 h-4" />
                                                     </button>
                                                     <button 
                                                         className="h-8 w-8 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all flex items-center justify-center"
-                                                        onClick={() => { if(confirm('Delete listing?')) toast.error('Use detail page to delete assets'); }}
+                                                        onClick={() => handleDelete(property.id)}
                                                     >
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
@@ -199,7 +213,7 @@ export default function SellerListingsPage() {
                                 </div>
                                 <h3 
                                     className="font-bold text-gray-900 group-hover:text-primary transition-colors mb-1 line-clamp-1 cursor-pointer"
-                                    onClick={() => window.location.href = `/dashboard/seller/listings/${property.id}`}
+                                    onClick={() => router.push(`/dashboard/seller/listings/${property.id}`)}
                                 >
                                     {property.title}
                                 </h3>
@@ -218,7 +232,7 @@ export default function SellerListingsPage() {
                                         )}
                                         <button 
                                             className="p-1 text-gray-400 hover:bg-gray-100 rounded transition-all"
-                                            onClick={() => window.location.href = `/dashboard/seller/listings/${property.id}`}
+                                            onClick={() => router.push(`/dashboard/seller/listings/${property.id}`)}
                                         >
                                             <Eye className="h-4 w-4" />
                                         </button>

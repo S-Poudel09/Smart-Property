@@ -36,6 +36,11 @@ const mockMarketData = [
 export default function BuyerDashboard() {
     const [stats, setStats] = useState<BuyerStats | null>(null);
     const [loading, setLoading] = useState(true);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     useEffect(() => {
         const load = async () => {
@@ -137,43 +142,45 @@ export default function BuyerDashboard() {
                         </div>
                         
                         <div className="h-[250px] w-full relative z-10">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={mockMarketData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                                    <defs>
-                                        <linearGradient id="colorIndex" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
-                                            <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                    <XAxis 
-                                        dataKey="name" 
-                                        axisLine={false} 
-                                        tickLine={false} 
-                                        tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} 
-                                        dy={10}
-                                    />
-                                    <YAxis hide />
-                                    <Tooltip 
-                                        contentStyle={{ 
-                                            borderRadius: '16px', 
-                                            border: 'none', 
-                                            boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
-                                            fontWeight: '800',
-                                            fontSize: '12px'
-                                        }}
-                                    />
-                                    <Area 
-                                        type="monotone" 
-                                        dataKey="index" 
-                                        stroke="#6366f1" 
-                                        strokeWidth={4} 
-                                        fillOpacity={1} 
-                                        fill="url(#colorIndex)" 
-                                        animationDuration={1500}
-                                    />
-                                </AreaChart>
-                            </ResponsiveContainer>
+                            {mounted && (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={mockMarketData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                        <defs>
+                                            <linearGradient id="colorIndex" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
+                                                <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                        <XAxis 
+                                            dataKey="name" 
+                                            axisLine={false} 
+                                            tickLine={false} 
+                                            tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} 
+                                            dy={10}
+                                        />
+                                        <YAxis hide />
+                                        <Tooltip 
+                                            contentStyle={{ 
+                                                borderRadius: '16px', 
+                                                border: 'none', 
+                                                boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+                                                fontWeight: '800',
+                                                fontSize: '12px'
+                                            }}
+                                        />
+                                        <Area 
+                                            type="monotone" 
+                                            dataKey="index" 
+                                            stroke="#6366f1" 
+                                            strokeWidth={4} 
+                                            fillOpacity={1} 
+                                            fill="url(#colorIndex)" 
+                                            animationDuration={1500}
+                                        />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            )}
                         </div>
                     </div>
 

@@ -16,10 +16,10 @@ import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const registerSchema = z.object({
-    name: z.string().min(2, 'Name must be at least 2 characters'),
-    email: z.string().email('Invalid email address'),
-    password: z.string().min(6, 'Password must be at least 6 characters'),
-    confirmPassword: z.string(),
+    name: z.string().min(1, 'Entity name is required').min(2, 'Name must be at least 2 characters'),
+    email: z.string().min(1, 'Communication channel is required').email('Invalid email address'),
+    password: z.string().min(1, 'Security key is required').min(6, 'Password must be at least 6 characters'),
+    confirmPassword: z.string().min(1, 'Please re-enter your key'),
     role: z.enum(['buyer', 'seller'] as const),
 }).refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",

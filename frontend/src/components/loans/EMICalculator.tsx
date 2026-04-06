@@ -19,15 +19,26 @@ export default function EMICalculator() {
     const [loading, setLoading] = useState(false);
 
     const handleCalculate = async () => {
+        const pAmount = parseFloat(amount);
+        const pRate = parseFloat(rate);
+        const pTenure = parseInt(tenure);
+        const pIncome = parseFloat(income);
+
+        if (isNaN(pAmount) || pAmount <= 0 || isNaN(pRate) || pRate <= 0 || isNaN(pTenure) || pTenure <= 0 || isNaN(pIncome) || pIncome <= 0) {
+            toast.error('Please enter valid positive numeric values for all parameters.');
+            return;
+        }
+        
         setLoading(true);
         try {
-            const res = await calculateEMI(parseFloat(amount), parseFloat(rate), parseInt(tenure));
+            const res = await calculateEMI(pAmount, pRate, pTenure);
             setEmiResult(res);
             
-            const elig = await checkEligibility(parseFloat(income), parseFloat(amount));
+            const elig = await checkEligibility(pIncome, pAmount);
             setEligibility(elig);
-        } catch (e) {
-            toast.error('Failed to calculate. Check your inputs.');
+        } catch (e: any) {
+            const msg = e.response?.data ? Object.values(e.response.data).flat().join(', ') : 'Calculation failure. Check registry data.';
+            toast.error(msg);
         } finally {
             setLoading(false);
         }
@@ -124,16 +135,16 @@ export default function EMICalculator() {
                             {/* EMI Card */}
                             <div className="bg-white p-6 rounded-3xl shadow-sm border border-blue-100">
                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Monthly EMI</p>
-                                <p className="text-4xl font-black text-blue-600 mb-4">{formatNPR(emiResult.monthly_emi)}</p>
+                                <p className="text-4xl font-black text-blue-600 mb-4">{formatNPR(emiResult.MonthlyEMI)}</p>
                                 
                                 <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-50">
                                     <div>
                                         <p className="text-[10px] text-gray-400 uppercase font-bold">Total Interest</p>
-                                        <p className="font-bold text-gray-900">{formatNPR(emiResult.total_interest)}</p>
+                                        <p className="font-bold text-gray-900">{formatNPR(emiResult.TotalInterest)}</p>
                                     </div>
                                     <div className="text-right">
                                         <p className="text-[10px] text-gray-400 uppercase font-bold">Total Payable</p>
-                                        <p className="font-bold text-gray-900">{formatNPR(emiResult.total_payable)}</p>
+                                        <p className="font-bold text-gray-900">{formatNPR(emiResult.TotalPayable)}</p>
                                     </div>
                                 </div>
                             </div>
@@ -141,7 +152,7 @@ export default function EMICalculator() {
                             {/* Eligibility Status */}
                             <div className={`p-6 rounded-3xl border ${
                                 !eligibility ? 'bg-gray-50 border-gray-100' :
-                                eligibility.is_eligible 
+                                eligibility.IsEligible 
                                     ? 'bg-indigo-50 border-indigo-100' 
                                     : 'bg-red-50 border-red-100'
                             }`}>
@@ -155,28 +166,28 @@ export default function EMICalculator() {
                                     </div>
                                 ) : (
                                     <div className="flex items-start gap-4">
-                                        {eligibility.is_eligible ? (
+                                        {eligibility.IsEligible ? (
                                             <CheckCircle className="h-6 w-6 text-indigo-700 shrink-0" />
                                         ) : (
                                             <AlertCircle className="h-6 w-6 text-red-600 shrink-0" />
                                         )}
                                         <div>
-                                            <h3 className={`font-bold ${eligibility.is_eligible ? 'text-green-900' : 'text-red-900'}`}>
-                                                {eligibility.is_eligible ? 'Likely Eligible' : 'Eligibility Warning'}
+                                            <h3 className={`font-bold ${eligibility.IsEligible ? 'text-green-900' : 'text-red-900'}`}>
+                                                {eligibility.IsEligible ? 'Likely Eligible' : 'Eligibility Warning'}
                                             </h3>
-                                            <p className={`text-sm mt-1 mb-4 ${eligibility.is_eligible ? 'text-indigo-800' : 'text-red-700'}`}>
-                                                {eligibility.recommendation || 'No recommendation provided.'}
+                                            <p className={`text-sm mt-1 mb-4 ${eligibility.IsEligible ? 'text-indigo-800' : 'text-red-700'}`}>
+                                                {eligibility.Recommendation || 'No recommendation provided.'}
                                             </p>
                                             
                                             <div className="space-y-2">
                                                 <div className="flex justify-between text-xs font-medium">
                                                     <span className="opacity-60">Max Monthly Debt Allowed</span>
-                                                    <span className="font-bold">{formatNPR(eligibility.max_allowed_emi || 0)}</span>
+                                                    <span className="font-bold">{formatNPR(eligibility.MaxAllowedEMI || 0)}</span>
                                                 </div>
                                                 <div className="w-full h-1.5 bg-white/50 rounded-full overflow-hidden">
                                                     <div 
-                                                        className={`h-full transition-all duration-1000 ${eligibility.is_eligible ? 'bg-indigo-600' : 'bg-red-500'}`}
-                                                        style={{ width: `${Math.min(100, (eligibility.estimated_emi / (eligibility.max_allowed_emi || 1)) * 100)}%` }}
+                                                        className={`h-full transition-all duration-1000 ${eligibility.IsEligible ? 'bg-indigo-600' : 'bg-red-500'}`}
+                                                        style={{ width: `${Math.min(100, (eligibility.EstimatedEMI / (eligibility.MaxAllowedEMI || 1)) * 100)}%` }}
                                                     />
                                                 </div>
                                             </div>

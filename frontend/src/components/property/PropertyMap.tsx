@@ -29,7 +29,13 @@ interface PropertyMapProps {
 function ChangeView({ center, zoom }: { center: [number, number], zoom: number }) {
     const map = useMap();
     useEffect(() => {
-        map.setView(center, zoom);
+        if (center && center[0] !== undefined && center[1] !== undefined) {
+            const lat = Number(center[0]);
+            const lng = Number(center[1]);
+            if (!isNaN(lat) && !isNaN(lng)) {
+                map.setView([lat, lng], zoom);
+            }
+        }
     }, [center, zoom, map]);
     return null;
 }
@@ -43,6 +49,10 @@ export default function PropertyMap({ center, zoom = 15, boundary, title }: Prop
     }, []);
 
     if (!mounted) return <div className="h-[500px] w-full bg-slate-900/5 animate-pulse rounded-[2.5rem] border border-slate-200" />;
+
+    const lat = Number(center[0]);
+    const lng = Number(center[1]);
+    const safeCenter: [number, number] = [isNaN(lat) ? 0 : lat, isNaN(lng) ? 0 : lng];
 
     return (
         <div className="h-[500px] w-full rounded-[2.5rem] overflow-hidden border border-slate-200 shadow-inner relative z-0 group">
@@ -63,13 +73,14 @@ export default function PropertyMap({ center, zoom = 15, boundary, title }: Prop
             </div>
 
             <MapContainer 
-                center={center} 
+                key={`${safeCenter[0]}-${safeCenter[1]}-map`} // Fix for 'Map container is being reused by another instance' in React StrictMode
+                center={safeCenter} 
                 zoom={zoom} 
                 scrollWheelZoom={false} 
                 style={{ height: '100%', width: '100%' }}
                 zoomControl={false}
             >
-                <ChangeView center={center} zoom={zoom} />
+                <ChangeView center={safeCenter} zoom={zoom} />
                 
                 {mapLayer === 'street' ? (
                     <TileLayer
@@ -84,7 +95,7 @@ export default function PropertyMap({ center, zoom = 15, boundary, title }: Prop
                 )}
                 
                 {/* Property Marker */}
-                <Marker position={center}>
+                <Marker position={safeCenter}>
                     <Popup>
                         <div className="p-2">
                             <div className="text-[10px] font-black uppercase tracking-widest text-indigo-600 mb-1">Verified Location</div>
@@ -116,8 +127,8 @@ export default function PropertyMap({ center, zoom = 15, boundary, title }: Prop
                     </p>
                     <div className="space-y-1">
                         <p className="text-[11px] text-slate-500 font-bold leading-relaxed">
-                            Lat: <span className="text-slate-900">{center[0].toFixed(6)}</span> <br />
-                            Lng: <span className="text-slate-900">{center[1].toFixed(6)}</span>
+                            Lat: <span className="text-slate-900">{safeCenter[0].toFixed(6)}</span> <br />
+                            Lng: <span className="text-slate-900">{safeCenter[1].toFixed(6)}</span>
                         </p>
                         <p className="text-[10px] font-black uppercase tracking-widest text-indigo-600">Land Revenue Status: Matched</p>
                     </div>

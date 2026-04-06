@@ -1,6 +1,7 @@
 'use client';
 
-import { Search, RotateCcw, Filter, Map, Layers, Zap } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, RotateCcw, Filter, Map, Layers, Zap, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PropertyCategory } from '@/types/property';
 import { NEPAL_PROPERTY_CATEGORIES, NEPAL_AMENITIES, NEPAL_DISTRICTS } from '@/lib/utils/currency';
@@ -22,9 +23,26 @@ interface PropertyFiltersProps {
     onFilterChange: (filters: FilterState) => void;
     onApply: () => void;
     onReset: () => void;
+    properties?: any[];
 }
 
-const PropertyFilters = ({ filters, onFilterChange, onApply, onReset }: PropertyFiltersProps) => {
+const PropertyFilters = ({ filters, onFilterChange, onApply, onReset, properties = [] }: PropertyFiltersProps) => {
+    const [suggestions, setSuggestions] = useState<string[]>([]);
+    
+    useEffect(() => {
+        if (!filters.search || filters.search.length < 2) {
+            setSuggestions([]);
+            return;
+        }
+        const searchLower = filters.search.toLowerCase();
+        const matches = new Set<string>();
+        properties.forEach(p => {
+            if (p.title.toLowerCase().includes(searchLower)) matches.add(p.title);
+            if (p.location.toLowerCase().includes(searchLower)) matches.add(p.location);
+        });
+        setSuggestions(Array.from(matches).slice(0, 5));
+    }, [filters.search, properties]);
+
     const updateFilter = <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
         onFilterChange({ ...filters, [key]: value });
     };
@@ -51,6 +69,31 @@ const PropertyFilters = ({ filters, onFilterChange, onApply, onReset }: Property
                         value={filters.search}
                         onChange={(e) => updateFilter('search', e.target.value)}
                     />
+                    
+                    <AnimatePresence>
+                        {suggestions.length > 0 && (
+                            <motion.div 
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="absolute left-0 right-0 top-full mt-2 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 overflow-hidden"
+                            >
+                                {suggestions.map((s, idx) => (
+                                    <button 
+                                        key={idx}
+                                        onClick={() => {
+                                            updateFilter('search', s);
+                                            setSuggestions([]);
+                                        }}
+                                        className="w-full px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 hover:text-indigo-600 border-b border-slate-50 last:border-0 transition-all flex items-center justify-between group/s"
+                                    >
+                                        <span className="truncate italic">{s}</span>
+                                        <ArrowRight className="h-3 w-3 opacity-0 group-hover/s:opacity-100 -translate-x-2 group-hover/s:translate-x-0 transition-all" />
+                                    </button>
+                                ))}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </div>
 

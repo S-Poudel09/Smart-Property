@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { getTransactions, Transaction } from '@/lib/api/transactions';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Loader } from '@/components/common/Loader';
@@ -11,6 +12,7 @@ import { Receipt, Search, Download, Home, Clock, CreditCard, ChevronRight, Filte
 import Link from 'next/link';
 
 export default function BuyerTransactionsPage() {
+    const router = useRouter();
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -127,7 +129,7 @@ export default function BuyerTransactionsPage() {
                                         <div>
                                             <h3 
                                                 className="text-2xl font-black text-primary font-outfit truncate max-w-xs xl:max-w-md cursor-pointer hover:text-accent transition-colors leading-none tracking-tighter mb-4" 
-                                                onClick={() => tx.Property?.id && (window.location.href=`/properties/${tx.Property.id}`)}
+                                                onClick={() => tx.Property?.id && router.push(`/properties/${tx.Property.id}`)}
                                             >
                                                 {tx.Property?.title ?? 'Property Inquiry'}
                                             </h3>

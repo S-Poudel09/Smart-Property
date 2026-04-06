@@ -25,6 +25,7 @@ const InputField = ({ label, name, type = "text", required = false, placeholder 
             value={value}
             onChange={onChange}
             placeholder={placeholder}
+            required={required}
             className={`w-full px-5 py-3.5 bg-slate-50 border rounded-2xl text-sm font-medium focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 focus:bg-white outline-none transition-all duration-300 ${
                 error ? 'border-red-400 bg-red-50/10' : 'border-slate-200'
             }`}
@@ -86,11 +87,38 @@ function AddListingContent() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setFieldErrors({});
-
-        if (step < 2) {
+        
+        // Manual Validation Check Segment
+        const errors: Record<string, string[]> = {};
+        if (step === 1) {
+            if (!form.title.trim()) errors.title = ['Please enter asset designation'];
+            if (!form.price.trim()) errors.price = ['Acquisition price is required'];
+            if (!form.area_sqft.trim()) errors.area_sqft = ['Total land area is required'];
+            if (!form.district) errors.district = ['Select administrative territory'];
+            if (!form.municipality.trim()) errors.municipality = ['Municipality area required'];
+            if (!form.ward.trim()) errors.ward = ['Sector / Ward required'];
+            if (!form.address.trim()) errors.address = ['Tactical address required'];
+            
+            if (Object.keys(errors).length > 0) {
+                setFieldErrors(errors);
+                toast.error("Required fields missing in parameters.");
+                return;
+            }
+            
             setStep(step + 1);
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
+        }
+
+        if (step === 2) {
+            if (images.length < 1) {
+                toast.error("Minimum 1 high-resolution capture required.");
+                return;
+            }
+            if (documents.length < 1) {
+                toast.error("Verification credentials (Title Deed) required.");
+                return;
+            }
         }
 
         setLoading(true);

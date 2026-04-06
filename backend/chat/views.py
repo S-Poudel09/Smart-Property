@@ -62,6 +62,12 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='room/(?P<room_id>[^/.]+)')
     def room_messages(self, request, room_id=None):
+        import uuid
+        try:
+            uuid.UUID(str(room_id))
+        except ValueError:
+            return Response({"error": "Invalid room ID format"}, status=status.HTTP_400_BAD_REQUEST)
+            
         messages = Message.objects.filter(room_id=room_id, room__participants=request.user).order_by('timestamp')
         # Mark as read
         messages.exclude(sender=request.user).update(status="READ")

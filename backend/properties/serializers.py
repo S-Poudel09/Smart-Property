@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Property, PropertyImage, PropertyDocument
+from .models import Property, PropertyImage, PropertyDocument, Review
+from accounts.serializers import UserSerializer
 
 class PropertyImageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -13,6 +14,13 @@ class PropertyDocumentSerializer(serializers.ModelSerializer):
         model = PropertyDocument
         fields = ('id', 'document', 'doc_type', 'doc_type_display', 'is_verified', 'ocr_data', 'created_at')
 
+class ReviewSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    
+    class Meta:
+        model = Review
+        fields = ('id', 'user', 'rating', 'comment', 'is_verified_purchase', 'created_at')
+
 class PropertySerializer(serializers.ModelSerializer):
     # Mapping to match requested names if needed, but keeping snake_case for consistency
     # We can use aliases if the user specifically wanted PascalCase in API
@@ -25,6 +33,17 @@ class PropertySerializer(serializers.ModelSerializer):
     # Nested serializers
     property_images = PropertyImageSerializer(many=True, read_only=True)
     property_documents = PropertyDocumentSerializer(many=True, read_only=True)
+    reviews = ReviewSerializer(many=True, read_only=True)
+    owner = UserSerializer(read_only=True)
+    
+    rating_stats = serializers.SerializerMethodField()
+
+    def get_rating_stats(self, obj):
+        reviews = obj.reviews.all()
+        if not reviews:
+            return {"average": 0, "count": 0}
+        avg = sum(r.rating for r in reviews) / len(reviews)
+        return {"average": round(avg, 1), "count": len(reviews)}
     
     # For uploading
     uploaded_images = serializers.ListField(
@@ -39,7 +58,7 @@ class PropertySerializer(serializers.ModelSerializer):
     class Meta:
         model = Property
         fields = (
-            'PropertyID', 'title', 'description', 'location', 'latitude', 
+            'id', 'owner', 'PropertyID', 'title', 'description', 'location', 'latitude', 
             'longitude', 'price', 'property_type', 'OwnerID', 'seller_id', 'CreatedAt',
             'listing_type', 'beds', 'baths', 'area_sqft', 'area_ropani', 'area_anna', 
             'city', 'ward', 'district', 'municipality', 'status', 'is_verified',
@@ -48,7 +67,7 @@ class PropertySerializer(serializers.ModelSerializer):
             'stories', 'mainroad', 'guestroom', 'basement', 'hotwaterheating',
             'airconditioning', 'parking_spaces', 'prefarea', 'furnishing_status',
             'hostel_gender', 'room_type', 'food_included', 'has_wifi', 'has_laundry',
-            'bathroom_type', 'available_beds', 'workflow_step'
+            'bathroom_type', 'available_beds', 'workflow_step', 'reviews', 'rating_stats'
         )
         # We can also keep the original names for internal use
         extra_kwargs = {

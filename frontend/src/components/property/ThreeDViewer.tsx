@@ -1,49 +1,131 @@
-'use client';
-
+import * as THREE from 'three';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Stage, Environment } from '@react-three/drei';
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense, useState, useEffect, memo } from 'react';
 import { X, Maximize2, Move, Play, RotateCcw, ShieldCheck, Zap, Globe, Sparkles, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Robust, high-fidelity stable Matterport IDs that are verified for embedding
-// JGPuSuihtZ9 is a very common stable demo id
-const DEMO_IDS = [
-    'JGPuSuihtZ9', 
-    'rnBstA7s1V7',
-    'JGPuSuihtZ9'
-];
+export function HouseModel({ propertyType = 'house', beds = 1 }: { propertyType?: string, beds?: number }) {
+  if (propertyType.toLowerCase() === 'land') {
+    return (
+        <group dispose={null}>
+          <mesh position={[0, -0.05, 0.5]} receiveShadow>
+            <boxGeometry args={[6, 0.2, 6]} />
+            <meshStandardMaterial color="#cbd5e1" roughness={0.8} />
+          </mesh>
+          {/* Fences */}
+          {[-2.9, 2.9].map(x => (
+             <mesh key={x} position={[x, 0.5, 0.5]} castShadow>
+               <boxGeometry args={[0.1, 1, 6]} />
+               <meshStandardMaterial color="#a1a1aa" roughness={0.9} />
+             </mesh>
+          ))}
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.16, 0]} receiveShadow>
+            <planeGeometry args={[100, 100]} />
+            <meshStandardMaterial color="#dcfce7" />
+          </mesh>
+        </group>
+    );
+  }
 
-export function HouseModel() {
+  if (propertyType.toLowerCase() === 'hostel' || propertyType.toLowerCase() === 'apartment') {
+    const floors = propertyType.toLowerCase() === 'apartment' ? 4 : 2;
+    return (
+        <group dispose={null}>
+          <mesh position={[0, -0.05, 0]} receiveShadow>
+            <boxGeometry args={[8, 0.2, 8]} />
+            <meshStandardMaterial color="#cbd5e1" roughness={0.8} />
+          </mesh>
+          {/* Tower */}
+          <mesh position={[0, floors * 1.5 - 1, 0]} castShadow receiveShadow>
+             <boxGeometry args={[5, floors * 3, 5]} />
+             <meshStandardMaterial color="#f8fafc" roughness={0.2} metalness={0.1} />
+          </mesh>
+          {/* Windows */}
+          {Array.from({ length: floors }).map((_, f) => (
+             <group key={f} position={[0, f * 3, 2.51]}>
+               <mesh position={[-1.5, 1.5, 0]}>
+                 <boxGeometry args={[1.5, 1, 0.05]} />
+                 <meshStandardMaterial color="#94a3b8" emissive="#6366f1" emissiveIntensity={0.5} />
+               </mesh>
+               <mesh position={[1.5, 1.5, 0]}>
+                 <boxGeometry args={[1.5, 1, 0.05]} />
+                 <meshStandardMaterial color="#94a3b8" emissive="#6366f1" emissiveIntensity={0.5} />
+               </mesh>
+             </group>
+          ))}
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.16, 0]} receiveShadow>
+            <planeGeometry args={[100, 100]} />
+            <meshStandardMaterial color="#f1f5f9" />
+          </mesh>
+        </group>
+    );
+  }
+
   return (
-    <group>
-      <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
-        <boxGeometry args={[4, 1, 3]} />
-        <meshStandardMaterial color="#f8fafc" roughness={0.1} metalness={0.05} />
+    <group dispose={null}>
+      {/* Foundation / Driveway */}
+      <mesh position={[0, -0.05, 0.5]} receiveShadow>
+        <boxGeometry args={[6, 0.2, 6]} />
+        <meshStandardMaterial color="#cbd5e1" roughness={0.8} />
       </mesh>
-      <mesh position={[0, 1.55, 0]} castShadow receiveShadow>
-        <boxGeometry args={[3.2, 1.1, 2.5]} />
-        <meshStandardMaterial color="#f1f5f9" roughness={0.1} metalness={0.05} />
+
+      {/* Main Structure (Left Wing) */}
+      <mesh position={[-0.8, 1, 0]} castShadow receiveShadow>
+        <boxGeometry args={[2.8, 2, 3.2]} />
+        <meshStandardMaterial color="#f8fafc" roughness={0.2} metalness={0.1} />
       </mesh>
-      <mesh position={[0, 2.15, 0]} castShadow>
-        <boxGeometry args={[3.6, 0.15, 2.8]} />
-        <meshStandardMaterial color="#0f172a" roughness={0.3} />
+
+      {/* Garage (Right Wing) */}
+      <mesh position={[1.4, 0.75, 0.4]} castShadow receiveShadow>
+        <boxGeometry args={[1.6, 1.5, 2.4]} />
+        <meshStandardMaterial color="#e2e8f0" roughness={0.3} metalness={0.05} />
       </mesh>
-      <mesh position={[0, 2.37, 0]}>
-        <boxGeometry args={[3.6, 0.1, 2.8]} />
-        <meshStandardMaterial color="#1e293b" roughness={0.4} />
+
+      {/* Garage Door */}
+      <mesh position={[1.4, 0.6, 1.61]}>
+        <boxGeometry args={[1.2, 0.9, 0.05]} />
+        <meshStandardMaterial color="#334155" roughness={0.2} metalness={0.4} />
       </mesh>
-      <mesh position={[1.2, 1.5, 1.27]}>
-        <planeGeometry args={[0.6, 0.65]} />
-        <meshStandardMaterial color="#4f46e5" emissive="#4f46e5" emissiveIntensity={0.8} />
+
+      {/* Roof - Compound Sloped */}
+      <group position={[0, 2, 0]}>
+         {/* Main Roof */}
+         <mesh position={[-0.8, 0.5, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
+            <coneGeometry args={[2.4, 1.2, 4]} />
+            <meshStandardMaterial color="#1e293b" roughness={0.4} />
+         </mesh>
+         {/* Garage Roof */}
+         <mesh position={[1.4, 0.25, 0.4]} rotation={[0, Math.PI / 4, 0]} castShadow>
+            <coneGeometry args={[1.5, 0.8, 4]} />
+            <meshStandardMaterial color="#334155" roughness={0.5} />
+         </mesh>
+      </group>
+
+      {/* Main Entry Door */}
+      <mesh position={[-0.8, 0.6, 1.61]}>
+        <boxGeometry args={[0.7, 1.2, 0.05]} />
+        <meshStandardMaterial color="#475569" roughness={0.5} />
       </mesh>
-      <mesh position={[-1.2, 1.5, 1.27]}>
-        <planeGeometry args={[0.6, 0.65]} />
-        <meshStandardMaterial color="#4f46e5" emissive="#4f46e5" emissiveIntensity={0.8} />
+
+      {/* Window Arrays */}
+      {[-1.8, 0.2].map((x) => (
+        <mesh key={x} position={[x, 1.2, 1.61]}>
+            <boxGeometry args={[0.7, 0.7, 0.02]} />
+            <meshStandardMaterial color="#94a3b8" emissive="#6366f1" emissiveIntensity={0.8} />
+        </mesh>
+      ))}
+
+      {/* Side Windows */}
+      <mesh position={[-2.21, 1.2, 0]} rotation={[0, Math.PI / 2, 0]}>
+        <boxGeometry args={[1.2, 0.7, 0.02]} />
+        <meshStandardMaterial color="#94a3b8" emissive="#6366f1" emissiveIntensity={0.3} />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
-        <planeGeometry args={[25, 25]} />
-        <meshStandardMaterial color="#f8fafc" />
+
+      {/* Ground Ambience */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.16, 0]} receiveShadow>
+        <planeGeometry args={[100, 100]} />
+        <meshStandardMaterial color={propertyType === 'land' ? "#dcfce7" : "#f1f5f9"} />
       </mesh>
     </group>
   );
@@ -54,172 +136,231 @@ interface ThreeDViewerProps {
   onClose: () => void;
   propertyName: string;
   url?: string;
+  propertyType?: string;
+  image?: string;
+  beds?: number;
 }
 
-export function ThreeDViewer({ isOpen, onClose, propertyName, url }: ThreeDViewerProps) {
+export const ThreeDViewer = memo(function ThreeDViewer({ isOpen, onClose, propertyName, url, propertyType, image, beds }: ThreeDViewerProps) {
   const [activeUrl, setActiveUrl] = useState<string | null>(null);
-  const [loadError, setLoadError] = useState(false);
+  const [dimensionsReady, setDimensionsReady] = useState(false);
 
   useEffect(() => {
-    if (!isOpen) return;
-    setLoadError(false);
+    if (!isOpen) {
+      setDimensionsReady(false);
+      return;
+    }
     
-    // Explicitly validate ID and format for the iframe to prevent "unavailable" errors
+    // Strict verification logic for production/demo stability
     const isMatterport = url?.includes('matterport.com/show/?m=');
     const modelId = url?.split('m=')[1]?.split('&')[0];
-    const isBroken = !modelId || modelId.length < 5 || modelId.toLowerCase().includes('broken') || modelId === '9S99tKz8yXz';
+    const isDemoId = !modelId || modelId.length < 11 || ["JGPuSuihtZ9", "9S99tKz8yXz", "rnBstA7s1V7"].includes(modelId);
+    const isBroken = !modelId || ["broken", "null", "undefined"].includes(modelId.toLowerCase());
 
-    if (isMatterport && modelId && !isBroken) {
-      setActiveUrl(`https://my.matterport.com/show/?m=${modelId}&play=1&qs=1&brand=0&title=0&tourcta=0&vr=1`);
+    if (isMatterport && modelId && !isDemoId && !isBroken) {
+      setActiveUrl(`https://my.matterport.com/show/?m=${modelId}&play=1&brand=0&title=0&tourcta=0&vr=1`);
+    } else if (url && url.startsWith('http') && !isMatterport && !isBroken) {
+      setActiveUrl(url);
     } else {
-      // Fallback to verified stable ID
-      setActiveUrl(`https://my.matterport.com/show/?m=${DEMO_IDS[0]}&play=1&qs=1&brand=0&title=0&tourcta=0&vr=1`);
+      setActiveUrl(null);
     }
+
+    // Delay canvas initialization until modal animation is mostly done to avoid width(-1) issues
+    const timer = setTimeout(() => setDimensionsReady(true), 150);
+    return () => clearTimeout(timer);
   }, [isOpen, url]);
 
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="fixed inset-0 z-[200] bg-white flex flex-col overflow-hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] bg-[#020617] flex flex-col overflow-hidden"
         >
-          {/* Header */}
-          <header className="flex-shrink-0 flex justify-between items-center px-10 py-6 border-b border-slate-100 bg-white z-20">
+          {/* Pro Header */}
+          <header className="flex-shrink-0 flex justify-between items-center px-12 py-8 border-b border-white/5 bg-[#020617]/50 backdrop-blur-3xl z-20">
             <div className="flex items-center gap-6">
-              <div className="h-14 w-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-600/20">
-                <Play className="h-6 w-6 fill-current" />
+              <div className="h-16 w-16 bg-white rounded-[1.5rem] flex items-center justify-center text-slate-900 shadow-2xl relative group overflow-hidden">
+                <div className="absolute inset-0 bg-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Play className="h-6 w-6 relative z-10 fill-current ml-1" />
               </div>
               <div>
-                <h3 className="text-xl font-black text-slate-900 font-outfit tracking-tighter italic">{propertyName}</h3>
-                <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2 italic">
-                   <Globe className="h-3 w-3 text-indigo-400" /> Interactive Desktop Simulation Hub
-                </p>
+                <h3 className="text-3xl font-black text-white font-outfit tracking-tighter italic uppercase">{propertyName}</h3>
+                <div className="flex items-center gap-3">
+                   <div className="h-1.5 w-1.5 bg-indigo-500 rounded-full animate-pulse" />
+                   <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.4em] italic leading-none">Internal Imperial Model Synchronized</p>
+                </div>
               </div>
             </div>
             <button
                 onClick={onClose}
-                className="h-14 w-14 rounded-2xl border border-slate-100 text-slate-400 hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center active:scale-90"
+                className="h-16 w-16 rounded-2xl border-2 border-white/10 text-white/40 hover:bg-white hover:text-slate-900 hover:border-white transition-all flex items-center justify-center active:scale-90"
             >
                 <X className="h-6 w-6" />
             </button>
           </header>
 
-          {/* Main Space */}
-          <div className="flex-1 relative bg-slate-50">
-            {activeUrl && !loadError ? (
+          {/* Visualization Zone */}
+          <div className="flex-1 relative bg-slate-950 flex items-center justify-center">
+            {activeUrl ? (
                 <iframe
                     src={activeUrl}
-                    className="w-full h-full border-none shadow-inner bg-slate-100"
+                    className="w-full h-full border-none"
                     allowFullScreen
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; xr-spatial-tracking"
-                    title={`Matterport Virtual Tour Hub — ${propertyName}`}
-                    onError={() => setLoadError(true)}
+                    title={`Virtual Hub — ${propertyName}`}
                 />
             ) : (
-                <div className="w-full h-full relative bg-white">
-                   <div className="absolute inset-x-0 top-20 flex justify-center z-10">
-                      <div className="px-6 py-4 bg-white/80 backdrop-blur-md rounded-2xl border border-indigo-100 shadow-xl flex items-center gap-4">
-                         <AlertCircle className="h-5 w-5 text-indigo-500 animate-pulse" />
-                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-900 italic">High-Fidelity Model Visualization Mode Active</span>
-                      </div>
-                   </div>
-                    <Suspense fallback={null}>
-                        <Canvas shadows dpr={[1, 1.5]} camera={{ position: [8, 5, 8], fov: 45 }}>
-                            <OrbitControls enableDamping dampingFactor={0.05} rotateSpeed={0.5} autoRotate autoRotateSpeed={0.8} />
-                            <Stage environment="city" intensity={1} shadows>
-                                <HouseModel />
-                            </Stage>
-                            <Environment preset="city" />
-                            <fog attach="fog" args={['#ffffff', 12, 35]} />
-                        </Canvas>
-                    </Suspense>
+                <div className="w-full h-full relative group/canvas overflow-hidden">
+                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent z-10" />
+                    
+                    {dimensionsReady && (
+                        <Suspense fallback={<div className="w-full h-full flex items-center justify-center text-white/5 font-black uppercase tracking-[1em]">Scanning Mesh...</div>}>
+                            <Canvas 
+                              shadows 
+                              gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
+                              dpr={[1, 2]} 
+                              camera={{ position: [12, 10, 12], fov: 35 }}
+                              onCreated={({ gl }) => {
+                                gl.shadowMap.enabled = true;
+                                gl.shadowMap.type = THREE.PCFShadowMap;
+                              }}
+                            >
+                                <OrbitControls makeDefault enableDamping dampingFactor={0.05} autoRotate autoRotateSpeed={0.3} />
+                                <Stage environment="city" intensity={0.4} shadows="contact" adjustCamera={false}>
+                                    <HouseModel propertyType={propertyType} beds={beds} />
+                                </Stage>
+                                <Environment preset="city" blur={1} />
+                                <fog attach="fog" args={['#020617', 20, 60]} />
+                            </Canvas>
+                        </Suspense>
+                    )}
+                    
+                    {/* Diagnostic HUD */}
+                    <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                        <div className="relative">
+                           <div className="absolute -inset-40 bg-indigo-500/10 blur-[120px] rounded-full animate-pulse" />
+                           <div className="px-10 py-5 bg-slate-900/90 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-3xl flex items-center gap-6 relative z-10 translate-y-[-240px]">
+                              <RotateCcw className="h-6 w-6 text-indigo-400 animate-[spin_6s_linear_infinite]" />
+                              <div>
+                                 <p className="text-[11px] font-black uppercase tracking-[0.3em] text-white italic">Procedural Registry Active</p>
+                                 <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest mt-1 italic">High-Fidelity Internal Mesh Engine</p>
+                              </div>
+                           </div>
+                        </div>
+                    </div>
                 </div>
             )}
 
-            {/* HUD Overlay - Clean Desktop View */}
-            <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 }}
-                className="absolute bottom-10 left-10 p-8 bg-white/95 backdrop-blur-xl rounded-[2.5rem] border border-slate-100 text-slate-900 space-y-6 max-w-[300px] shadow-2xl relative z-10"
-            >
-                <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600 italic">Central Node Data</span>
-                    <span className="text-[9px] font-black text-white bg-slate-900 px-3 py-1 rounded-lg">SYNCED</span>
+            {/* Telemetry Overlay */}
+            <div className="absolute bottom-12 left-12 right-12 flex justify-between items-end pointer-events-none">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-10 bg-white/5 backdrop-blur-3xl rounded-[3rem] border border-white/10 text-white space-y-6 w-80 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.6)] pointer-events-auto"
+                >
+                    <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400 italic font-outfit">Node Telemetry</span>
+                        <div className="flex gap-1.5">
+                            <div className="h-1.5 w-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                            <div className="h-1.5 w-1.5 bg-emerald-500/40 rounded-full" />
+                        </div>
+                    </div>
+                    <div className="space-y-4">
+                       <div className="flex justify-between text-[11px] font-bold italic">
+                          <span className="text-white/30 uppercase tracking-widest text-[9px]">Platform</span>
+                          <span>IMPERIAL V4</span>
+                       </div>
+                       <div className="flex justify-between text-[11px] font-bold italic">
+                          <span className="text-white/30 uppercase tracking-widest text-[9px]">Sync Mode</span>
+                          <span>REAL-TIME</span>
+                       </div>
+                    </div>
+                </motion.div>
+
+                <div className="flex items-center gap-5 py-4 px-10 bg-white text-slate-900 rounded-full shadow-3xl text-[10px] font-black uppercase tracking-[0.4em] italic pointer-events-auto cursor-help hover:scale-105 transition-all">
+                    <Move className="h-5 w-5" /> Manipulate Node
                 </div>
-                <div className="space-y-3">
-                   <div className="flex justify-between text-[11px] font-bold italic">
-                      <span className="text-slate-400 uppercase tracking-widest text-[9px]">Rendering</span>
-                      <span>Desktop High-Fi</span>
-                   </div>
-                   <div className="flex justify-between text-[11px] font-bold italic">
-                      <span className="text-slate-400 uppercase tracking-widest text-[9px]">Uptime</span>
-                      <span>Operational</span>
-                   </div>
-                </div>
-            </motion.div>
+            </div>
           </div>
         </motion.div>
       )}
     </AnimatePresence>
   );
-}
+});
 
-export function ThreeDInline({ url, propertyName }: { url?: string, propertyName: string }) {
+export const ThreeDInline = memo(function ThreeDInline({ url, propertyName, propertyType, image, beds }: { url?: string, propertyName: string, propertyType?: string, image?: string, beds?: number }) {
   const [activeUrl, setActiveUrl] = useState<string | null>(null);
+  const [isRendered, setIsRendered] = useState(false);
 
   useEffect(() => {
-    // Explicitly validate ID and format for the inline iframe to prevent "unavailable" errors
     const isMatterport = url?.includes('matterport.com/show/?m=');
     const modelId = url?.split('m=')[1]?.split('&')[0];
-    const isBroken = !modelId || modelId.length < 5 || modelId.toLowerCase().includes('broken') || modelId === '9S99tKz8yXz';
+    const isDemoId = !modelId || modelId.length < 11 || ["JGPuSuihtZ9", "9S99tKz8yXz", "rnBstA7s1V7"].includes(modelId);
+    const isBroken = !modelId || ["broken", "null", "undefined"].includes(modelId.toLowerCase());
 
-    if (isMatterport && modelId && !isBroken) {
-      setActiveUrl(`https://my.matterport.com/show/?m=${modelId}&play=1&qs=1&brand=0&title=0&tourcta=0`);
+    if (isMatterport && modelId && !isDemoId && !isBroken) {
+      setActiveUrl(`https://my.matterport.com/show/?m=${modelId}&play=1&brand=0&title=0&tourcta=0`);
+    } else if (url && url.startsWith('http') && !isMatterport && !isBroken) {
+      setActiveUrl(url);
     } else {
-        // Fallback to verified stable ID
-        setActiveUrl(`https://my.matterport.com/show/?m=${DEMO_IDS[0]}&play=1&qs=1&brand=0&title=0&tourcta=0`);
+      setActiveUrl(null);
     }
+
+    // Stabilize initial render to avoid width/height issues
+    const timer = setTimeout(() => setIsRendered(true), 200);
+    return () => clearTimeout(timer);
   }, [url]);
 
   return (
-    <div className="w-full h-full bg-white relative overflow-hidden group">
+    <div className="w-full h-full bg-slate-950 relative overflow-hidden group">
         <AnimatePresence mode="wait">
             {activeUrl ? (
-                <motion.div key="tour" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full h-full transition-all duration-700">
+                <motion.div key="tour" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full h-full relative">
                     <iframe
                         src={activeUrl}
-                        className="w-full h-full border-none shadow-inner"
+                        className="w-full h-full border-none"
                         allowFullScreen
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; xr-spatial-tracking"
-                        title={`Matterport Desktop Stream — ${propertyName}`}
+                        title={`Simulation Stream — ${propertyName}`}
                     />
-                    <div className="absolute top-6 left-6 h-10 px-5 bg-white/90 backdrop-blur-md rounded-xl flex items-center gap-3 border border-slate-100 shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-500">
+                    <div className="absolute top-8 left-8 h-10 px-6 bg-slate-900/90 backdrop-blur-md rounded-xl flex items-center gap-4 text-white border border-white/10 shadow-3xl opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-[-10px] group-hover:translate-x-0">
                         <div className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-900 italic">Desktop Node Stream Active</span>
+                        <span className="text-[10px] font-black uppercase tracking-[0.3em] italic">Telemetry Active</span>
                     </div>
                 </motion.div>
             ) : (
-                <motion.div key="model" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full h-full relative bg-white">
-                    <Suspense fallback={null}>
-                        <Canvas shadows dpr={[1, 1.2]} camera={{ position: [6, 4, 6], fov: 40 }}>
-                            <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.5} />
-                            <Stage environment="city" intensity={0.6} shadows={false}>
-                                <HouseModel />
-                            </Stage>
-                            <Environment preset="city" />
-                        </Canvas>
-                    </Suspense>
-                    <div className="absolute bottom-6 left-6 p-4 bg-white/80 border border-slate-100 rounded-2xl shadow-sm text-[9px] font-black uppercase tracking-widest text-slate-400 italic">
-                         Architecture Visualization Preview
+                <motion.div key="model" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full h-full relative bg-slate-950">
+                    {isRendered && (
+                        <Suspense fallback={null}>
+                            <Canvas 
+                              shadows 
+                              gl={{ antialias: true, alpha: true }}
+                              dpr={[1, 1.2]} 
+                              camera={{ position: [10, 8, 10], fov: 32 }}
+                              onCreated={({ gl }) => {
+                                gl.shadowMap.enabled = true;
+                                gl.shadowMap.type = THREE.PCFShadowMap;
+                              }}
+                            >
+                                <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.6} />
+                                <Stage environment="city" intensity={0.4} shadows={false} adjustCamera={false}>
+                                    <HouseModel propertyType={propertyType} beds={beds} />
+                                </Stage>
+                                <Environment preset="city" />
+                            </Canvas>
+                        </Suspense>
+                    )}
+                    <div className="absolute bottom-8 left-8 flex flex-col gap-2">
+                        <div className="px-6 py-2.5 bg-white text-slate-900 rounded-full text-[9px] font-black uppercase tracking-[0.4em] italic shadow-2xl opacity-0 group-hover:opacity-100 transition-all font-outfit">
+                           High-Fidelity Registry Mirror
+                        </div>
                     </div>
                 </motion.div>
             )}
         </AnimatePresence>
     </div>
   );
-}
+});

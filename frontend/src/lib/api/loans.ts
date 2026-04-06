@@ -16,45 +16,45 @@ export const getLoans = async (): Promise<Loan[]> => {
 };
 
 export const applyForLoan = async (data: any) => {
-    // Transform to PascalCase for backend protocol integrity
+    // Protocol integrity requires exact field mapping for ModelSerializer
     const payload = {
-        PropertyID: data.property,
-        LoanAmount: data.loan_amount,
-        InterestRate: data.interest_rate,
-        Status: 'SUBMITTED',
-        ApplicationDate: new Date().toISOString().split('T')[0]
+        PropertyID: data.PropertyID || data.property,
+        LoanAmount: data.LoanAmount || data.loan_amount,
+        InterestRate: data.InterestRate || data.interest_rate,
+        Age: data.Age || data.age || 25,
+        CreditScore: data.CreditScore || data.credit_score || 750,
+        LoanTerm: data.LoanTerm || data.loan_term || 240
     };
     const response = await api.post('loans/', payload);
     return response.data;
 };
 
 export const predictLoan = async (data: any) => {
-    // Prediction matrix expects standardized signal
+    // Standardized signal for ML prediction matrix
     const payload = {
-        Income: data.income,
-        LoanAmount: data.amount,
-        Term: data.term,
-        CreditScore: data.credit_score || 750
+        age: parseInt(data.age),
+        income: parseFloat(data.income),
+        credit_score: parseInt(data.credit_score),
+        loan_amount: parseFloat(data.loan_amount || data.amount),
+        loan_term: parseInt(data.loan_term || data.term),
+        employment_status: data.employment_status || 'Employed'
     };
-    // If backend returns 405 on trailing slash, try without
-    const response = await api.post('loans/predict', payload).catch(err => {
-        if (err.response?.status === 405) return api.post('loans/predict/', payload);
-        throw err;
-    });
+    // Ensure trailing slash to avoid 500 redirect errors
+    const response = await api.post('loans/predict/', payload);
     return response.data;
 };
 
 export const calculateEMI = async (amount: number, rate: number, tenure: number) => {
-    const payload = { Amount: amount, Rate: rate, Tenure: tenure };
+    const payload = { amount, rate, tenure };
     const response = await api.post('loans/calculate-emi/', payload);
     return response.data;
 };
 
 export const checkEligibility = async (income: number, loanAmount: number, existingEmis: number = 0) => {
     const payload = { 
-        Income: income, 
-        LoanAmount: loanAmount, 
-        ExistingEmis: existingEmis 
+        income, 
+        loan_amount: loanAmount, 
+        existing_emis: existingEmis 
     };
     const response = await api.post('loans/check-eligibility/', payload);
     return response.data;

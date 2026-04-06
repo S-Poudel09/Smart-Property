@@ -15,8 +15,8 @@ import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const loginSchema = z.object({
-    email: z.string().email('Invalid email address'),
-    password: z.string().min(6, 'Password must be at least 6 characters'),
+    email: z.string().min(1, 'Email is required').email('Invalid email format'),
+    password: z.string().min(1, 'Security key is required').min(6, 'Password must be at least 6 characters'),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;

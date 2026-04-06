@@ -16,13 +16,26 @@ export interface PropertyDocument {
     type: string;
 }
 
+export interface Review {
+    id: string;
+    user: {
+        id: string;
+        full_name: string;
+        email: string;
+    };
+    rating: number;
+    comment: string;
+    isVerifiedPurchase: boolean;
+    createdAt: string;
+}
+
 export interface Property {
     id: string;
     sellerId: string;
     title: string;
     description: string;
     price: number;
-    location: string; // Keep for backward compatibility/simplified display
+    location: string;
     address: string;
     city: string;
     lat?: number;
@@ -31,22 +44,29 @@ export interface Property {
     category: PropertyCategory;
     bedrooms: number;
     bathrooms: number;
-    area: number; // sqft
+    area: number;
     area_ropani?: number;
     area_anna?: number;
     ward?: string;
     municipality?: string;
     district?: string;
-    images: string[] | PropertyImage[]; // Keep string[] for initial mock, PropertyImage[] for new ones
+    images: string[] | PropertyImage[];
     documents?: PropertyDocument[];
     status: PropertyStatus;
     isVerified: boolean;
     rejectionReason?: string;
     features: string[];
-    boundaryCoordinates?: any; // Polygon coordinates for GIS
-    virtualTourUrl?: string; // 360-degree virtual tour link
+    boundaryCoordinates?: any;
+    virtualTourUrl?: string;
     createdAt: string;
     updatedAt: string;
+    
+    // Additional features
+    reviews?: Review[];
+    ratingStats?: {
+        average: number;
+        count: number;
+    };
     
     // Hostel Support
     propertyType?: PropertyCategory;

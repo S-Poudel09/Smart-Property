@@ -20,11 +20,11 @@ export default function KYCUpload({ currentStatus, onSuccess }: KYCUploadProps) 
 
     const handleSubmit = async () => {
         if (!docType) {
-            toast.error('Please select a document type');
+            toast.error('Identity Protocol: Document type is required.');
             return;
         }
         if (files.length === 0 || !files[0].file) {
-            toast.error('Please upload an identity document');
+            toast.error('Identity Protocol: Document capture is required.');
             return;
         }
 

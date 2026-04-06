@@ -1,44 +1,39 @@
 @import "tailwindcss";
 
-@theme {
-  --color-background: #F8FAFC;
-  --color-foreground: #020617;
-  --color-primary: #0F172A;
-  --color-primary-light: #1E293B;
-  --color-primary-hover: #1E293B;
-  --color-accent: #6366F1;
-  --color-accent-hover: #4F46E5;
-  --color-border: #E2E8F0;
-  --color-muted: #64748B;
-  --color-success: #10B981;
-  --color-danger: #EF4444;
-  --color-warning: #F59E0B;
-  
+:root {
+  --background: #F8FAFC; /* Slate 50 */
+  --foreground: #020617; /* Slate 950 */
+  --primary: #0F172A;    /* Slate 900 */
+  --primary-light: #1E293B;
+  --accent: #10B981;    /* Emerald 500 */
+  --accent-soft: rgba(16, 185, 129, 0.1);
+  --card: #FFFFFF;
+  --border: #E2E8F0;    /* Slate 200 */
+  --muted: #64748B;     /* Slate 500 */
+  --success: #10B981;
+  --danger: #EF4444;
+  --warning: #F59E0B;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
   --font-inter: "Inter", sans-serif;
   --font-outfit: "Outfit", sans-serif;
-  
-  --shadow-premium: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
-  --shadow-accent: 0 10px 15px -3px rgba(99, 102, 241, 0.15), 0 4px 6px -4px rgba(99, 102, 241, 0.05);
 }
 
-:root {
-  --background: #F8FAFC;
-  --foreground: #020617;
-}
-
-body {
-  background: #F8FAFC;
-  color: #020617;
-  font-family: "Inter", sans-serif;
-}
-
-/* Base Styles */
 @layer base {
   body {
-    background: var(--color-background);
-    color: var(--color-foreground);
-    font-family: var(--font-inter);
-    @apply antialiased selection:bg-accent/10 selection:text-accent font-inter;
+    background: var(--background);
+    color: var(--foreground);
+    @apply font-inter antialiased selection:bg-accent/10 selection:text-accent;
   }
 }
 
@@ -47,31 +42,29 @@ body {
   @apply flex items-center gap-3.5 px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-300 relative;
 }
 
+.sidebar-link-active {
+  @apply bg-primary text-white shadow-xl shadow-primary/10;
+}
+
+.sidebar-link-inactive {
+  @apply text-muted hover:text-primary hover:bg-white hover:shadow-md hover:shadow-slate-200/50;
+}
+
 .dashboard-card {
-  background-color: white;
-  border: 1px solid #E2E8F0;
-  border-radius: 1.5rem;
-  padding: 2rem;
-  @apply shadow-sm transition-all duration-500 hover:shadow-xl;
+  @apply bg-white border border-border/60 rounded-3xl p-8 shadow-sm transition-all duration-500 hover:shadow-xl hover:shadow-slate-200/50 hover:border-accent/10;
 }
 
 .glass-header {
-  background-color: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(24px);
-  border-bottom: 1px solid #E2E8F0;
-  @apply sticky top-0 z-[45];
+  @apply bg-white/70 backdrop-blur-2xl border-b border-border/40 sticky top-0 z-[45];
 }
 
 /* Typography & Layout */
 .section-header {
-  color: #0F172A;
-  font-family: "Outfit", sans-serif;
-  @apply text-4xl font-bold tracking-tight;
+  @apply text-4xl font-bold tracking-tight text-primary font-outfit;
 }
 
 .label-caps {
-  color: #64748B;
-  @apply text-[10px] font-black uppercase tracking-[0.2em];
+  @apply text-[10px] font-black uppercase tracking-[0.2em] text-muted;
 }
 
 .btn-premium {
@@ -79,9 +72,7 @@ body {
 }
 
 .form-input-premium {
-  background-color: white;
-  border: 1px solid #E2E8F0;
-  @apply w-full rounded-2xl px-6 py-4 text-sm font-medium focus:ring-4 transition-all outline-none;
+  @apply w-full bg-white border border-border rounded-2xl px-6 py-4 text-sm font-medium focus:ring-4 focus:ring-primary/5 focus:border-primary/20 transition-all outline-none placeholder:text-muted/40;
 }
 
 /* Custom Scrollbar */
@@ -91,16 +82,11 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  @apply bg-transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #E2E8F0;
-  border-radius: 9999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background-color: #CBD5E1;
+  @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
 }
 
 /* Animation Utilities */
