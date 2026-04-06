@@ -23,24 +23,24 @@ const ChatDetailScreen = ({ route, navigation }: any) => {
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
+    if (!roomId || roomId === 'undefined') {
+      setIsLoading(false);
+      return;
+    }
+
     fetchMessages();
     
-    // In a real app we would use WebSockets.
-    // For this MVP, we can use simple long polling interval if needed, 
-    // but a one-time fetch is fine for basic requirements demonstration.
+    // Simple polling for new messages in this MVP
     const interval = setInterval(() => {
         fetchMessages(false);
-    }, 5000);
+    }, 4000);
 
     return () => clearInterval(interval);
   }, [roomId]);
 
   const fetchMessages = async (showLoader = true) => {
-    if (!roomId || roomId === 'undefined') {
-        console.warn('Cannot fetch messages: roomId is undefined');
-        setIsLoading(false);
-        return;
-    }
+    // CRITICAL: Prevent calling API with invalid roomId string
+    if (!roomId || roomId === 'undefined') return;
 
     if (showLoader) setIsLoading(true);
     try {

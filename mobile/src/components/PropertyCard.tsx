@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { MapPin, Home, Bed, Bath, Square } from 'lucide-react-native';
+import { getFullImageUrl } from '../api/client';
 
 const { width } = Dimensions.get('window');
 
@@ -23,7 +24,8 @@ interface PropertyCardProps {
 
 const PropertyCard: React.FC<PropertyCardProps> = ({ property, onPress }) => {
   const primaryImageObj = property.property_images?.find((img) => img.is_primary) || property.property_images?.[0];
-  const imageUrl = property.thumbnail || primaryImageObj?.image;
+  const imagePath = property.thumbnail || primaryImageObj?.image;
+  const imageUrl = getFullImageUrl(imagePath);
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress}>

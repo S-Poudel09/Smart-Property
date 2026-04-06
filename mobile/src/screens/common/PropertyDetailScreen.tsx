@@ -8,7 +8,8 @@ import {
   ActivityIndicator, 
   Dimensions,
   Share,
-  Linking
+  Linking,
+  Alert
 } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { 
@@ -26,11 +27,8 @@ import {
   Map,
   Camera
 } from 'lucide-react-native';
-import api from '../../api/client';
+import api, { getFullImageUrl } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
-import { Alert } from '../../utils/alert';
-
-const { width } = Dimensions.get('window');
 
 const PropertyDetailScreen = ({ route, navigation }: any) => {
   const { id } = route.params;
@@ -68,74 +66,66 @@ const PropertyDetailScreen = ({ route, navigation }: any) => {
     
     if (!property) return;
 
-    // Use available ID fields, prioritizing nested owner object
-    const propertyId = property.id || property.PropertyID;
+    const propertyId = property.PropertyID || property.id;
     const ownerId = property.owner?.id || property.OwnerID || property.seller_id;
-    const ownerDisplayName = property.owner?.name || property.owner?.full_name || (property.owner?.email ? property.owner.email.split('@')[0] : 'Property Owner');
+    const ownerDisplayName = property.owner?.name || property.owner?.full_name || 'Property Owner';
 
     if (!ownerId) {
-        Alert.alert('Error', 'Property owner information is missing. Cannot start chat.');
+        Alert.alert('Error', 'Property owner information is missing.');
         return;
     }
 
-    // Check if user is trying to contact themselves
     if (ownerId === user.id) {
-        Alert.alert('Info', 'This is your own property listing. You cannot chat with yourself.');
+        Alert.alert('Info', 'You cannot chat with yourself.');
         return;
     }
 
     try {
-       // Create or get chat room
        const response = await api.post('/chat/rooms/get_or_create_room/', { 
          property_id: propertyId,
          recipient_id: ownerId 
        });
        
-       const chatRoom = response.data;
-       const finalRoomId = chatRoom.RoomID || chatRoom.id;
+       const finalRoomId = response.data.RoomID || response.data.id;
 
-       if (finalRoomId) {
+       if (finalRoomId && finalRoomId !== 'undefined') {
          navigation.navigate('ChatDetail', { 
            roomId: finalRoomId, 
            propertyTitle: property.title,
            recipientName: ownerDisplayName
          });
        } else {
-         throw new Error('Invalid response from server');
+         Alert.alert('Error', 'Could not create chat session.');
        }
-    } catch (error: any) {
-       console.error('Failed to start chat:', error.response?.data || error.message);
-       const errorMsg = error.response?.data?.error || 'Could not start chat with owner. Please try again later.';
-       Alert.alert('Error', errorMsg);
+    } catch (error) {
+       console.error('Chat error:', error);
+       Alert.alert('Error', 'Could not start chat with owner.');
     }
   };
 
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `Check out this property: ${property.title} in ${property.location} for NPR ${property.price}`,
-        url: `http://localhost:3000/properties/${property.PropertyID || property.id}`,
+        message: `Property: ${property.title} in ${property.location}`,
+        url: `http://localhost:3000/properties/${property.id}`,
       });
-    } catch (error) {
-      console.error(error);
-    }
+    } catch (e) {}
   };
 
   const handleMapPress = () => {
     if (property.latitude && property.longitude) {
        Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${property.latitude},${property.longitude}`);
     } else {
-       const query = encodeURIComponent(property.location || property.city || 'Nepal');
-       Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${query}`);
+       Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(property.location || '')}`);
     }
   };
 
   const handle3DPress = () => {
-    const webUrl = property.virtual_tour_url || `http://localhost:3000/properties/${property.PropertyID || property.id}`;
+    const webUrl = property.virtual_tour_url || `http://localhost:3000/properties/${property.id}`;
     navigation.navigate('Mobile3DViewer', { url: webUrl, title: property.title });
   };
 
-  if (isLoading) {
+  if (isLoading || !id) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color="#6366f1" />
@@ -143,12 +133,16 @@ const PropertyDetailScreen = ({ route, navigation }: any) => {
     );
   }
 
-  const primaryImage = property.property_images?.find((img: any) => img.is_primary)?.image || 
-                     (property.property_images?.length > 0 ? property.property_images[0].image : null);
+  if (!property) return null;
+
+  const rawImage = property.property_images?.find((img: any) => img.is_primary)?.image || 
+                  (property.property_images?.length > 0 ? property.property_images[0].image : null);
+  const primaryImage = getFullImageUrl(rawImage);
 
   return (
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        {/* Header Media */}
         <View style={styles.imageContainer}>
           {primaryImage ? (
             <ExpoImage
@@ -162,10 +156,7 @@ const PropertyDetailScreen = ({ route, navigation }: any) => {
             </View>
           )}
           
-          <TouchableOpacity 
-            style={styles.backButton} 
-            onPress={() => navigation.goBack()}
-          >
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <ChevronLeft color="#1e293b" size={24} />
           </TouchableOpacity>
 
@@ -179,6 +170,7 @@ const PropertyDetailScreen = ({ route, navigation }: any) => {
           </View>
         </View>
 
+        {/* Content Body */}
         <View style={styles.content}>
           <View style={styles.typeRow}>
             <View style={styles.typeBadge}>
@@ -231,8 +223,9 @@ const PropertyDetailScreen = ({ route, navigation }: any) => {
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Description</Text>
-            <Text style={styles.description}>{property.description || 'No description available for this property.'}</Text>
+            <Text style={styles.description}>{property.description || 'No description available.'}</Text>
           </View>
+
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Listing Owner</Text>
             <View style={styles.ownerCard}>
@@ -240,7 +233,7 @@ const PropertyDetailScreen = ({ route, navigation }: any) => {
                     <Text style={styles.ownerInitial}>{(property.owner?.name || property.owner?.full_name || 'O').charAt(0).toUpperCase()}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                    <Text style={styles.ownerName}>{property.owner?.name || property.owner?.full_name || (property.owner?.email ? property.owner.email.split('@')[0] : 'Property Owner')}</Text>
+                    <Text style={styles.ownerName}>{property.owner?.name || property.owner?.full_name || 'Property Owner'}</Text>
                     <Text style={styles.ownerRole}>{property.is_verified ? 'Verified Seller' : 'Registered User'}</Text>
                 </View>
                 <TouchableOpacity style={styles.ownerContactBtn} onPress={handleContact}>
@@ -265,8 +258,9 @@ const PropertyDetailScreen = ({ route, navigation }: any) => {
         </View>
       </ScrollView>
 
+      {/* Floating Footer */}
       <View style={styles.footerActions}>
-        <TouchableOpacity style={styles.emiButton} onPress={() => Alert.alert('Loan Calculator', 'Calculation based on backend rates...')}>
+        <TouchableOpacity style={styles.emiButton} onPress={() => Alert.alert('Loan', 'Inquiry sent.')}>
           <CreditCard color="#6366f1" size={20} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.contactButton} onPress={handleContact}>
