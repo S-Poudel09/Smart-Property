@@ -62,8 +62,8 @@ export default function SellerDashboard() {
         const load = async () => {
             try {
                 const [propertiesRes, transactionsRes] = await Promise.all([
-                    api.get('/properties/?seller=me').catch(() => ({ data: [] })),
-                    api.get('/transactions/').catch(() => ({ data: [] }))
+                    api.get('properties/?seller=me').catch(() => ({ data: [] })),
+                    api.get('transactions/').catch(() => ({ data: [] }))
                 ]);
                 const listings = propertiesRes.data?.results ?? propertiesRes.data ?? [];
                 const transactions = transactionsRes.data?.results ?? transactionsRes.data ?? [];

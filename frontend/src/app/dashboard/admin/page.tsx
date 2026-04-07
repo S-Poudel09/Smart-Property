@@ -42,7 +42,7 @@ export default function AdminDashboard() {
         setMounted(true);
         const load = async () => {
             try {
-                const response = await api.get('/admin/analytics/');
+                const response = await api.get('admin/analytics/');
                 setStats(response.data);
             } catch (e) {
                 console.error(e);

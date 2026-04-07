@@ -33,7 +33,14 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
         else:
             try:
                 from accounts.models import User
-                recipient = User.objects.get(id=recipient_id)
+                try:
+                    import uuid
+                    # Validate identifier format before query to prevent 500 errors on invalid strings
+                    uuid.UUID(str(recipient_id))
+                    recipient = User.objects.get(id=recipient_id)
+                except (ValueError, User.DoesNotExist):
+                    return Response({"error": "Recipient identity not verified or does not exist"}, status=status.HTTP_404_NOT_FOUND)
+                
                 room = ChatRoom.objects.create(property_id=property_id)
                 room.participants.add(request.user, recipient)
             except User.DoesNotExist:
