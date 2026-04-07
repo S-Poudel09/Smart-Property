@@ -1,10 +1,27 @@
+"""
+Serializers for the accounts module.
+
+This file contains Django REST Framework serializers responsible for
+validating input data, transforming model instances into API-friendly
+representations, and encapsulating business rules for authentication,
+registration, KYC submission, OTP verification, and password reset flows.
+
+Key responsibilities:
+- User profile serialization
+- User registration validation and creation
+- Login credential validation
+- OTP verification input handling
+- Password reset request and confirmation
+- KYC submission and admin verification workflows
+"""
 from rest_framework import serializers
 from django.contrib.auth import get_user_model, authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 
+# Retrieves the currently active custom user model configured for the project.
 User = get_user_model()
 
-
+# Lightweight serializer used to expose essential user profile information to the frontend.
 class UserSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='full_name', read_only=True)
 
@@ -12,7 +29,8 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ("id", "name", "email", "role", "kyc_status", "identity_document", "document_type", "is_2fa_enabled", "is_verified")
 
-
+# Handles public user registration with validation rules for email uniqueness,
+# role restrictions, and user creation.
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     name = serializers.CharField(source='full_name')
@@ -25,12 +43,14 @@ class RegisterSerializer(serializers.ModelSerializer):
             'password': {'write_only': True}
         }
 
+# Ensures that the provided email address is unique before creating a new account.
     def validate_email(self, value):
         if User.objects.filter(email=value).exists():
             print(f"[AUTH DEBUG] Registration Blocked: Email {value} already exists.")
             raise serializers.ValidationError("An account with this email already exists.")
         return value
 
+# Restricts public registration to allowed non-admin roles only.
     def validate_role(self, value):
         if value.lower() == 'admin':
             raise serializers.ValidationError("Admin accounts cannot be created through public registration.")
@@ -38,6 +58,8 @@ class RegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Invalid role selected.")
         return value.lower()
 
+# Creates a new user using email as the primary login identifier and ensures
+# consistent field mapping from serializer input to model fields.
     def create(self, validated_data):
         # DRF maps 'name' (input) to 'full_name' (output) because of source='full_name'
         # but in validated_data IT IS the source field name ('full_name')!
@@ -62,7 +84,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             print(f"[AUTH DEBUG] ERROR during create_user: {str(e)}")
             raise serializers.ValidationError({"error": f"Internal database error: {str(e)}"})
 
-
+# Validates login credentials and enforces account verification rules before authentication.
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
@@ -96,7 +118,7 @@ class LoginSerializer(serializers.Serializer):
         print(f"[AUTH DEBUG] Final check before success: role={getattr(user, 'role', 'N/A')}")
         return {"user": user}
 
-
+# Accepts and validates the input required for OTP-based verification.
 class VerifyOTPSerializer(serializers.Serializer):
     email = serializers.EmailField()
     otp_code = serializers.CharField(max_length=6)
@@ -105,17 +127,17 @@ class VerifyOTPSerializer(serializers.Serializer):
         # Additional validation could be added here
         return data
 
-
+# Serializer for initiating password reset requests.
 class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
-
+# Serializer for confirming password reset using token-based validation.
 class PasswordResetConfirmSerializer(serializers.Serializer):
     uidb64 = serializers.CharField()
     token = serializers.CharField()
     new_password = serializers.CharField(write_only=True, min_length=6)
 
-
+# Handles KYC document submission and validates required KYC fields.
 class KYCSubmissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -128,6 +150,7 @@ class KYCSubmissionSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Document type is required.")
         return data
 
+# Used by administrators to approve or reject KYC submissions.
 class AdminKYCVerifySerializer(serializers.Serializer):
     status = serializers.ChoiceField(choices=[('verified', 'Verified'), ('rejected', 'Rejected')])
     reason = serializers.CharField(required=False, allow_blank=True)

@@ -1,10 +1,8 @@
 'use client';
 
 import { ChatThread } from '@/types/chat';
-import { Property } from '@/types/property';
-
 import { getPropertyById } from '@/lib/properties/storage';
-import { Building2, ChevronRight, MessageSquare } from 'lucide-react';
+import { Building2, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -33,7 +31,7 @@ export const ChatThreadList = ({ threads, activeThreadId, baseUrl }: ChatThreadL
                 {threads.length > 0 ? (
                     <div className="space-y-2 pb-4">
                         {threads.map((thread) => {
-                            let prop = getPropertyById(thread.propertyId);
+                            const prop = getPropertyById(thread.propertyId);
                             const isActive = thread.id === activeThreadId;
 
                             return (
@@ -79,7 +77,7 @@ export const ChatThreadList = ({ threads, activeThreadId, baseUrl }: ChatThreadL
                             <MessageSquare className="h-6 w-6" />
                         </div>
                         <p className="text-[11px] font-black uppercase tracking-widest text-gray-400">Silent Canvas</p>
-                        <p className="text-xs text-gray-400 italic mt-2">"No active decrees found."</p>
+                        <p className="text-xs text-gray-400 italic mt-2">&quot;No active decrees found.&quot;</p>
                     </div>
                 )}
             </div>

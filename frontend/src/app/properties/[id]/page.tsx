@@ -48,6 +48,8 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
     const [isLoading, setIsLoading] = useState(true);
     const [isThreeDOpen, setIsThreeDOpen] = useState(false);
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+    const [activeTransactionId, setActiveTransactionId] = useState<string | null>(null);
+    const [isInsightsOpen, setIsInsightsOpen] = useState(false);
     const [isActionLoading, setIsActionLoading] = useState(false);
 
     const load = async () => {
@@ -71,6 +73,17 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
     useEffect(() => {
         load();
     }, [id]);
+
+    useEffect(() => {
+        if (isCheckoutOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isCheckoutOpen]);
 
     const handleDataRefresh = () => {
         load();
@@ -98,11 +111,37 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
         </div>
     );
 
-    const handleInitiatePayment = () => {
+    const handleInitiatePayment = async () => {
         const user = getUser();
-        if (!user) { toast.error('Auth required'); router.push('/auth/login'); return; }
-        if (user.role !== 'buyer') { toast.error('Buyer privilege required'); return; }
-        setIsCheckoutOpen(true);
+        if (!user) {
+            toast.error('Authentication required to acquire assets');
+            router.push('/auth/login');
+            return;
+        }
+        
+        if (user.role !== 'buyer') {
+            toast.error('Buyer privileges required for direct acquisition');
+            return;
+        }
+
+        try {
+            // Create the transaction first to get a valid TransactionID for KPG-2
+            const transaction = await createPurchaseRequest(
+                property.id, 
+                property.sellerId || '', 
+                Number(property.price)
+            );
+            
+            if (transaction && (transaction.id || transaction.TransactionID)) {
+                setActiveTransactionId(transaction.id || transaction.TransactionID);
+                setIsCheckoutOpen(true);
+            } else {
+                toast.error('Failed to initialize acquisition record');
+            }
+        } catch (error) {
+            console.error('Transaction Initialization Error:', error);
+            toast.error('System error initializing ledger entry');
+        }
     };
 
     const handlePaymentSuccess = async (referenceId: string) => {
@@ -408,13 +447,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
                                         {!isActionLoading && <span className="text-[9px] opacity-40 font-black tracking-[0.3em] italic">Protocol Synchronized</span>}
                                     </button>
 
-                                    <CheckoutModal 
-                                        isOpen={isCheckoutOpen} 
-                                        onClose={() => setIsCheckoutOpen(false)} 
-                                        propertyTitle={property.title} 
-                                        amount={Number(property.price)} 
-                                        onSuccess={handlePaymentSuccess}
-                                    />
+                                     {/* CheckoutModal was here, moved to root */}
 
                                     <button 
                                         className="w-full h-20 text-[10px] font-black uppercase tracking-[0.3em] rounded-2xl bg-white border-2 border-slate-900 text-slate-900 hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center gap-4 shadow-sm active:scale-95 italic group/comms" 
@@ -469,6 +502,17 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
                     </div>
                 </div>
             </main>
+
+            {isCheckoutOpen && activeTransactionId && (
+                <CheckoutModal 
+                    isOpen={isCheckoutOpen} 
+                    onClose={() => setIsCheckoutOpen(false)} 
+                    propertyTitle={property.title} 
+                    propertyId={activeTransactionId}
+                    amount={Number(property.price)} 
+                    onSuccess={handlePaymentSuccess}
+                />
+            )}
         </div>
     );
 }

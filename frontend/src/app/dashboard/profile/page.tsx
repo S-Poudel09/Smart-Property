@@ -4,12 +4,20 @@ import { useEffect, useState } from 'react';
 import { getMe } from '@/lib/api/auth';
 import KYCUpload from '@/components/auth/KYCUpload';
 import Container from '@/components/layout/Container';
-import { User, Mail, Shield, UserCheck, Settings, Lock, Crown, Gem, BadgeCheck, Sparkles, Fingerprint } from 'lucide-react';
-import { Loader2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { User, Mail, Settings, Lock, Crown, Gem, BadgeCheck, Sparkles, Fingerprint } from 'lucide-react';
+import { motion } from 'framer-motion';
+
+interface UserProfile {
+    name: string;
+    email: string;
+    role: string;
+    is_verified?: boolean;
+    is_2fa_enabled?: boolean;
+    kyc_status?: 'not_submitted' | 'pending' | 'verified' | 'rejected';
+}
 
 export default function ProfilePage() {
-    const [user, setUser] = useState<any>(null);
+    const [user, setUser] = useState<UserProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     const fetchUser = async () => {
@@ -42,7 +50,7 @@ export default function ProfilePage() {
     if (!user) {
         return (
             <div className="p-20 text-center bg-[#fffdf9] min-h-screen">
-                <p className="font-serif text-2xl text-red-500 italic">"The Imperial Records fail to recognize your identity."</p>
+                <p className="font-serif text-2xl text-red-500 italic">&quot;The Imperial Records fail to recognize your identity.&quot;</p>
             </div>
         );
     }
@@ -162,7 +170,7 @@ export default function ProfilePage() {
                             className="bg-white rounded-[3.5rem] border border-accent/10 shadow-3xl overflow-hidden shadow-gold-glow/5"
                         >
                             <KYCUpload 
-                                currentStatus={user.kyc_status} 
+                                currentStatus={user.kyc_status ?? 'not_submitted'} 
                                 onSuccess={fetchUser} 
                             />
                         </motion.div>
@@ -179,7 +187,7 @@ export default function ProfilePage() {
                             </div>
                              <h4 className="text-2xl font-serif text-primary mb-4">Imperial Ledger Update</h4>
                             <p className="max-w-md mx-auto text-gray-400 font-medium italic leading-relaxed">
-                                "The artisans are currently refining the detailed statistics and property overview for your {user.role} profile. Further insights will manifest in the next era."
+                                &quot;The artisans are currently refining the detailed statistics and property overview for your {user.role} profile. Further insights will manifest in the next era.&quot;
                             </p>
                             <div className="mt-10 h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
                                 <motion.div 

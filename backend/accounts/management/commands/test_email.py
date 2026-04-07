@@ -1,3 +1,12 @@
+"""
+Management command for testing outbound email delivery.
+
+This command sends a trial email to a specified recipient in order to verify
+that the configured SMTP backend is working correctly.
+
+Usage:
+    python manage.py test_email <recipient_email>
+"""
 import os
 from django.core.management.base import BaseCommand
 from django.core.mail import send_mail

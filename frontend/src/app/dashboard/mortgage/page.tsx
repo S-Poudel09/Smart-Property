@@ -1,8 +1,7 @@
 'use client';
 
 import EMICalculator from '@/components/loans/EMICalculator';
-import { Landmark, Compass, ShieldCheck, TrendingUp, Sparkles, AlertCircle } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Landmark, TrendingUp, Sparkles, AlertCircle } from 'lucide-react';
 
 export default function MortgageIntelligencePage() {
     return (
@@ -15,7 +14,7 @@ export default function MortgageIntelligencePage() {
                     </div>
                     <h1 className="text-5xl font-black text-slate-900 font-outfit tracking-tighter italic">Mortgage Intelligence</h1>
                     <p className="text-lg text-slate-500 mt-5 font-medium italic border-l-4 border-indigo-500/20 pl-8 max-w-xl leading-relaxed">
-                        "High-precision amortization analysis and structural financing eligibility for premium property acquisitions."
+                        &quot;High-precision amortization analysis and structural financing eligibility for premium property acquisitions.&quot;
                     </p>
                 </div>
                 
@@ -42,7 +41,7 @@ export default function MortgageIntelligencePage() {
                         <TrendingUp className="h-10 w-10 text-indigo-500 mb-10" />
                         <h3 className="text-2xl font-black font-outfit mb-4 italic">Rate Trajectory</h3>
                         <p className="text-slate-400 text-sm mb-12 font-medium italic leading-relaxed">
-                            "Current market volatility is low. Lockdown your fixed rates now to maximize generational portfolio growth."
+                            &quot;Current market volatility is low. Lockdown your fixed rates now to maximize generational portfolio growth.&quot;
                         </p>
                         <button className="w-full bg-indigo-500 text-white font-black text-[11px] uppercase tracking-widest py-5 rounded-2xl transition-all shadow-xl shadow-indigo-900/10 hover:bg-indigo-400 active:scale-95">
                             Connect with Financer
@@ -60,7 +59,7 @@ export default function MortgageIntelligencePage() {
                              </div>
                         </div>
                         <p className="text-sm text-slate-500 leading-relaxed font-medium italic">
-                            "Your financing trajectory is based on current state interest benchmarks and imperial registry history."
+                            &quot;Your financing trajectory is based on current state interest benchmarks and imperial registry history.&quot;
                         </p>
                         <div className="mt-10 h-1.5 w-full bg-slate-50 rounded-full overflow-hidden">
                              <div className="h-full w-4/5 bg-indigo-500 rounded-full"></div>

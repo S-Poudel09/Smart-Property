@@ -131,42 +131,118 @@ class TransactionViewSet(viewsets.ModelViewSet):
         transaction.save()
         return Response({"status": "Transaction confirmed"})
 
-    @action(detail=True, methods=['post'], url_path='khalti-verify')
-    def khalti_verify(self, request, pk=None):
-        transaction = self.get_object()
-        token = request.data.get('token')
-        amount = request.data.get('amount') # in paisa for Khalti
-
-        if not token or not amount:
-            return Response({"error": "Token and amount required"}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Standard Khalti verification:
-        # POST to https://khalti.com/api/v2/payment/verify/
-        # Headers: Authorization: Key <SECRET_KEY>
-        # Body: { "token": "...", "amount": ... }
-
+    @action(detail=True, methods=['post'], url_path='khalti-initiate')
+    def khalti_initiate(self, request, pk=None):
+        # AUTH CHECK
+        with open('/tmp/khalti_debug.log', 'a') as f:
+            auth_header = request.headers.get('Authorization', 'MISSING')
+            f.write(f"Inbound Auth Header: {auth_header[:20]}...\n")
+            
+        if not request.user.is_authenticated:
+            return Response({"error": "Platform Authentication Required"}, status=status.HTTP_401_UNAUTHORIZED)
+            
         try:
-            url = settings.KHALTI_BASE_URL + "payment/verify/"
+            transaction = self.get_object()
+            return_url = request.data.get('return_url')
+            website_url = request.data.get('website_url', 'http://localhost:3000')
+
+            if not return_url:
+                return Response({"error": "return_url is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # KPG-2 Initiate
+            base_url = getattr(settings, 'KHALTI_BASE_URL', 'https://dev.khalti.com/api/v2/')
+            base_url = base_url.rstrip('/')
+            initiate_url = f"{base_url}/epayment/initiate/"
+            
+            # DIAGNOSTIC LOGS to file
+            with open('/tmp/khalti_debug.log', 'a') as f:
+                f.write(f"\n[{timezone.now()}] KHALTI_INITIATE_DEBUG\n")
+                f.write(f"URL: {initiate_url}\n")
+                k_key = str(getattr(settings, 'KHALTI_SECRET_KEY', 'MISSING_KEY'))
+                f.write(f"Key loaded: {k_key[:10]}.....{k_key[-5:]}\n")
+                f.write(f"Transaction ID: {transaction.id}\n")
+
             headers = {
                 'Authorization': f'Key {settings.KHALTI_SECRET_KEY}',
                 'Content-Type': 'application/json'
             }
-            data = json.dumps({
-                'token': token,
-                'amount': int(amount)
-            }).encode('utf-8')
+            
+            # Amount in Paisa
+            paisa_amount = int(float(transaction.total_amount) * 100)
+            
+            payload = {
+                "return_url": return_url,
+                "website_url": website_url,
+                "amount": paisa_amount,
+                "purchase_order_id": str(transaction.id),
+                "purchase_order_name": f"Property Purchase: {transaction.property.title}",
+                "customer_info": {
+                    "name": f"{request.user.first_name} {request.user.last_name}",
+                    "email": request.user.email,
+                }
+            }
 
-            req = urllib.request.Request(url, data=data, headers=headers)
+            req = urllib.request.Request(initiate_url, data=json.dumps(payload).encode('utf-8'), headers=headers)
             with urllib.request.urlopen(req) as response:
                 res_data = json.loads(response.read().decode())
                 
-                # Khalti returns 200 on successful verification
-                # Check for specific attributes if needed
-                if res_data.get('idx'):
-                    # Verification succeeded
+                if res_data.get('pidx'):
+                    # Save pidx to transaction for later lookup
+                    transaction.transaction_reference_id = res_data.get('pidx')
+                    transaction.save()
+                    
+                    return Response({
+                        "pidx": res_data.get('pidx'),
+                        "payment_url": res_data.get('payment_url')
+                    }, status=status.HTTP_200_OK)
+                else:
+                    return Response({
+                        "error": "Unable to initiate Khalti sandbox payment. Please verify sandbox keys.",
+                        "details": res_data
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+        except urllib.error.HTTPError as e:
+            res_err = e.read().decode()
+            logger.error(f"Khalti Initiate API Error: {res_err}")
+            with open('/tmp/khalti_debug.log', 'a') as f:
+                f.write(f"Khalti API Error Status: {e.code}\n")
+                f.write(f"Khalti API Response Body: {res_err}\n")
+            return Response({
+                "error": "Unable to initiate Khalti sandbox payment. Please verify sandbox keys.",
+                "details": res_err
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Internal Error during Khalti initiate: {str(e)}")
+            return Response({"error": f"Internal initiation error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['post'], url_path='khalti-verify')
+    def khalti_verify(self, request, pk=None):
+        try:
+            transaction = self.get_object()
+            pidx = request.data.get('pidx') or transaction.transaction_reference_id
+
+            if not pidx:
+                return Response({"error": "pidx required for lookup"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # KPG-2 Lookup
+            base_url = getattr(settings, 'KHALTI_BASE_URL', 'https://dev.khalti.com/api/v2/')
+            base_url = base_url.rstrip('/')
+            lookup_url = f"{base_url}/epayment/lookup/"
+            
+            headers = {
+                'Authorization': f'Key {settings.KHALTI_SECRET_KEY}',
+                'Content-Type': 'application/json'
+            }
+            payload = {"pidx": pidx}
+
+            req = urllib.request.Request(lookup_url, data=json.dumps(payload).encode('utf-8'), headers=headers)
+            with urllib.request.urlopen(req) as response:
+                res_data = json.loads(response.read().decode())
+                
+                # Khalti returns status 'Completed' if successful
+                if res_data.get('status') == 'Completed':
                     transaction.status = "COMPLETED"
-                    transaction.amount_paid = transaction.total_amount # Or use amount from Khalti
-                    transaction.transaction_reference_id = res_data.get('idx')
+                    transaction.amount_paid = transaction.total_amount
                     transaction.payment_method = "Khalti"
                     transaction.save()
 
@@ -174,21 +250,25 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     from analytics.utils import log_activity
                     log_activity(
                         request.user.email, 
-                        'khalti_payment_verified', 
-                        details={'transaction_id': str(transaction.id), 'khalti_idx': res_data.get('idx')}, 
+                        'khalti_payment_completed', 
+                        details={'transaction_id': str(transaction.id), 'pidx': pidx}, 
                         status='success'
                     )
 
                     return Response({
-                        "message": "Payment verified successfully",
+                        "message": "Payment completed successfully",
                         "data": res_data
                     }, status=status.HTTP_200_OK)
                 else:
-                    return Response({"error": "Khalti verification failed"}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({
+                        "error": "Payment not completed", 
+                        "status": res_data.get('status'),
+                        "details": res_data
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
         except urllib.error.HTTPError as e:
             res_err = e.read().decode()
-            logger.error(f"Khalti API Error: {res_err}")
+            logger.error(f"Khalti Verify API Error: {res_err}")
             return Response({"error": "Khalti API error", "details": res_err}, status=e.code)
         except Exception as e:
             logger.error(f"Internal Error during Khalti verify: {str(e)}")

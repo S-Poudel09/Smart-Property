@@ -1,3 +1,18 @@
+"""
+Management command for importing seed datasets into the system.
+
+This command loads user, property, transaction, and loan data from CSV
+files and optionally attaches dataset images to imported properties.
+
+Primary responsibilities:
+- Clear existing seed-related data
+- Import users from CSV
+- Import properties and related images
+- Import transaction records
+- Import loan records
+
+This command is mainly intended for development, testing, and demo data setup.
+"""
 import csv
 import os
 from django.core.management.base import BaseCommand
@@ -41,10 +56,12 @@ class Command(BaseCommand):
         
         self.stdout.write(self.style.SUCCESS('Successfully imported all datasets with imagery'))
 
+    # Normalizes currency-like string values into Decimal objects for safe database storage.
     def clean_decimal(self, value):
         if not value: return Decimal("0.00")
         return Decimal(value.replace('$', '').replace(',', '').strip())
 
+    # Imports user records from the provided CSV dataset.
     def import_users(self, file_path):
         self.stdout.write('Importing users...')
         with open(file_path, mode='r') as f:
@@ -68,6 +85,7 @@ class Command(BaseCommand):
                 user.set_password("SecurePassword123!")
                 user.save()
 
+    # Imports property records and attaches sample images from dataset folders.
     def import_properties(self, file_path):
         self.stdout.write('Importing properties with integrated images...')
         # Get an existing seller from the DB, fallback to first user if none
@@ -125,6 +143,7 @@ class Command(BaseCommand):
                 except Exception as e:
                     self.stdout.write(self.style.WARNING(f"Failed to attach images for property {i+1}: {e}"))
 
+    # Imports transaction records and links them to existing users and properties.
     def import_transactions(self, file_path):
         self.stdout.write('Importing transactions...')
         properties = list(Property.objects.all())
@@ -152,6 +171,7 @@ class Command(BaseCommand):
                 except User.DoesNotExist:
                     continue
 
+# Imports loan records for existing users and properties.
     def import_loans(self, file_path):
         self.stdout.write('Importing loans...')
         users = list(User.objects.filter(role='buyer'))

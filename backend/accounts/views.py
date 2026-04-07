@@ -1,3 +1,25 @@
+"""
+API views for the accounts module.
+
+This file implements the main authentication, verification, profile,
+and administrative workflows for the Smart Property system.
+
+Main features covered:
+- User registration
+- Email OTP generation and verification
+- Login and admin login MFA flow
+- OTP resend functionality
+- User profile retrieval and update
+- SMTP diagnostic email testing
+- Admin user management
+- Password reset request and confirmation
+- KYC document upload and admin verification
+- User statistics endpoints
+
+The views are built using Django REST Framework APIView and ModelViewSet
+classes, with role-based access control enforced through custom permissions.
+"""
+
 from rest_framework import status, viewsets, parsers
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -38,6 +60,9 @@ from .models import User, OTP
 #         print(f"OTP email sent successfully to {user.email}")
 #     except Exception as e:
 #         print(f"Error sending OTP email to {user.email}: {str(e)}")
+
+# Generates a fresh OTP for the given user, stores it in the database,
+# invalidates previous OTPs, and sends the code via email.
 def generate_and_send_otp(user, reason="verification"):
     # delete old OTPs
     OTP.objects.filter(user=user).delete()
@@ -94,6 +119,8 @@ def generate_and_send_otp(user, reason="verification"):
             return False, "Sovereign Authentication Failure: Incorrect credentials. Ensure you are using a GMAIL APP PASSWORD, not your standard account password."
         return False, f"Imperial Herald Dispatch Error: {error_msg}"
 
+# Creates JWT refresh and access tokens for an authenticated user and
+# attaches essential user metadata for frontend use.
 def get_tokens_for_user(user):
     logger.info(f"Generating Imperial tokens for: {user.email}")
     try:
@@ -113,6 +140,7 @@ def get_tokens_for_user(user):
         logger.error(f"CRITICAL ERROR in token generation for {user.email}: {e}")
         raise e
 
+# Handles public account registration and triggers email verification.
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
@@ -156,6 +184,7 @@ class RegisterView(APIView):
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+# Confirms a user's email address by validating the submitted OTP code.
 class VerifyOTPView(APIView):
     permission_classes = [AllowAny]
 
@@ -200,6 +229,7 @@ class VerifyOTPView(APIView):
             return Response({"message": "Email verified successfully."}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+# Resends a verification OTP to users whose accounts are not yet verified.
 class ResendOTPView(APIView):
     permission_classes = [AllowAny]
 
@@ -222,6 +252,7 @@ class ResendOTPView(APIView):
         else:
             return Response({"error": "Verification dispatch failed."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+# Authenticates users and applies a separate OTP-based MFA flow for admin accounts.
 class LoginView(APIView):
     permission_classes = [AllowAny]
 
@@ -264,6 +295,7 @@ class LoginView(APIView):
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+# Completes the second step of admin authentication by validating the login OTP.
 class AdminLoginVerifyOTPView(APIView):
     permission_classes = [AllowAny]
 
@@ -303,6 +335,7 @@ class AdminLoginVerifyOTPView(APIView):
 
         return Response(data, status=status.HTTP_200_OK)
 
+# Resends an admin login OTP when the original verification code expires or is not received.
 class AdminResendLoginOTPView(APIView):
     permission_classes = [AllowAny]
 
@@ -324,6 +357,7 @@ class AdminResendLoginOTPView(APIView):
         else:
             return Response({"error": f"MFA Herald Dispatch Error: {otp_error}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+# Allows authenticated users to retrieve and update their own profile data.
 class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -338,6 +372,7 @@ class UserProfileView(APIView):
         user.save()
         return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
 
+# Diagnostic endpoint used by administrators to verify SMTP/email configuration.
 class SendTestEmailView(APIView):
     """
     Diagnostic view to verify SMTP settings are operational.
@@ -369,6 +404,7 @@ class SendTestEmailView(APIView):
         except Exception as e:
             return Response({"error": f"Imperial Dispatch Error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+# Admin-only CRUD interface for managing user records.
 class UserManagementViewSet(viewsets.ModelViewSet):
     """
     Admin-only management of system users.
@@ -377,7 +413,7 @@ class UserManagementViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated, IsAdminUser]
 
-
+# Initiates a password reset flow by generating a tokenized reset link and emailing it to the user.
 class PasswordResetRequestView(APIView):
     permission_classes = [AllowAny]
 
@@ -415,7 +451,7 @@ class PasswordResetRequestView(APIView):
                 return Response({"error": f"Imperial Herald Error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
+# Completes the password reset process after validating the encoded user ID and token.
 class PasswordResetConfirmView(APIView):
     permission_classes = [AllowAny]
 
@@ -440,6 +476,7 @@ class PasswordResetConfirmView(APIView):
                 return Response({"error": "Invalid or expired token."}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+# Allows authenticated users to upload identity documents for KYC review.
 class KYCUploadView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = (parsers.MultiPartParser, parsers.FormParser)
@@ -455,6 +492,7 @@ class KYCUploadView(APIView):
             return Response({"message": "KYC documents submitted successfully. Status is now pending."}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+# Allows administrators to approve or reject submitted KYC records.
 class AdminKYCVerifyView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -483,6 +521,7 @@ class AdminKYCVerifyView(APIView):
             return Response({"message": f"User KYC status updated to {kyc_status}."}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+# Returns the total number of users in the system for admin dashboards or statistics.
 class UserCountView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
     def get(self, request):

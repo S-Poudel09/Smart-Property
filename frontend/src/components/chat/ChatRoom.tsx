@@ -1,14 +1,14 @@
 'use client';
 
-import { useEffect, useState, useRef, useMemo } from 'react';
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { getRooms, getRoomMessages, sendMessage, ChatRoom, ChatMessage } from '@/lib/api/chat';
 import { getUser } from '@/lib/auth/getUser';
 import { Loader } from '@/components/common/Loader';
 import Link from 'next/link';
 import {
     MessageSquare, Send, Building, Search,
-    ChevronLeft, UserCircle, CheckCheck, Clock, ShieldCheck,
-    ExternalLink, MapPin, Tag
+    ChevronLeft, CheckCheck, Clock, ShieldCheck,
+    ExternalLink, Tag
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'react-hot-toast';
@@ -34,7 +34,7 @@ export default function ChatRoomComponent({ initialRoomId }: ChatRoomComponentPr
     const user = getUser();
     const currentUserId = useMemo(() => String(user?.id || user?.user_id || ''), [user]);
 
-    const getDisplayName = (participant: any) => {
+    const getDisplayName = (participant: { full_name?: string; first_name?: string; last_name?: string; email?: string; role?: string } | undefined) => {
         if (!participant) return 'Anonymous User';
         if (participant.full_name) return participant.full_name;
         const fullName = `${participant.first_name || ''} ${participant.last_name || ''}`.trim();
@@ -43,7 +43,7 @@ export default function ChatRoomComponent({ initialRoomId }: ChatRoomComponentPr
         return `Authorized ${participant.role || 'Node'}`;
     };
 
-    const loadRooms = async () => {
+    const loadRooms = useCallback(async () => {
         try {
             const data = await getRooms();
             setRooms(data);
@@ -56,11 +56,11 @@ export default function ChatRoomComponent({ initialRoomId }: ChatRoomComponentPr
         } finally {
             setLoading(false);
         }
-    };
+    }, [initialRoomId, selectedRoom]);
 
     useEffect(() => {
         loadRooms();
-    }, [initialRoomId]);
+    }, [loadRooms]);
 
     useEffect(() => {
         if (!selectedRoom) return;
@@ -359,7 +359,7 @@ export default function ChatRoomComponent({ initialRoomId }: ChatRoomComponentPr
                             </div>
                             <h3 className="text-2xl font-black text-slate-900 font-outfit uppercase tracking-tighter italic">Establish Connection</h3>
                             <p className="text-sm font-medium text-slate-400 mt-4 max-w-xs mx-auto italic leading-relaxed">
-                                "Select a transmission node from the sidebar to initialize encrypted data exchange."
+                                &quot;Select a transmission node from the sidebar to initialize encrypted data exchange.&quot;
                             </p>
                             <div className="mt-12 flex flex-wrap justify-center gap-4">
                                 <div className="px-5 py-2.5 bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase tracking-widest rounded-full border border-indigo-100/50 flex items-center gap-2">

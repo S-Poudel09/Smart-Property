@@ -3,12 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getTransactions, Transaction } from '@/lib/api/transactions';
-import { EmptyState } from '@/components/common/EmptyState';
 import { Loader } from '@/components/common/Loader';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { formatNPR } from '@/lib/utils/currency';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Receipt, Search, Download, Home, Clock, CreditCard, ChevronRight, Filter, Building, Activity, ShieldCheck } from 'lucide-react';
+import { Search, Download, Clock, CreditCard, ChevronRight, Filter, Building, Activity, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 
 export default function BuyerTransactionsPage() {
@@ -21,7 +20,7 @@ export default function BuyerTransactionsPage() {
     useEffect(() => {
         getTransactions()
             .then(data => {
-                const arr = Array.isArray(data) ? data : (data as any).results ?? [];
+                const arr = Array.isArray(data) ? data : (data as { results?: Transaction[] }).results ?? [];
                 setTransactions(arr);
                 setLoading(false);
             })
@@ -47,7 +46,7 @@ export default function BuyerTransactionsPage() {
                     </div>
                     <h1 className="text-5xl font-black text-primary font-outfit tracking-tight italic leading-none">Operations Ledger</h1>
                     <p className="text-lg text-muted mt-5 font-medium italic border-l-4 border-accent/20 pl-8 max-w-xl">
-                        "Your consolidated history of asset inquiries, valuation decrees, and confirmed acquisitions."
+                        &quot;Your consolidated history of asset inquiries, valuation decrees, and confirmed acquisitions.&quot;
                     </p>
                 </div>
                 
@@ -102,7 +101,7 @@ export default function BuyerTransactionsPage() {
                     </div>
                     <h2 className="text-3xl font-black text-primary font-outfit uppercase italic tracking-tighter">No Operations Detected</h2>
                     <p className="text-muted font-medium italic mt-4 max-w-sm mx-auto mb-12">
-                        "Your transaction registry is currently clear. Direct actions are required to initialize records."
+                        &quot;Your transaction registry is currently clear. Direct actions are required to initialize records.&quot;
                     </p>
                     <Link href="/properties">
                         <button className="btn-premium bg-primary text-white hover:bg-slate-800 shadow-xl shadow-primary/20">Launch Search</button>
@@ -176,8 +175,8 @@ export default function BuyerTransactionsPage() {
                      <div>
                         <h3 className="text-2xl font-black font-outfit mb-2 italic">Registry Protocol Information</h3>
                         <p className="text-slate-300 font-medium leading-relaxed italic max-w-3xl">
-                            "Current operations remain in PENDING verification until documentation is authourized by the Imperial Council. 
-                            If records appear stagnant, please verify your KYC status in the profile wing."
+                            &quot;Current operations remain in PENDING verification until documentation is authourized by the Imperial Council. 
+                            If records appear stagnant, please verify your KYC status in the profile wing.&quot;
                         </p>
                      </div>
                  </div>

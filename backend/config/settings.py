@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import logging
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / ".env")
+load_dotenv(BASE_DIR / ".env", override=True)
 
 logger = logging.getLogger(__name__)
 

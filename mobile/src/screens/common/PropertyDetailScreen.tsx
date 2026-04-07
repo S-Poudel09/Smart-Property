@@ -161,7 +161,7 @@ const PropertyDetailScreen = ({ route, navigation }: any) => {
             <ChevronLeft color="#1e293b" size={24} />
           </TouchableOpacity>
 
-          <View style={styles.imageOverlay}>
+          <View style={styles.imageOverlay} pointerEvents="box-none">
             <TouchableOpacity style={styles.iconCircle} onPress={() => setIsFavorite(!isFavorite)}>
               <Heart color={isFavorite ? "#ef4444" : "#1e293b"} fill={isFavorite ? "#ef4444" : "transparent"} size={20} />
             </TouchableOpacity>
@@ -262,14 +262,17 @@ const PropertyDetailScreen = ({ route, navigation }: any) => {
       </ScrollView>
 
       {/* Floating Footer */}
-      <View style={styles.footerActions}>
-        <TouchableOpacity style={styles.emiButton} onPress={() => navigation.navigate('LoanCalculator', { price: Number(property.price) })}>
-          <CreditCard color="#6366f1" size={20} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.contactButton} onPress={handleContact}>
-          <MessageCircle color="#fff" size={20} />
-          <Text style={styles.contactButtonText}>Chat with Owner</Text>
-        </TouchableOpacity>
+      {/* Floating Footer - Use pointerEvents="box-none" to prevent blocking ScrollView content above it */}
+      <View style={styles.footerActions} pointerEvents="box-none">
+        <View style={styles.footerInner}>
+            <TouchableOpacity style={styles.emiButton} onPress={() => navigation.navigate('LoanCalculator', { price: Number(property.price) })}>
+              <CreditCard color="#6366f1" size={20} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.contactButton} onPress={handleContact}>
+              <MessageCircle color="#fff" size={20} />
+              <Text style={styles.contactButtonText}>Chat with Owner</Text>
+            </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -286,7 +289,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   scrollContent: {
-    paddingBottom: 100,
+    flexGrow: 1,
+    paddingBottom: 140, // Increased to provide clear clearance for footer
   },
   imageContainer: {
     height: 300,
@@ -312,7 +316,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 10,
+    zIndex: 50,
+    elevation: 5,
   },
   imageOverlay: {
     position: 'absolute',
@@ -320,7 +325,8 @@ const styles = StyleSheet.create({
     right: 20,
     flexDirection: 'row',
     gap: 12,
-    zIndex: 10,
+    zIndex: 50,
+    elevation: 5,
   },
   iconCircle: {
     width: 40,
@@ -495,11 +501,14 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 20,
-    paddingBottom: 34,
+    zIndex: 100,
+  },
+  footerInner: {
     backgroundColor: '#fff',
     flexDirection: 'row',
     gap: 12,
+    padding: 20,
+    paddingBottom: 34,
     borderTopWidth: 1,
     borderTopColor: '#f1f5f9',
   },

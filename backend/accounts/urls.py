@@ -1,3 +1,13 @@
+"""
+URL configuration for the accounts module.
+
+This file defines all API routes related to user registration, login,
+OTP verification, password reset, profile management, KYC workflows,
+and admin-level user management.
+
+It also registers router-based endpoints for admin user management using
+Django REST Framework's DefaultRouter.
+"""
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
@@ -10,9 +20,11 @@ from .views import (
 
 from rest_framework.routers import DefaultRouter
 
+# Router for admin-managed user CRUD operations.
 router = DefaultRouter(trailing_slash=True)
 router.register(r'admin/users', UserManagementViewSet, basename='admin-users')
 
+# API endpoints exposed by the accounts module.
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
     path('verify-otp/', VerifyOTPView.as_view(), name='verify_otp'),

@@ -9,22 +9,23 @@ interface CheckoutModalProps {
     isOpen: boolean;
     onClose: () => void;
     propertyTitle: string;
+    propertyId: string;
     amount: number;
     onSuccess: (referenceId: string) => void;
 }
 
-export const CheckoutModal = ({ isOpen, onClose, propertyTitle, amount, onSuccess }: CheckoutModalProps) => {
+export const CheckoutModal = ({ isOpen, onClose, propertyTitle, propertyId, amount, onSuccess }: CheckoutModalProps) => {
     return (
         <AnimatePresence>
             {isOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 lg:p-8">
+                <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 lg:p-8">
                     {/* Backdrop */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="absolute inset-0 bg-[#0f172a]/60 backdrop-blur-md"
+                        className="fixed inset-0 bg-slate-950/40 backdrop-blur-md z-0"
                     />
 
                     {/* Modal Content */}
@@ -32,12 +33,13 @@ export const CheckoutModal = ({ isOpen, onClose, propertyTitle, amount, onSucces
                         initial={{ opacity: 0, scale: 0.9, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                        className="relative w-full max-w-4xl bg-white rounded-[2.5rem] shadow-[0_30px_100px_rgb(0,0,0,0.4)] overflow-hidden flex flex-col lg:flex-row"
+                        className="relative z-10 w-full max-w-4xl bg-white rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col lg:flex-row"
                     >
                         {/* Summary Side */}
                         <div className="lg:w-2/5 bg-gray-50/50 p-10 border-r border-gray-100 flex flex-col justify-between">
                             <div>
                                 <button
+                                    type="button"
                                     onClick={onClose}
                                     className="mb-10 h-10 w-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-rose-500 hover:border-rose-100 transition-all shadow-sm group"
                                 >
@@ -71,6 +73,7 @@ export const CheckoutModal = ({ isOpen, onClose, propertyTitle, amount, onSucces
                         {/* Payment Side */}
                         <div className="lg:w-3/5 p-10 lg:p-14 bg-white flex items-center justify-center relative">
                             <KhaltiPaymentDemo 
+                                transactionId={propertyId}
                                 amount={amount} 
                                 propertyTitle={propertyTitle} 
                                 onSuccess={onSuccess} 

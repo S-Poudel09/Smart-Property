@@ -28,14 +28,22 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         const status = error.response?.status;
+        const config = error.config;
 
         if (status === 401) {
-            // Token expired or invalid
-            console.warn('Unauthorized access - potential token expiry. Clearing session.');
-            clearAuthFromStorage();
+            // Check if this is a payment initiation request
+            const isPaymentRequest = config?.url?.includes('khalti');
             
-            if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth/')) {
-                window.location.href = '/auth/login?expired=true';
+            if (!isPaymentRequest) {
+                // Token expired or invalid
+                console.warn('Unauthorized access - potential token expiry. Clearing session.');
+                clearAuthFromStorage();
+                
+                if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth/')) {
+                    window.location.href = '/auth/login?expired=true';
+                }
+            } else {
+                console.warn('Khalti API 401: Invalid Credentials (handled by component)');
             }
         } else if (status === 403) {
             console.error('Forbidden access - user lacks sufficient permissions.');

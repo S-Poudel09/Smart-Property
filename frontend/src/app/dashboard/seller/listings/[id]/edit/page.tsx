@@ -115,8 +115,8 @@ export default function EditListingPage() {
                     title: data.title,
                     description: data.description,
                     price: data.price,
-                    type: data.type as any,
-                    category: data.category as any,
+                    type: data.type as 'sale' | 'rent',
+                    category: data.category as 'house' | 'flat' | 'bungalow' | 'apartment' | 'commercial' | 'hostel' | 'land',
                     bedrooms: data.bedrooms,
                     bathrooms: data.bathrooms,
                     area: data.area,
@@ -134,7 +134,7 @@ export default function EditListingPage() {
 
                 if (data.images) {
                     setImages(data.images.map(img => {
-                        const url = typeof img === 'string' ? img : (img as any).previewUrl;
+                        const url = typeof img === 'string' ? img : (img as { previewUrl?: string }).previewUrl ?? '';
                         return { previewUrl: url, name: 'Registry Image', type: 'image/jpeg' };
                     }));
                 }
@@ -293,7 +293,7 @@ export default function EditListingPage() {
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                                                 <div className="space-y-3">
                                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-2">Admission Policy</label>
-                                                    <select {...register('hostel_gender' as any)} className="w-full h-16 bg-white border border-slate-200 rounded-[1.25rem] px-5 text-sm font-black outline-none focus:border-indigo-600 transition-all">
+                                                    <select {...register('hostel_gender')} className="w-full h-16 bg-white border border-slate-200 rounded-[1.25rem] px-5 text-sm font-black outline-none focus:border-indigo-600 transition-all">
                                                         <option value="boys">Boys Only</option>
                                                         <option value="girls">Girls Only</option>
                                                         <option value="mixed">Mixed / Co-ed</option>
@@ -301,13 +301,13 @@ export default function EditListingPage() {
                                                 </div>
                                                 <div className="space-y-3">
                                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-2">Bathroom Proto</label>
-                                                    <select {...register('bathroom_type' as any)} className="w-full h-16 bg-white border border-slate-200 rounded-[1.25rem] px-5 text-sm font-black outline-none focus:border-indigo-600 transition-all">
+                                                    <select {...register('bathroom_type')} className="w-full h-16 bg-white border border-slate-200 rounded-[1.25rem] px-5 text-sm font-black outline-none focus:border-indigo-600 transition-all">
                                                         <option value="attached">Attached Bathroom</option>
                                                         <option value="shared">Shared Facility</option>
                                                     </select>
                                                 </div>
-                                                <Input label="Bed Inventory Count" type="number" {...register('available_beds' as any)} />
-                                                <Input label="Room Segment Class" placeholder="e.g. 2-Seater, 3-Seater" {...register('room_type' as any)} />
+                                                <Input label="Bed Inventory Count" type="number" {...register('available_beds')} />
+                                                <Input label="Room Segment Class" placeholder="e.g. 2-Seater, 3-Seater" {...register('room_type')} />
                                             </div>
                                             <div className="flex flex-wrap gap-8 pt-4 border-t border-indigo-100">
                                                 {[
@@ -318,7 +318,7 @@ export default function EditListingPage() {
                                                     <label key={amenity.id} className="flex items-center gap-4 cursor-pointer group">
                                                         <input 
                                                             type="checkbox" 
-                                                            {...register(amenity.id as any)}
+                                                        {...register(amenity.id as keyof ListingFormValues)}
                                                             className="w-6 h-6 rounded-lg border-slate-200 text-indigo-600 focus:ring-indigo-500/20 transition-all"
                                                         />
                                                         <span className="text-[10px] font-black text-slate-500 group-hover:text-slate-900 transition-colors uppercase tracking-widest">{amenity.label}</span>
@@ -395,7 +395,7 @@ export default function EditListingPage() {
                                         </div>
                                         <div className="mt-10 p-6 bg-white/5 border border-white/10 rounded-2xl flex items-center gap-4">
                                             <ShieldCheck className="h-6 w-6 text-indigo-400" />
-                                            <p className="text-[11px] font-medium italic opacity-80 italic">"Node reconfiguration will maintain the current approval status. Core verification history remains intact."</p>
+                                            <p className="text-[11px] font-medium italic opacity-80">&quot;Node reconfiguration will maintain the current approval status. Core verification history remains intact.&quot;</p>
                                         </div>
                                      </div>
                                 </div>

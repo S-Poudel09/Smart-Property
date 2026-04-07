@@ -1,3 +1,14 @@
+"""
+Management command to standardize demo user accounts.
+
+This command is intended for development or testing environments where
+demo accounts may need to be repaired or normalized. It updates demo
+users by rehashing passwords, aligning usernames, and optionally marking
+accounts as verified.
+
+Usage:
+    python manage.py fix_demo_users
+"""
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 

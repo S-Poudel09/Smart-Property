@@ -4,12 +4,11 @@ import { useState, useEffect } from 'react';
 import { getServices, bookService, Service } from '@/lib/api/services';
 import { 
     Search, Hammer, Droplets, Zap, Shield, 
-    Truck, Paintbrush, Ruler, Sparkles, 
-    ArrowRight, Star, Clock, Filter, ShoppingBag,
-    Landmark, CheckCircle, Navigation, X, CreditCard
+    Ruler, Sparkles, 
+    ArrowRight, Clock, ShoppingBag,
+    CheckCircle, X
 } from 'lucide-react';
 import { Loader } from '@/components/common/Loader';
-import { Button } from '@/components/common/Button';
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatNPR } from '@/lib/utils/currency';
@@ -45,7 +44,7 @@ export default function Marketplace() {
                 const apiServices = await getServices();
                 const merged = [...apiServices, ...EXTRA_SERVICES].filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
                 setServices(merged);
-            } catch (e) {
+            } catch (_e) {
                 console.warn('API connection unstable, using local registry');
                 setServices(EXTRA_SERVICES);
             } finally {
@@ -74,7 +73,7 @@ export default function Marketplace() {
             toast.success('Service requested successfully');
             setIsBookingModalOpen(false);
             setBookingNotes('');
-        } catch (e) {
+        } catch (_e) {
             toast.error('Failed to process request');
         } finally {
             setBookingLoading(false);
@@ -95,7 +94,7 @@ export default function Marketplace() {
                     </div>
                     <h1 className="text-5xl font-black text-slate-900 font-outfit tracking-tighter leading-none italic">Service Marketplace</h1>
                     <p className="text-lg text-slate-500 font-medium italic border-l-4 border-indigo-600/20 pl-8 max-w-xl">
-                        "Connect with verified specialists for property maintenance, legal advisory, and architectural design."
+                        &quot;Connect with verified specialists for property maintenance, legal advisory, and architectural design.&quot;
                     </p>
                 </div>
                 
@@ -164,7 +163,7 @@ export default function Marketplace() {
                             </div>
                             
                             <h3 className="text-2xl font-black text-slate-900 font-outfit tracking-tighter mb-4 group-hover:text-indigo-600 transition-colors leading-tight italic">{service.name}</h3>
-                            <p className="text-sm text-slate-500 font-medium italic leading-relaxed mb-10 flex-1 line-clamp-3">"{service.description}"</p>
+                            <p className="text-sm text-slate-500 font-medium italic leading-relaxed mb-10 flex-1 line-clamp-3">&quot;{service.description}&quot;</p>
                             
                             <div className="pt-8 border-t border-slate-50 flex items-center justify-between mt-auto">
                                 <div>
@@ -223,7 +222,7 @@ export default function Marketplace() {
                                             <h3 className="text-xl font-black text-slate-900 font-outfit tracking-tight">{selectedService.name}</h3>
                                             <span className="text-lg font-black text-indigo-600 italic">{formatNPR(selectedService.base_price)}</span>
                                         </div>
-                                        <p className="text-xs text-slate-500 leading-relaxed font-bold italic">"{selectedService.description}"</p>
+                                        <p className="text-xs text-slate-500 leading-relaxed font-bold italic">&quot;{selectedService.description}&quot;</p>
                                     </div>
 
                                     <div>

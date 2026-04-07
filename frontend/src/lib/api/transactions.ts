@@ -79,10 +79,16 @@ export const confirmTransaction = async (transactionId: string) => {
     return response.data;
 };
 
-export const verifyKhaltiPayment = async (transactionId: string, token: string, amount: number) => {
+export const initiateKhaltiPayment = async (transactionId: string, returnUrl: string) => {
+    const response = await api.post(`transactions/${transactionId}/khalti-initiate/`, {
+        return_url: returnUrl
+    });
+    return response.data;
+};
+
+export const verifyKhaltiPayment = async (transactionId: string, pidx: string) => {
     const response = await api.post(`transactions/${transactionId}/khalti-verify/`, {
-        token,
-        amount
+        pidx
     });
     return response.data;
 };

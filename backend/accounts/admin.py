@@ -1,3 +1,15 @@
+"""
+Admin configuration for the accounts module.
+
+This file registers custom authentication-related models with the Django
+administration panel and extends the default UserAdmin to expose project-
+specific user attributes such as role, KYC status, verification state,
+security settings, and financial metadata.
+
+Registered models:
+- User: Custom user model used across the Smart Property system.
+- OTP: One-time password records used for email-based verification flows.
+"""
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import User, OTP

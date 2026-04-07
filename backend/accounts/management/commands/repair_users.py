@@ -1,3 +1,13 @@
+"""
+Management command for auditing and repairing user account records.
+
+This command scans all existing users and fixes common account integrity issues,
+such as plaintext passwords, missing passwords, and inconsistent username/email
+mapping. It can also ensure core roles are marked as verified for development use.
+
+Usage:
+    python manage.py repair_users
+"""
 import sys
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model

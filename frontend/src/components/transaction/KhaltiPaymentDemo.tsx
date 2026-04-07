@@ -6,11 +6,12 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/common/Button';
-import { CreditCard, Wallet, CheckCircle2, Loader2, Info } from 'lucide-react';
+import { Wallet, CheckCircle2, Loader2, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
-import { verifyKhaltiPayment } from '@/lib/api/transactions';
+import { initiateKhaltiPayment, verifyKhaltiPayment } from '@/lib/api/transactions';
 
 interface KhaltiPaymentProps {
     transactionId: string;
@@ -19,78 +20,53 @@ interface KhaltiPaymentProps {
     onSuccess: (data: any) => void;
 }
 
-declare global {
-  interface Window {
-    KhaltiCheckout: any;
-  }
-}
-
 export const KhaltiPaymentDemo = ({ transactionId, amount, propertyTitle, onSuccess }: KhaltiPaymentProps) => {
     const [step, setStep] = useState<'selection' | 'processing' | 'success'>('selection');
-    const [isSdkLoaded, setIsSdkLoaded] = useState(false);
+    const [isInitiating, setIsInitiating] = useState(false);
+    
+    const searchParams = useSearchParams();
+    const router = useRouter();
 
     useEffect(() => {
-        // Inject Khalti Script
-        const script = document.createElement('script');
-        script.src = 'https://khalti.s3.ap-south-1.amazonaws.com/KPG/dist/2020.12.17.0.0.0/khalti-checkout.iffe.js';
-        script.async = true;
-        script.onload = () => setIsSdkLoaded(true);
-        document.body.appendChild(script);
-
-        return () => {
-            document.body.removeChild(script);
-        };
-    }, []);
-
-    const handlePay = () => {
-        if (!isSdkLoaded) {
-            toast.error('Khalti SDK not loaded yet. Please wait.');
-            return;
+        const pidx = searchParams.get('pidx');
+        if (pidx && step === 'selection') {
+            verifyPayment(pidx);
         }
+    }, [searchParams]);
 
-        const config = {
-            publicKey: process.env.NEXT_PUBLIC_KHALTI_PUBLIC_KEY || "test_public_key_ad34731d167140e69882200547000000",
-            productIdentity: transactionId,
-            productName: propertyTitle,
-            productUrl: typeof window !== 'undefined' ? window.location.href : '',
-            amount: Math.round(amount * 100), // convert to paisa
-            eventHandler: {
-                onSuccess(payload: any) {
-                    // payload contains token and amount
-                    verifyPayment(payload);
-                },
-                onError(error: any) {
-                    console.error('Khalti Error:', error);
-                    toast.error('Payment failed or cancelled');
-                    setStep('selection');
-                },
-                onClose() {
-                    console.log('Khalti widget closed');
-                }
-            },
-            paymentPreference: [
-                "KHALTI",
-                "EBANKING",
-                "MOBILE_BANKING",
-                "CONNECT_IPS",
-                "SCT",
-            ],
-        };
-
-        const checkout = new window.KhaltiCheckout(config);
-        checkout.show({ amount: Math.round(amount * 100) });
+    const handlePay = async () => {
+        try {
+            setIsInitiating(true);
+            const returnUrl = window.location.origin + window.location.pathname;
+            const websiteUrl = window.location.origin;
+            
+            const response = await initiateKhaltiPayment(transactionId, returnUrl);
+            
+            if (response.payment_url) {
+                toast.success('Redirecting to Khalti...');
+                window.location.href = response.payment_url;
+            } else {
+                toast.error('Initiation failed: No payment URL');
+            }
+        } catch (error: any) {
+            console.error('Khalti Initiate Error:', error);
+            const backendError = error.response?.data?.error;
+            toast.error(backendError || 'Failed to initiate secure payment');
+        } finally {
+            setIsInitiating(false);
+        }
     };
 
-    const verifyPayment = async (payload: any) => {
+    const verifyPayment = async (pidx: string) => {
         setStep('processing');
         try {
-            const response = await verifyKhaltiPayment(transactionId, payload.token, payload.amount);
+            const response = await verifyKhaltiPayment(transactionId, pidx);
             setStep('success');
             onSuccess(response.data);
             toast.success('Payment Verified Successfully');
         } catch (error: any) {
             console.error('Verification Error:', error);
-            const detail = error.response?.data?.details || 'Verification failed';
+            const detail = error.response?.data?.details || 'Verification node timeout';
             toast.error(`Verification Failed: ${detail}`);
             setStep('selection');
         }
@@ -136,8 +112,9 @@ export const KhaltiPaymentDemo = ({ transactionId, amount, propertyTitle, onSucc
                             <div className="space-y-3">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Payment Options</label>
                                 <button 
+                                    type="button"
                                     onClick={handlePay}
-                                    className="w-full flex items-center justify-between p-5 bg-gray-50 border-2 border-primary/20 rounded-2xl group hover:border-primary transition-all shadow-sm"
+                                    className="w-full flex items-center justify-between p-5 bg-gray-50 border-2 border-primary/20 rounded-2xl group hover:border-primary transition-all shadow-sm relative z-10"
                                 >
                                     <div className="flex items-center gap-4">
                                         <div className="h-10 w-10 bg-[#5C2D91]/10 text-[#5C2D91] rounded-lg flex items-center justify-center">
@@ -159,11 +136,12 @@ export const KhaltiPaymentDemo = ({ transactionId, amount, propertyTitle, onSucc
                             </div>
 
                             <Button 
-                                className="w-full h-14 bg-[#5C2D91] hover:bg-[#4C2376] text-white font-bold uppercase tracking-[0.2em] text-[10px] rounded-2xl shadow-xl shadow-[#5C2D91]/20 flex items-center justify-center gap-3 transition-all active:scale-[0.98]"
+                                type="button"
+                                className="w-full h-14 bg-[#5C2D91] hover:bg-[#4C2376] text-white font-bold uppercase tracking-[0.2em] text-[10px] rounded-2xl shadow-xl shadow-[#5C2D91]/20 flex items-center justify-center gap-3 transition-all active:scale-[0.98] relative z-20"
                                 onClick={handlePay}
-                                disabled={!isSdkLoaded}
+                                disabled={isInitiating}
                             >
-                                {!isSdkLoaded ? 'Initialising Gateway...' : `Proceed to Pay Rs. ${amount.toLocaleString()}`}
+                                {isInitiating ? 'Initializing Imperial Gateway...' : `Proceed to Pay NPR ${amount.toLocaleString()}`}
                             </Button>
                         </motion.div>
                     )}
