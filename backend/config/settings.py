@@ -228,3 +228,8 @@ TWO_FACTOR_PATCH_ADMIN = True # This automatically patches the admin site to req
 # ACCOUNT SETTINGS
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_EMAIL_REQUIRED = True
+
+# KHALTI PAYMENT SETTINGS
+KHALTI_PUBLIC_KEY = os.getenv("KHALTI_PUBLIC_KEY", "test_public_key_place_holder")
+KHALTI_SECRET_KEY = os.getenv("KHALTI_SECRET_KEY", "test_secret_key_place_holder")
+KHALTI_BASE_URL = os.getenv("KHALTI_BASE_URL", "https://khalti.com/api/v2/")

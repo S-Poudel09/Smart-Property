@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Toaster } from 'react-hot-toast';
+import { AuthProvider } from "@/providers/AuthProvider";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -26,11 +27,13 @@ export default function RootLayout({
         className={`${inter.variable} antialiased flex flex-col min-h-screen bg-background text-foreground`}
       >
         <Toaster position="top-right" />
-        <Navbar />
-        <main className="flex-grow">
-          {children}
-        </main>
-        <Footer />
+        <AuthProvider>
+            <Navbar />
+            <main className="flex-grow">
+              {children}
+            </main>
+            <Footer />
+        </AuthProvider>
       </body>
     </html>
   );

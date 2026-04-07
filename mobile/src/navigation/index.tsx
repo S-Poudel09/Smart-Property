@@ -21,6 +21,12 @@ import Mobile3DViewerScreen from '../screens/common/Mobile3DViewerScreen';
 import SellerDashboardScreen from '../screens/seller/DashboardScreen';
 import MyListingsScreen from '../screens/seller/MyListingsScreen';
 import AddListingScreen from '../screens/seller/AddListingScreen';
+import SellerAnalyticsScreen from '../screens/seller/SellerAnalyticsScreen';
+
+import EditProfileScreen from '../screens/common/EditProfileScreen';
+import NotificationsScreen from '../screens/common/NotificationsScreen';
+import SettingsScreen from '../screens/common/SettingsScreen';
+import LoanCalculatorScreen from '../screens/buyer/LoanCalculatorScreen';
 
 const RootStack = createStackNavigator();
 const AuthStack = createStackNavigator();
@@ -150,6 +156,11 @@ export const RootNavigator = () => {
             <RootStack.Screen name="PropertyDetail" component={PropertyDetailScreen} options={{ headerShown: true, title: 'Property Detail' }} />
             <RootStack.Screen name="ChatDetail" component={ChatDetailScreen} options={{ headerShown: true, title: 'Chat' }} />
             <RootStack.Screen name="Mobile3DViewer" component={Mobile3DViewerScreen} options={({ route }: any) => ({ headerShown: true, title: route.params?.title || '3D Virtual Tour' })} />
+            <RootStack.Screen name="EditProfile" component={EditProfileScreen} options={{ headerShown: true, title: 'Edit Profile' }} />
+            <RootStack.Screen name="Notifications" component={NotificationsScreen} options={{ headerShown: true, title: 'Notifications' }} />
+            <RootStack.Screen name="SellerAnalytics" component={SellerAnalyticsScreen} options={{ headerShown: true, title: 'Performance Hub' }} />
+            <RootStack.Screen name="Settings" component={SettingsScreen} options={{ headerShown: true, title: 'Preferences' }} />
+            <RootStack.Screen name="LoanCalculator" component={LoanCalculatorScreen} options={{ headerShown: true, title: 'Liquidity Analysis' }} />
           </>
         ) : (
           <RootStack.Screen name="Auth" component={AuthNavigator} />

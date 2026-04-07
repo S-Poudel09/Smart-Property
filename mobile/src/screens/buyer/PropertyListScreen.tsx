@@ -6,7 +6,9 @@ import {
   FlatList, 
   ActivityIndicator,
   RefreshControl,
-  TextInput
+  TextInput,
+  ScrollView,
+  TouchableOpacity
 } from 'react-native';
 import { Search, MapPin } from 'lucide-react-native';
 import api from '../../api/client';
@@ -78,6 +80,18 @@ const PropertyListScreen = ({ navigation }: any) => {
             onChangeText={handleSearch}
           />
         </View>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={styles.filterContent}>
+          {['All', 'Home', 'Apartment', 'Land', 'Hostel', 'Office'].map((cat) => (
+            <TouchableOpacity 
+              key={cat} 
+              style={[styles.filterChip, searchQuery.toLowerCase() === cat.toLowerCase() && styles.activeFilterChip]}
+              onPress={() => handleSearch(cat === 'All' ? '' : cat)}
+            >
+              <Text style={[styles.filterText, searchQuery.toLowerCase() === cat.toLowerCase() && styles.activeFilterText]}>{cat}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
       
       <FlatList
@@ -169,6 +183,33 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#64748b',
     textAlign: 'center',
+  },
+  filterScroll: {
+    marginTop: 16,
+  },
+  filterContent: {
+    paddingHorizontal: 4,
+    gap: 8,
+  },
+  filterChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#f1f5f9',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  activeFilterChip: {
+    backgroundColor: '#6366f1',
+    borderColor: '#6366f1',
+  },
+  filterText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  activeFilterText: {
+    color: '#fff',
   },
 });
 

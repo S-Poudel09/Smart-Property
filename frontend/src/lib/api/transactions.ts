@@ -79,6 +79,14 @@ export const confirmTransaction = async (transactionId: string) => {
     return response.data;
 };
 
+export const verifyKhaltiPayment = async (transactionId: string, token: string, amount: number) => {
+    const response = await api.post(`transactions/${transactionId}/khalti-verify/`, {
+        token,
+        amount
+    });
+    return response.data;
+};
+
 export const createPurchaseRequest = async (propertyId: string, sellerId: string, totalAmount: number) => {
     const response = await api.post('transactions/', {
         property: propertyId,

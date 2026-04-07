@@ -6,6 +6,12 @@ from rest_framework.response import Response
 from .models import Transaction, PaymentProof
 from .serializers import TransactionSerializer, PaymentProofSerializer
 from django.utils import timezone
+from django.conf import settings
+import urllib.request
+import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 class TransactionViewSet(viewsets.ModelViewSet):
     serializer_class = TransactionSerializer
@@ -14,10 +20,11 @@ class TransactionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         # Admins see ALL transactions for oversight
-        if user.role == 'admin':
+        role = getattr(user, 'role', 'buyer')
+        if role == 'admin' or user.is_staff:
             return Transaction.objects.all()
         # Users can see transactions where they are either buyer or seller
-        return Transaction.objects.filter(models.Q(buyer=user) | models.Q(seller=user))
+        return Transaction.objects.filter(Q(buyer=user) | Q(seller=user))
 
     def perform_create(self, serializer):
         transaction = serializer.save(buyer=self.request.user)
@@ -123,3 +130,66 @@ class TransactionViewSet(viewsets.ModelViewSet):
         transaction.amount_paid = transaction.total_amount
         transaction.save()
         return Response({"status": "Transaction confirmed"})
+
+    @action(detail=True, methods=['post'], url_path='khalti-verify')
+    def khalti_verify(self, request, pk=None):
+        transaction = self.get_object()
+        token = request.data.get('token')
+        amount = request.data.get('amount') # in paisa for Khalti
+
+        if not token or not amount:
+            return Response({"error": "Token and amount required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Standard Khalti verification:
+        # POST to https://khalti.com/api/v2/payment/verify/
+        # Headers: Authorization: Key <SECRET_KEY>
+        # Body: { "token": "...", "amount": ... }
+
+        try:
+            url = settings.KHALTI_BASE_URL + "payment/verify/"
+            headers = {
+                'Authorization': f'Key {settings.KHALTI_SECRET_KEY}',
+                'Content-Type': 'application/json'
+            }
+            data = json.dumps({
+                'token': token,
+                'amount': int(amount)
+            }).encode('utf-8')
+
+            req = urllib.request.Request(url, data=data, headers=headers)
+            with urllib.request.urlopen(req) as response:
+                res_data = json.loads(response.read().decode())
+                
+                # Khalti returns 200 on successful verification
+                # Check for specific attributes if needed
+                if res_data.get('idx'):
+                    # Verification succeeded
+                    transaction.status = "COMPLETED"
+                    transaction.amount_paid = transaction.total_amount # Or use amount from Khalti
+                    transaction.transaction_reference_id = res_data.get('idx')
+                    transaction.payment_method = "Khalti"
+                    transaction.save()
+
+                    # PostgreSQL activity log
+                    from analytics.utils import log_activity
+                    log_activity(
+                        request.user.email, 
+                        'khalti_payment_verified', 
+                        details={'transaction_id': str(transaction.id), 'khalti_idx': res_data.get('idx')}, 
+                        status='success'
+                    )
+
+                    return Response({
+                        "message": "Payment verified successfully",
+                        "data": res_data
+                    }, status=status.HTTP_200_OK)
+                else:
+                    return Response({"error": "Khalti verification failed"}, status=status.HTTP_400_BAD_REQUEST)
+
+        except urllib.error.HTTPError as e:
+            res_err = e.read().decode()
+            logger.error(f"Khalti API Error: {res_err}")
+            return Response({"error": "Khalti API error", "details": res_err}, status=e.code)
+        except Exception as e:
+            logger.error(f"Internal Error during Khalti verify: {str(e)}")
+            return Response({"error": "Internal verification error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -29,6 +29,7 @@ import {
 } from 'lucide-react-native';
 import api, { getFullImageUrl } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
+import MarketInsights from '../../components/MarketInsights';
 
 const PropertyDetailScreen = ({ route, navigation }: any) => {
   const { id } = route.params;
@@ -221,6 +222,8 @@ const PropertyDetailScreen = ({ route, navigation }: any) => {
             </View>
           </View>
 
+          <MarketInsights propertyId={property.PropertyID || property.id} currentPrice={Number(property.price)} />
+
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Description</Text>
             <Text style={styles.description}>{property.description || 'No description available.'}</Text>
@@ -260,7 +263,7 @@ const PropertyDetailScreen = ({ route, navigation }: any) => {
 
       {/* Floating Footer */}
       <View style={styles.footerActions}>
-        <TouchableOpacity style={styles.emiButton} onPress={() => Alert.alert('Loan', 'Inquiry sent.')}>
+        <TouchableOpacity style={styles.emiButton} onPress={() => navigation.navigate('LoanCalculator', { price: Number(property.price) })}>
           <CreditCard color="#6366f1" size={20} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.contactButton} onPress={handleContact}>

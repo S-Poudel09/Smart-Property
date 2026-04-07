@@ -23,6 +23,7 @@ urlpatterns = [
     path('test-email/', SendTestEmailView.as_view(), name='send_test_email'),
     path('me/', UserProfileView.as_view(), name='me'),
     path('profile/', UserProfileView.as_view(), name='user-profile'),
+    path('profile/update/', UserProfileView.as_view(), name='profile-update'),
     path('users/count/', UserCountView.as_view(), name='user-count'),
     path('kyc/upload/', KYCUploadView.as_view(), name='kyc-upload'),
     path('kyc/verify/<int:user_id>/', AdminKYCVerifyView.as_view(), name='admin-kyc-verify'),

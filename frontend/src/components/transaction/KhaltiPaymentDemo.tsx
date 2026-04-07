@@ -1,37 +1,99 @@
 'use client';
 
 /**
- * MOCK PAYMENT DEMO COMPONENT
- * This is used for demonstration and internal testing purposes only.
- * DO NOT integrate real payment keys or call real Khalti APIs here.
- * The transaction reference ID generated here is fake.
+ * REAL KHALTI PAYMENT COMPONENT
+ * Implements the official Khalti Web Checkout flow.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/common/Button';
 import { CreditCard, Wallet, CheckCircle2, Loader2, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
+import { verifyKhaltiPayment } from '@/lib/api/transactions';
 
-interface KhaltiPaymentDemoProps {
-    amount: number;
+interface KhaltiPaymentProps {
+    transactionId: string;
+    amount: number; // in NPR
     propertyTitle: string;
-    onSuccess: (referenceId: string) => void;
+    onSuccess: (data: any) => void;
 }
 
-export const KhaltiPaymentDemo = ({ amount, propertyTitle, onSuccess }: KhaltiPaymentDemoProps) => {
+declare global {
+  interface Window {
+    KhaltiCheckout: any;
+  }
+}
+
+export const KhaltiPaymentDemo = ({ transactionId, amount, propertyTitle, onSuccess }: KhaltiPaymentProps) => {
     const [step, setStep] = useState<'selection' | 'processing' | 'success'>('selection');
-    // Generating a random mock reference ID starting with DEMO-
-    const [referenceId] = useState(() => `DEMO-${Math.random().toString(36).substring(2, 10).toUpperCase()}`);
+    const [isSdkLoaded, setIsSdkLoaded] = useState(false);
+
+    useEffect(() => {
+        // Inject Khalti Script
+        const script = document.createElement('script');
+        script.src = 'https://khalti.s3.ap-south-1.amazonaws.com/KPG/dist/2020.12.17.0.0.0/khalti-checkout.iffe.js';
+        script.async = true;
+        script.onload = () => setIsSdkLoaded(true);
+        document.body.appendChild(script);
+
+        return () => {
+            document.body.removeChild(script);
+        };
+    }, []);
 
     const handlePay = () => {
+        if (!isSdkLoaded) {
+            toast.error('Khalti SDK not loaded yet. Please wait.');
+            return;
+        }
+
+        const config = {
+            publicKey: process.env.NEXT_PUBLIC_KHALTI_PUBLIC_KEY || "test_public_key_ad34731d167140e69882200547000000",
+            productIdentity: transactionId,
+            productName: propertyTitle,
+            productUrl: typeof window !== 'undefined' ? window.location.href : '',
+            amount: Math.round(amount * 100), // convert to paisa
+            eventHandler: {
+                onSuccess(payload: any) {
+                    // payload contains token and amount
+                    verifyPayment(payload);
+                },
+                onError(error: any) {
+                    console.error('Khalti Error:', error);
+                    toast.error('Payment failed or cancelled');
+                    setStep('selection');
+                },
+                onClose() {
+                    console.log('Khalti widget closed');
+                }
+            },
+            paymentPreference: [
+                "KHALTI",
+                "EBANKING",
+                "MOBILE_BANKING",
+                "CONNECT_IPS",
+                "SCT",
+            ],
+        };
+
+        const checkout = new window.KhaltiCheckout(config);
+        checkout.show({ amount: Math.round(amount * 100) });
+    };
+
+    const verifyPayment = async (payload: any) => {
         setStep('processing');
-        // Simulating network delay for realistic demo
-        setTimeout(() => {
+        try {
+            const response = await verifyKhaltiPayment(transactionId, payload.token, payload.amount);
             setStep('success');
-            onSuccess(referenceId);
-            toast.success('Mock Payment Recorded - Demo Success');
-        }, 2000);
+            onSuccess(response.data);
+            toast.success('Payment Verified Successfully');
+        } catch (error: any) {
+            console.error('Verification Error:', error);
+            const detail = error.response?.data?.details || 'Verification failed';
+            toast.error(`Verification Failed: ${detail}`);
+            setStep('selection');
+        }
     };
 
     return (
@@ -40,12 +102,12 @@ export const KhaltiPaymentDemo = ({ amount, propertyTitle, onSuccess }: KhaltiPa
                 <div className="absolute -top-10 -right-10 h-40 w-40 bg-white/10 rounded-full blur-3xl opacity-50" />
                 <div className="relative z-10 flex justify-between items-center mb-6">
                     <div className="h-10 w-24 bg-white rounded-lg flex items-center justify-center p-2">
-                        <img src="https://khalti.com/static/img/logo1.png" alt="Khalti Demo" className="h-6 object-contain" />
+                        <img src="https://khalti.com/static/img/logo1.png" alt="Khalti" className="h-6 object-contain" />
                     </div>
-                    <div className="text-[10px] font-black uppercase tracking-widest text-white/60 bg-black/20 px-3 py-1.5 rounded-full">Demo Environment</div>
+                    <div className="text-[10px] font-black uppercase tracking-widest text-white/60 bg-black/20 px-3 py-1.5 rounded-full">Secure Gateway</div>
                 </div>
                 <div className="relative z-10">
-                    <p className="text-white/70 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Escrow Ledger Account</p>
+                    <p className="text-white/70 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Escrow Payment for</p>
                     <h3 className="text-lg font-bold mb-4 line-clamp-1">{propertyTitle}</h3>
                     <div className="flex items-baseline gap-2">
                         <span className="text-sm font-bold text-white/60 text-indigo-400">NPR</span>
@@ -64,24 +126,26 @@ export const KhaltiPaymentDemo = ({ amount, propertyTitle, onSuccess }: KhaltiPa
                             exit={{ opacity: 0, scale: 0.95 }}
                             className="space-y-6"
                         >
-                            <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex items-start gap-3">
-                                <Info className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                                <p className="text-[10px] text-amber-700 font-bold leading-relaxed">
-                                    NOTICE: This is a sandbox/demo payment gateway. No real funds will be moved. 
-                                    Internal verification only.
+                            <div className="bg-blue-50 border border-blue-200 p-4 rounded-2xl flex items-start gap-3">
+                                <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+                                <p className="text-[10px] text-blue-700 font-bold leading-relaxed">
+                                    NOTICE: You are initiating a secure transaction via Khalti. Funds will be recorded in the platform's verified registry.
                                 </p>
                             </div>
 
                             <div className="space-y-3">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Payment Options</label>
-                                <button className="w-full flex items-center justify-between p-5 bg-gray-50 border-2 border-primary/20 rounded-2xl group hover:border-primary transition-all shadow-sm">
+                                <button 
+                                    onClick={handlePay}
+                                    className="w-full flex items-center justify-between p-5 bg-gray-50 border-2 border-primary/20 rounded-2xl group hover:border-primary transition-all shadow-sm"
+                                >
                                     <div className="flex items-center gap-4">
                                         <div className="h-10 w-10 bg-[#5C2D91]/10 text-[#5C2D91] rounded-lg flex items-center justify-center">
                                             <Wallet className="h-5 w-5" />
                                         </div>
                                         <div className="text-left">
-                                            <p className="text-sm font-bold text-gray-900 group-hover:text-primary transition-colors">Khalti Mock Wallet</p>
-                                            <p className="text-[10px] text-gray-500 font-medium tracking-tight">One-Click Demo Approval</p>
+                                            <p className="text-sm font-bold text-gray-900 group-hover:text-primary transition-colors">Pay with Khalti</p>
+                                            <p className="text-[10px] text-gray-500 font-medium tracking-tight">Wallet, E-Banking, ConnectIPS</p>
                                         </div>
                                     </div>
                                     <div className="h-5 w-5 rounded-full border-2 border-primary flex items-center justify-center">
@@ -92,24 +156,14 @@ export const KhaltiPaymentDemo = ({ amount, propertyTitle, onSuccess }: KhaltiPa
                                         />
                                     </div>
                                 </button>
-                                <button className="w-full flex items-center justify-between p-5 bg-white border border-gray-100 rounded-2xl opacity-40 grayscale cursor-not-allowed">
-                                    <div className="flex items-center gap-4">
-                                        <div className="h-10 w-10 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center">
-                                            <CreditCard className="h-5 w-5" />
-                                        </div>
-                                        <div className="text-left">
-                                            <p className="text-sm font-bold text-gray-900">E-Banking (Demo)</p>
-                                            <p className="text-[10px] text-gray-400 font-medium">Coming in Production</p>
-                                        </div>
-                                    </div>
-                                </button>
                             </div>
 
                             <Button 
                                 className="w-full h-14 bg-[#5C2D91] hover:bg-[#4C2376] text-white font-bold uppercase tracking-[0.2em] text-[10px] rounded-2xl shadow-xl shadow-[#5C2D91]/20 flex items-center justify-center gap-3 transition-all active:scale-[0.98]"
                                 onClick={handlePay}
+                                disabled={!isSdkLoaded}
                             >
-                                Submit Mock Payment Rs. {amount.toLocaleString()}
+                                {!isSdkLoaded ? 'Initialising Gateway...' : `Proceed to Pay Rs. ${amount.toLocaleString()}`}
                             </Button>
                         </motion.div>
                     )}
@@ -132,8 +186,8 @@ export const KhaltiPaymentDemo = ({ amount, propertyTitle, onSuccess }: KhaltiPa
                                 </div>
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-gray-900">Verifying Ledger Status</h3>
-                                <p className="text-[10px] text-gray-400 font-black mt-2 uppercase tracking-[0.3em]">Demo Sequence Enacted</p>
+                                <h3 className="text-lg font-bold text-gray-900">Verifying Settlement</h3>
+                                <p className="text-[10px] text-gray-400 font-black mt-2 uppercase tracking-[0.3em]">Imperial Verification Protocol</p>
                             </div>
                         </motion.div>
                     )}
@@ -149,23 +203,12 @@ export const KhaltiPaymentDemo = ({ amount, propertyTitle, onSuccess }: KhaltiPa
                                 <CheckCircle2 className="h-12 w-12 -rotate-12" />
                             </div>
                             <div>
-                                <h3 className="text-xl font-bold text-gray-900">Mock Success</h3>
-                                <p className="text-[10px] text-indigo-500 font-black mt-2 uppercase tracking-[0.2em] bg-indigo-50 inline-block px-4 py-2 rounded-full border border-indigo-100">Reference Recorded</p>
+                                <h3 className="text-xl font-bold text-gray-900">Payment Confirmed</h3>
+                                <p className="text-[10px] text-indigo-500 font-black mt-2 uppercase tracking-[0.2em] bg-indigo-50 inline-block px-4 py-2 rounded-full border border-indigo-100">Ledger Updated</p>
                             </div>
-                            <div className="bg-gray-50 p-7 rounded-[2.5rem] border border-gray-100 flex flex-col gap-4 text-left">
-                                <div className="flex justify-between items-center text-[10px] font-bold">
-                                    <span className="text-gray-400 uppercase tracking-widest">Mock Ref ID</span>
-                                    <span className="text-gray-900 font-mono tracking-wider bg-white px-2 py-1 rounded border border-gray-100">{referenceId}</span>
-                                </div>
-                                <div className="flex justify-between items-center text-[10px] font-bold">
-                                    <span className="text-gray-400 uppercase tracking-widest">Captured Time</span>
-                                    <span className="text-gray-900">{new Date().toLocaleString()}</span>
-                                </div>
-                                <div className="flex justify-between items-center text-[10px] font-bold pt-2 border-t border-dashed border-gray-200">
-                                    <span className="text-gray-400 uppercase tracking-widest">Network Status</span>
-                                    <span className="text-indigo-500 uppercase tracking-widest">Demo Confirmed</span>
-                                </div>
-                            </div>
+                            <p className="text-xs text-gray-500 font-medium px-4">
+                                Your payment has been successfully verified with Khalti. The transaction records are now permanent and legally binding.
+                            </p>
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -173,4 +216,3 @@ export const KhaltiPaymentDemo = ({ amount, propertyTitle, onSuccess }: KhaltiPa
         </div>
     );
 };
-

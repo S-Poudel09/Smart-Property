@@ -80,7 +80,7 @@ const ProfileScreen = ({ navigation }: any) => {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Account</Text>
         <View style={styles.menuCard}>
-          {renderMenuItem(<User color="#6366f1" size={20} />, 'Personal Information', 'Update your name, phone')}
+          {renderMenuItem(<User color="#6366f1" size={20} />, 'Personal Information', 'Update your name, phone', () => navigation.navigate('EditProfile'))}
           {renderMenuItem(<ShieldCheck color="#10b981" size={20} />, 'Verification Details', 'KYC and identity verification')}
         </View>
       </View>
@@ -88,8 +88,8 @@ const ProfileScreen = ({ navigation }: any) => {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Preferences</Text>
         <View style={styles.menuCard}>
-          {renderMenuItem(<Bell color="#f59e0b" size={20} />, 'Notifications', 'Manage alerts and emails')}
-          {renderMenuItem(<Settings color="#64748b" size={20} />, 'Settings', 'App preferences and security')}
+          {renderMenuItem(<Bell color="#f59e0b" size={20} />, 'Notifications', 'Manage alerts and emails', () => navigation.navigate('Notifications'))}
+          {renderMenuItem(<Settings color="#64748b" size={20} />, 'Settings', 'App preferences and security', () => navigation.navigate('Settings'))}
           {renderMenuItem(<HelpCircle color="#3b82f6" size={20} />, 'Help & Support', 'FAQs and contact info')}
         </View>
       </View>

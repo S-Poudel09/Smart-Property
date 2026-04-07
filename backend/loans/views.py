@@ -2,9 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
 from .models import Loan
-from .serializers import LoanSerializer, EMICalculationSerializer, LoanEligibilitySerializer, LoanPredictionSerializer
-from ml.predict_loan import predict_loan, is_model_loaded
-
+from .serializers import LoanSerializer, EMICalculationSerializer, LoanEligibilitySerializer
 
 class LoanViewSet(viewsets.ModelViewSet):
     serializer_class = LoanSerializer
@@ -76,6 +74,12 @@ class LoanViewSet(viewsets.ModelViewSet):
 
 @api_view(["POST"])
 def loan_prediction(request):
+    try:
+        from ml.predict_loan import predict_loan, is_model_loaded
+        from .serializers import LoanPredictionSerializer
+    except ImportError:
+        return Response({"error": "ML dependencies (pandas, joblib, sklearn) not installed on server"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
     serializer = LoanPredictionSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

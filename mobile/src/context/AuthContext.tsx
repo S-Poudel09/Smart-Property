@@ -8,6 +8,7 @@ interface User {
   email: string;
   role: 'buyer' | 'seller' | 'admin';
   avatar?: string;
+  phone?: string;
 }
 
 interface AuthContextType {

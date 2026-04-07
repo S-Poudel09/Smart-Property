@@ -117,9 +117,10 @@ export default function BuyerTransactionDetailPage({ params }: { params: Promise
                             {(transaction.status === 'PENDING' || transaction.status === 'PARTIAL') && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <KhaltiPaymentDemo 
+                                        transactionId={id}
                                         amount={parseFloat(transaction.total_amount) - parseFloat(transaction.amount_paid || '0')} 
                                         propertyTitle={transaction.Property?.title || 'Property Purchase'} 
-                                        onSuccess={handleKhaltiSuccess}
+                                        onSuccess={() => fetchData()}
                                     />
                                     
                                     <div className="space-y-6">

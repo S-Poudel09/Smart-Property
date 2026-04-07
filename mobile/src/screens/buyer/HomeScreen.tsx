@@ -50,7 +50,7 @@ const BuyerHomeScreen = ({ navigation }: any) => {
           <Text style={styles.welcomeText}>Hi, {user?.name?.split(' ')[0] || 'Member'}</Text>
           <Text style={styles.locationTitle}>Find your dream home</Text>
         </View>
-        <TouchableOpacity style={styles.iconButton} onPress={() => Alert.alert('Notifications coming soon')}>
+        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Notifications')}>
           <Bell color="#1e293b" size={22} />
         </TouchableOpacity>
       </View>

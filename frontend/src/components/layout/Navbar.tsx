@@ -6,7 +6,7 @@ import { Home, Search, LayoutDashboard, Menu, X, Building2, LogOut, User, Briefc
 import { useState, useEffect } from 'react';
 import { Button } from '../common/Button';
 import { logout } from '@/lib/auth/getUser';
-import { getUser, DecodedUser } from '@/lib/auth/getUser';
+import { useAuth } from '@/providers/AuthProvider';
 import { toast } from 'react-hot-toast';
 import { NotificationBell } from './NotificationBell';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,30 +14,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 const Navbar = () => {
     const pathname = usePathname();
     const router = useRouter();
+    const { user, isAuth, logout: performLogout } = useAuth();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [user, setUser] = useState<DecodedUser | null>(null);
-    const [isAuth, setIsAuth] = useState(false);
     const [scrolled, setScrolled] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 20);
         window.addEventListener('scroll', handleScroll);
-        
-        const checkAuth = () => {
-            const currentUser = getUser();
-            setUser(currentUser);
-            setIsAuth(!!localStorage.getItem('smartproperty_token'));
-        };
-
-        checkAuth();
-        window.addEventListener('storage', checkAuth);
-        const interval = setInterval(checkAuth, 2000);
-
-        return () => {
-            window.removeEventListener('scroll', handleScroll);
-            window.removeEventListener('storage', checkAuth);
-            clearInterval(interval);
-        };
+        return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
     const navLinks = [
@@ -47,10 +31,9 @@ const Navbar = () => {
     ];
 
     const handleLogout = () => {
-        logout();
+        performLogout();
         toast.success('Signed out successfully');
         setIsMenuOpen(false);
-        router.push('/');
     };
 
     const isActive = (path: string) => pathname === path;

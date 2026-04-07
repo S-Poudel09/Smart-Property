@@ -174,7 +174,7 @@ const SellerDashboardScreen = ({ navigation }: any) => {
                 <MessageSquare color="#6366f1" size={24} />
                 <Text style={styles.actionCardText}>Inbox</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionCard} onPress={() => Alert.alert('Analytics coming soon')}>
+            <TouchableOpacity style={styles.actionCard} onPress={() => navigation.navigate('SellerAnalytics')}>
                 <LayoutDashboard color="#10b981" size={24} />
                 <Text style={styles.actionCardText}>Analytics</Text>
             </TouchableOpacity>

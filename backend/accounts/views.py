@@ -331,6 +331,13 @@ class UserProfileView(APIView):
         serializer = UserSerializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    def put(self, request):
+        user = request.user
+        user.full_name = request.data.get('full_name', user.full_name)
+        user.phone = request.data.get('phone', user.phone)
+        user.save()
+        return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
+
 class SendTestEmailView(APIView):
     """
     Diagnostic view to verify SMTP settings are operational.
