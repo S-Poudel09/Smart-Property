@@ -163,13 +163,18 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 f.write(f"Transaction ID: {transaction.id}\n")
 
             headers = {
-                'Authorization': f'Key {settings.KHALTI_SECRET_KEY}',
+                'Authorization': f"Key {settings.KHALTI_SECRET_KEY.strip()}",
                 'Content-Type': 'application/json'
             }
             
             # Amount in Paisa
             paisa_amount = int(float(transaction.total_amount) * 100)
             
+            # Fetch user phone safely or use standard sandbox bypass number
+            user_phone = getattr(request.user, 'phone', None)
+            if not user_phone:
+                user_phone = "9800000000"
+                
             payload = {
                 "return_url": return_url,
                 "website_url": website_url,
@@ -179,6 +184,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 "customer_info": {
                     "name": f"{request.user.first_name} {request.user.last_name}",
                     "email": request.user.email,
+                    "phone": str(user_phone)
                 }
             }
 
