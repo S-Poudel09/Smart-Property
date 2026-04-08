@@ -58,6 +58,7 @@ export interface Property {
     features: string[];
     boundaryCoordinates?: any;
     virtualTourUrl?: string;
+    modelUrl?: string;
     createdAt: string;
     updatedAt: string;
     

@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { ActivityIndicator, View } from 'react-native';
-import { Home, Search, MessageSquare, User, LayoutDashboard, PlusCircle, Bell } from 'lucide-react-native';
+import { Home, Search, MessageSquare, User, LayoutDashboard, PlusCircle, Bell, Building2 } from 'lucide-react-native';
 
 import { useAuth } from '../context/AuthContext';
 import LoginScreen from '../screens/auth/LoginScreen';
@@ -17,11 +17,17 @@ import ChatListScreen from '../screens/common/ChatListScreen';
 import ChatDetailScreen from '../screens/common/ChatDetailScreen';
 import ProfileScreen from '../screens/common/ProfileScreen';
 import Mobile3DViewerScreen from '../screens/common/Mobile3DViewerScreen';
+import KhaltiPaymentScreen from '../screens/common/KhaltiPaymentScreen';
+import MapExplorerScreen from '../screens/buyer/MapExplorerScreen';
 
 import SellerDashboardScreen from '../screens/seller/DashboardScreen';
 import MyListingsScreen from '../screens/seller/MyListingsScreen';
 import AddListingScreen from '../screens/seller/AddListingScreen';
 import SellerAnalyticsScreen from '../screens/seller/SellerAnalyticsScreen';
+
+import AdminDashboardScreen from '../screens/admin/AdminDashboardScreen';
+import PendingPropertiesScreen from '../screens/admin/PendingPropertiesScreen';
+import KYCScreen from '../screens/common/KYCScreen';
 
 import EditProfileScreen from '../screens/common/EditProfileScreen';
 import NotificationsScreen from '../screens/common/NotificationsScreen';
@@ -32,6 +38,7 @@ const RootStack = createStackNavigator();
 const AuthStack = createStackNavigator();
 const BuyerTabs = createBottomTabNavigator();
 const SellerTabs = createBottomTabNavigator();
+const AdminTabs = createBottomTabNavigator();
 
 const AuthNavigator = () => (
   <AuthStack.Navigator screenOptions={{ headerShown: false }}>
@@ -131,6 +138,61 @@ const SellerTabNavigator = () => (
   </SellerTabs.Navigator>
 );
 
+const AdminTabNavigator = () => (
+  <AdminTabs.Navigator screenOptions={{ 
+    tabBarActiveTintColor: '#6366f1',
+    tabBarInactiveTintColor: '#94a3b8',
+    headerStyle: { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
+    headerTitleStyle: { fontWeight: '700' }
+  }}>
+    <AdminTabs.Screen 
+      name="AdminHome" 
+      component={AdminDashboardScreen} 
+      options={{ 
+        title: 'Overlord', 
+        tabBarIcon: ({ color, size }) => <LayoutDashboard color={color} size={size} /> 
+      }} 
+    />
+    <AdminTabs.Screen 
+      name="AdminApprovals" 
+      component={PendingPropertiesScreen} 
+      options={{ 
+        title: 'Registry', 
+        tabBarIcon: ({ color, size }) => <Building2 color={color} size={size} /> 
+      }} 
+    />
+    <AdminTabs.Screen 
+      name="AdminMessages" 
+      component={ChatListScreen} 
+      options={{ 
+        title: 'Comms', 
+        tabBarIcon: ({ color, size }) => <MessageSquare color={color} size={size} /> 
+      }} 
+    />
+    <AdminTabs.Screen 
+      name="AdminProfile" 
+      component={ProfileScreen} 
+      options={{ 
+        title: 'Profile', 
+        tabBarIcon: ({ color, size }) => <User color={color} size={size} /> 
+      }} 
+    />
+  </AdminTabs.Navigator>
+);
+
+// Must be a proper named component (PascalCase) for React Navigation
+const MainNavigator = ({ route }: any) => {
+  const { user } = useAuth();
+  switch (user?.role) {
+    case 'admin':
+      return <AdminTabNavigator />;
+    case 'seller':
+      return <SellerTabNavigator />;
+    default:
+      return <BuyerTabNavigator />;
+  }
+};
+
 export const RootNavigator = () => {
   const { user, isLoading } = useAuth();
 
@@ -147,20 +209,19 @@ export const RootNavigator = () => {
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
         {user ? (
           <>
-            {user.role === 'seller' ? (
-              <RootStack.Screen name="SellerMain" component={SellerTabNavigator} />
-            ) : (
-              <RootStack.Screen name="BuyerMain" component={BuyerTabNavigator} />
-            )
-            }
+            <RootStack.Screen name="Main" component={MainNavigator} />
             <RootStack.Screen name="PropertyDetail" component={PropertyDetailScreen} options={{ headerShown: true, title: 'Property Detail' }} />
             <RootStack.Screen name="ChatDetail" component={ChatDetailScreen} options={{ headerShown: true, title: 'Chat' }} />
             <RootStack.Screen name="Mobile3DViewer" component={Mobile3DViewerScreen} options={({ route }: any) => ({ headerShown: true, title: route.params?.title || '3D Virtual Tour' })} />
             <RootStack.Screen name="EditProfile" component={EditProfileScreen} options={{ headerShown: true, title: 'Edit Profile' }} />
+            <RootStack.Screen name="KYC" component={KYCScreen} options={{ headerShown: true, title: 'Identity Verification' }} />
+            <RootStack.Screen name="PendingProperties" component={PendingPropertiesScreen} options={{ headerShown: true, title: 'Registry Review' }} />
             <RootStack.Screen name="Notifications" component={NotificationsScreen} options={{ headerShown: true, title: 'Notifications' }} />
             <RootStack.Screen name="SellerAnalytics" component={SellerAnalyticsScreen} options={{ headerShown: true, title: 'Performance Hub' }} />
             <RootStack.Screen name="Settings" component={SettingsScreen} options={{ headerShown: true, title: 'Preferences' }} />
             <RootStack.Screen name="LoanCalculator" component={LoanCalculatorScreen} options={{ headerShown: true, title: 'Liquidity Analysis' }} />
+            <RootStack.Screen name="KhaltiPayment" component={KhaltiPaymentScreen} options={{ headerShown: false }} />
+            <RootStack.Screen name="MapExplorer" component={MapExplorerScreen} options={{ headerShown: false }} />
           </>
         ) : (
           <RootStack.Screen name="Auth" component={AuthNavigator} />

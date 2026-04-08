@@ -7,6 +7,7 @@ interface User {
   name: string;
   email: string;
   role: 'buyer' | 'seller' | 'admin';
+  kyc_status: 'unverified' | 'pending' | 'verified' | 'rejected';
   avatar?: string;
   phone?: string;
 }

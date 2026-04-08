@@ -37,25 +37,8 @@ export default function BuyerTransactionDetailPage({ params }: { params: Promise
 
     useEffect(() => {
         fetchData();
-        const interval = setInterval(fetchData, 10000); // Refresh every 10s for status updates
-        return () => clearInterval(interval);
+        // Redirection handles the payment confirmation, so we don't need heavy polling here anymore.
     }, [id]);
-
-    const handleKhaltiSuccess = async (referenceId: string) => {
-        setIsActionLoading(true);
-        try {
-            const blob = new Blob(["Demo Payment via Khalti Reference: " + referenceId], { type: 'text/plain' });
-            const file = new File([blob], `khalti_${referenceId}.txt`, { type: 'text/plain' });
-            
-            await uploadPaymentProof(id, parseFloat(transaction?.total_amount || '0'), file, `Khalti Ref: ${referenceId}`);
-            toast.success('Payment captured successfully!');
-            fetchData();
-        } catch (e) {
-            toast.error('Failed to sync payment record');
-        } finally {
-            setIsActionLoading(false);
-        }
-    };
 
     if (isLoading) {
         return (
@@ -120,7 +103,7 @@ export default function BuyerTransactionDetailPage({ params }: { params: Promise
                                         transactionId={id}
                                         amount={parseFloat(transaction.total_amount) - parseFloat(transaction.amount_paid || '0')} 
                                         propertyTitle={transaction.Property?.title || 'Property Purchase'} 
-                                        onSuccess={() => fetchData()}
+                                        onSuccess={() => {}} 
                                     />
                                     
                                     <div className="space-y-6">

@@ -11,6 +11,7 @@ def api_root(request):
 
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 from .analytics_views import SystemAnalyticsView, FraudDetectionView, ActivityLogsView
+from accounts.views import UserCountView
 
 from two_factor.urls import urlpatterns as tf_urls
 
@@ -21,6 +22,7 @@ urlpatterns = [
     path("favicon.ico", RedirectView.as_view(url="/static/favicon.ico")),
 
     path("api/auth/", include("accounts.urls")),
+    path("api/users/count/", UserCountView.as_view(), name='root-user-count'),
     path("api/properties/", include("properties.urls")),
     path("api/transactions/", include("transactions.urls")),
     path("api/loans/", include("loans.urls")),

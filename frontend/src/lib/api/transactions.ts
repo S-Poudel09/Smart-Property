@@ -79,11 +79,61 @@ export const confirmTransaction = async (transactionId: string) => {
     return response.data;
 };
 
-export const initiateKhaltiPayment = async (transactionId: string, returnUrl: string) => {
+export const initiateKhaltiPayment = async (
+    transactionId: string,
+    returnUrl: string,
+    websiteUrl?: string
+) => {
     const response = await api.post(`transactions/${transactionId}/khalti-initiate/`, {
-        return_url: returnUrl
+        return_url: returnUrl,
+        website_url: websiteUrl || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'),
     });
     return response.data;
+};
+
+// --- DUMMY SIMULATION FUNCTIONS ---
+
+/**
+ * Simulates payment initiation without hitting the backend/Khalti.
+ * Useful for frontend-only demonstrations.
+ */
+export const initiateDummyPayment = async (transactionId: string, returnUrl: string) => {
+    console.log("Initiating dummy payment for transaction:", transactionId);
+    
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    // Mocked response
+    const mockPidx = "dummy_pidx_" + Math.random().toString(36).substring(7);
+    const response = {
+        status: "success",
+        pidx: mockPidx,
+        transaction_id: transactionId,
+        payment_url: `${returnUrl}&pidx=${mockPidx}&status=Completed&dummy=true`,
+    };
+
+    console.log("Dummy payment initiated successfully:", response);
+    return response;
+};
+
+/**
+ * Simulates payment verification with dummy data.
+ */
+export const verifyDummyPayment = async (transactionId: string, pidx: string) => {
+    console.log("Verifying dummy payment:", pidx);
+    
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    // Mocked verification response (Success)
+    const paymentStatus = {
+        status: "Completed",
+        pidx: pidx,
+        transaction_id: transactionId,
+        amount_paid: 15000, // NPR
+    };
+
+    console.log("Dummy payment verification successful:", paymentStatus);
+    return paymentStatus;
 };
 
 export const verifyKhaltiPayment = async (transactionId: string, pidx: string) => {

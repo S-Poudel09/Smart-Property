@@ -52,10 +52,15 @@ const PropertyListScreen = ({ navigation }: any) => {
       
       const lowercased = text.toLowerCase();
       const filtered = properties.filter((p: any) => 
-          p.title?.toLowerCase().includes(lowercased) ||
+          (p.title?.toLowerCase().includes(lowercased) ||
           p.location?.toLowerCase().includes(lowercased) ||
-          p.property_type?.toLowerCase().includes(lowercased)
+          p.property_type?.toLowerCase().includes(lowercased))
       );
+      setFilteredProperties(filtered);
+  };
+
+  const handlePriceFilter = (maxPrice: number) => {
+      const filtered = properties.filter((p: any) => Number(p.price) <= maxPrice);
       setFilteredProperties(filtered);
   };
 
@@ -82,13 +87,23 @@ const PropertyListScreen = ({ navigation }: any) => {
         </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={styles.filterContent}>
-          {['All', 'Home', 'Apartment', 'Land', 'Hostel', 'Office'].map((cat) => (
+          {['All', 'Home', 'Apartment', 'Land', 'Office'].map((cat) => (
             <TouchableOpacity 
               key={cat} 
               style={[styles.filterChip, searchQuery.toLowerCase() === cat.toLowerCase() && styles.activeFilterChip]}
               onPress={() => handleSearch(cat === 'All' ? '' : cat)}
             >
               <Text style={[styles.filterText, searchQuery.toLowerCase() === cat.toLowerCase() && styles.activeFilterText]}>{cat}</Text>
+            </TouchableOpacity>
+          ))}
+          <View style={styles.divider} />
+          {[1000000, 5000000, 10000000, 50000000].map((price) => (
+            <TouchableOpacity 
+              key={price} 
+              style={styles.filterChip}
+              onPress={() => handlePriceFilter(price)}
+            >
+              <Text style={styles.filterText}>Under {price/1000000}M</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -211,6 +226,13 @@ const styles = StyleSheet.create({
   activeFilterText: {
     color: '#fff',
   },
+  divider: {
+    width: 1,
+    height: 20,
+    backgroundColor: '#e2e8f0',
+    alignSelf: 'center',
+    marginHorizontal: 8,
+  }
 });
 
 export default PropertyListScreen;

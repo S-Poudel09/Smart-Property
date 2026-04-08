@@ -4,7 +4,7 @@ import Constants from 'expo-constants';
 
 // For physical devices, we should use the local IP instead of 127.0.0.1
 // You can change this to your actual local IP (e.g. 192.168.x.x) for testing
-const BASE_URL = 'http://127.0.0.1:8000/api';
+const BASE_URL = 'http://10.0.2.2:8000/api';
 
 export const getFullImageUrl = (path: string | null | undefined) => {
   if (!path) return null;
@@ -12,7 +12,7 @@ export const getFullImageUrl = (path: string | null | undefined) => {
   if (path.startsWith('http')) return path;
   // Ensure the path starts with /
   const formattedPath = path.startsWith('/') ? path : `/${path}`;
-  return `http://127.0.0.1:8000${formattedPath}`;
+  return `http://10.0.2.2:8000${formattedPath}`;
 };
 
 const api = axios.create({

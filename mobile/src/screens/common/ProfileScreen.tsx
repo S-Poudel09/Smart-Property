@@ -81,7 +81,12 @@ const ProfileScreen = ({ navigation }: any) => {
         <Text style={styles.sectionTitle}>Account</Text>
         <View style={styles.menuCard}>
           {renderMenuItem(<User color="#6366f1" size={20} />, 'Personal Information', 'Update your name, phone', () => navigation.navigate('EditProfile'))}
-          {renderMenuItem(<ShieldCheck color="#10b981" size={20} />, 'Verification Details', 'KYC and identity verification')}
+          {renderMenuItem(
+            <ShieldCheck color={user?.kyc_status === 'verified' ? '#10b981' : '#f59e0b'} size={20} />, 
+            'Verification Details', 
+            user?.kyc_status === 'verified' ? 'Identity Verified' : 'KYC and identity verification',
+            () => navigation.navigate('KYC')
+          )}
         </View>
       </View>
 

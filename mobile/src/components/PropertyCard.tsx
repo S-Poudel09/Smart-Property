@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
-import { MapPin, Home, Bed, Bath, Square } from 'lucide-react-native';
+import { MapPin, Home, Bed, Bath, Square, Heart } from 'lucide-react-native';
 import { getFullImageUrl } from '../api/client';
 
 const { width } = Dimensions.get('window');
@@ -48,6 +48,9 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onPress }) => {
         <View style={styles.typeTag}>
           <Text style={styles.typeText}>{property.property_type}</Text>
         </View>
+        <TouchableOpacity style={styles.favoriteBtn}>
+          <Heart color="#fff" size={20} />
+        </TouchableOpacity>
       </View>
       
       <View style={styles.content}>
@@ -71,6 +74,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onPress }) => {
             <Text style={styles.specText}>{property.area_sqft || 0} sq.ft</Text>
           </View>
         </View>
+
+        <TouchableOpacity style={styles.detailsButton} onPress={onPress}>
+          <Text style={styles.detailsButtonText}>View Details</Text>
+        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
@@ -175,6 +182,37 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#475569',
     fontWeight: '500',
+  },
+  detailsButton: {
+    marginTop: 16,
+    backgroundColor: '#6366f1',
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  detailsButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  favoriteBtn: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
   },
 });
 

@@ -230,6 +230,14 @@ ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_EMAIL_REQUIRED = True
 
 # KHALTI PAYMENT SETTINGS
+# Keys are loaded from .env - get your sandbox key at: https://merchant.khalti.com/
 KHALTI_PUBLIC_KEY = os.getenv("KHALTI_PUBLIC_KEY", "test_public_key_place_holder")
 KHALTI_SECRET_KEY = os.getenv("KHALTI_SECRET_KEY", "test_secret_key_place_holder")
-KHALTI_BASE_URL = os.getenv("KHALTI_BASE_URL", "https://khalti.com/api/v2/")
+# Sandbox URL (official): https://dev.khalti.com/api/v2/
+# Production URL:         https://khalti.com/api/v2/
+KHALTI_BASE_URL = os.getenv("KHALTI_BASE_URL", "https://dev.khalti.com/api/v2/")
+
+# Live Khalti keys (switch to these for production)
+KHALTI_LIVE_PUBLIC_KEY = os.getenv("KHALTI_LIVE_PUBLIC_KEY", "your_live_public_key_here")
+KHALTI_LIVE_SECRET_KEY = os.getenv("KHALTI_LIVE_SECRET_KEY", "your_live_secret_key_here")
+KHALTI_LIVE_BASE_URL = os.getenv("KHALTI_LIVE_BASE_URL", "https://khalti.com/api/v2/")

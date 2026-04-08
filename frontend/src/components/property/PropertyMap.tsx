@@ -5,7 +5,10 @@ import { MapContainer, TileLayer, Polygon, Marker, Popup, useMap } from 'react-l
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Map as MapIcon, Layers, Maximize2 } from 'lucide-react';
+import { Map as MapIcon, Layers, Maximize2, Building2, MapPin, ArrowUpRight } from 'lucide-react';
+import { Property } from '@/types/property';
+import Link from 'next/link';
+import { formatNPR } from '@/lib/utils/currency';
 
 // Fix for default marker icon in Leaflet + Next.js
 if (typeof window !== 'undefined') {
@@ -19,10 +22,13 @@ if (typeof window !== 'undefined') {
 }
 
 interface PropertyMapProps {
-    center: [number, number];
+    center?: [number, number];
     zoom?: number;
     boundary?: [number, number][]; // Array of lat, lng coordinates
     title?: string;
+    properties?: Property[];
+    onMarkerClick?: (property: Property) => void;
+    height?: string;
 }
 
 // Helper component to update map view when center changes
@@ -34,13 +40,23 @@ function ChangeView({ center, zoom }: { center: [number, number], zoom: number }
             const lng = Number(center[1]);
             if (!isNaN(lat) && !isNaN(lng)) {
                 map.setView([lat, lng], zoom);
+                // Ensure tiles are correctly aligned after potentially being hidden/resized
+                setTimeout(() => map.invalidateSize(), 150);
             }
         }
     }, [center, zoom, map]);
     return null;
 }
 
-export default function PropertyMap({ center, zoom = 15, boundary, title }: PropertyMapProps) {
+export default function PropertyMap({ 
+    center, 
+    zoom = 15, 
+    boundary, 
+    title, 
+    properties = [], 
+    onMarkerClick,
+    height = "500px" 
+}: PropertyMapProps) {
     const [mounted, setMounted] = useState(false);
     const [mapLayer, setMapLayer] = useState<'street' | 'satellite'>('satellite');
 
@@ -48,20 +64,37 @@ export default function PropertyMap({ center, zoom = 15, boundary, title }: Prop
         setMounted(true);
     }, []);
 
-    if (!mounted) return <div className="h-[500px] w-full bg-slate-900/5 animate-pulse rounded-[2.5rem] border border-slate-200" />;
+    if (!mounted) return <div style={{ height }} className="w-full bg-slate-900/5 animate-pulse rounded-[2.5rem] border border-slate-200" />;
 
-    const lat = Number(center[0]);
-    const lng = Number(center[1]);
-    const safeCenter: [number, number] = [isNaN(lat) ? 0 : lat, isNaN(lng) ? 0 : lng];
+    // Determine target center: either explicit center prop or first property
+    let targetLat = 27.7172;
+    let targetLng = 85.3240;
+
+    if (center) {
+        targetLat = Number(center[0]);
+        targetLng = Number(center[1]);
+    } else if (properties.length > 0) {
+        targetLat = Number(properties[0].lat);
+        targetLng = Number(properties[0].lng);
+    }
+
+    const safeCenter: [number, number] = [
+        isNaN(targetLat) ? 27.7172 : targetLat, 
+        isNaN(targetLng) ? 85.3240 : targetLng
+    ];
 
     return (
-        <div className="h-[500px] w-full rounded-[2.5rem] overflow-hidden border border-slate-200 shadow-inner relative z-0 group">
+        <div className={`w-full rounded-[2.5rem] overflow-hidden border border-slate-200 shadow-inner relative z-0 group`} style={{ height }}>
             {/* Map Controls HUD */}
             <div className="absolute top-6 left-6 z-[1000] flex flex-col gap-3">
                 <motion.button 
+                    type="button"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => setMapLayer(mapLayer === 'street' ? 'satellite' : 'street')}
+                    onClick={() => {
+                        console.log("Map: Toggling layer from", mapLayer);
+                        setMapLayer(mapLayer === 'street' ? 'satellite' : 'street');
+                    }}
                     className="h-12 w-12 bg-white/90 backdrop-blur-xl rounded-2xl flex items-center justify-center shadow-2xl border border-white/50 text-slate-900 transition-all hover:bg-indigo-500 hover:text-white"
                 >
                     <Layers className="h-5 w-5" />
@@ -94,24 +127,55 @@ export default function PropertyMap({ center, zoom = 15, boundary, title }: Prop
                     />
                 )}
                 
-                {/* Property Marker */}
-                <Marker position={safeCenter}>
-                    <Popup>
-                        <div className="p-2">
-                            <div className="text-[10px] font-black uppercase tracking-widest text-indigo-600 mb-1">Verified Location</div>
-                            <div className="text-sm font-bold text-slate-900">{title || 'Property Site'}</div>
-                        </div>
-                    </Popup>
-                </Marker>
+                {/* Multi-Property Markers */}
+                {properties.map((prop) => (
+                    <Marker 
+                        key={prop.id} 
+                        position={[Number(prop.lat), Number(prop.lng)]}
+                        eventHandlers={{
+                            click: () => onMarkerClick?.(prop)
+                        }}
+                    >
+                        <Popup className="premium-popup">
+                            <div className="p-4 min-w-[240px] space-y-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <div className="h-6 w-6 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600 border border-indigo-100">
+                                        <Building2 className="h-3.5 w-3.5" />
+                                    </div>
+                                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">Node ID: {prop.id.substring(0, 8)}</span>
+                                </div>
+                                <h4 className="text-sm font-black text-slate-900 uppercase tracking-tighter italic">{prop.title}</h4>
+                                <div className="flex items-center justify-between pt-3 border-t border-slate-50">
+                                    <span className="text-xs font-black text-indigo-600 italic">{formatNPR(prop.price)}</span>
+                                    <Link href={`/properties/${prop.id}`} className="flex items-center gap-1.5 text-[9px] font-black uppercase text-slate-900 hover:text-indigo-600 transition-colors">
+                                        Inspect Cluster <ArrowUpRight className="h-3 w-3" />
+                                    </Link>
+                                </div>
+                            </div>
+                        </Popup>
+                    </Marker>
+                ))}
+
+                {/* Single Property Marker (Backward compatibility) */}
+                {center && properties.length === 0 && (
+                    <Marker position={safeCenter}>
+                        <Popup>
+                            <div className="p-2">
+                                <div className="text-[10px] font-black uppercase tracking-widest text-indigo-600 mb-1">Target Cluster</div>
+                                <div className="text-sm font-bold text-slate-900">{title || 'Property Site'}</div>
+                            </div>
+                        </Popup>
+                    </Marker>
+                )}
 
                 {/* Property Boundary Polygon */}
                 {boundary && boundary.length > 2 && (
                     <Polygon 
                         positions={boundary} 
                         pathOptions={{ 
-                            color: '#10b981', 
-                            fillColor: '#10b981', 
-                            fillOpacity: 0.15,
+                            color: '#6366f1', 
+                            fillColor: '#6366f1', 
+                            fillOpacity: 0.1,
                             weight: 3,
                             dashArray: '8, 8'
                         }} 

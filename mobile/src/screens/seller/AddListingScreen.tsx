@@ -262,6 +262,8 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 24,
     paddingTop: 20,
+    paddingBottom: 60,
+    flexGrow: 1,
   },
   headerTitle: {
     fontSize: 24,

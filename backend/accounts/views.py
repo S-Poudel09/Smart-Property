@@ -198,9 +198,8 @@ class VerifyOTPView(APIView):
             email = validated_data.get('email')
             otp_code = validated_data.get('otp_code')
 
-            try:
-                user = User.objects.get(email=email)
-            except User.DoesNotExist:
+            user = User.objects.filter(email=email).first()
+            if not user:
                 return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
             # Get the most recent valid OTP for this user
@@ -237,15 +236,14 @@ class ResendOTPView(APIView):
         email = request.data.get('email')
         if not email:
             return Response({"error": "Email is required."}, status=status.HTTP_400_BAD_REQUEST)
-        
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
+
+        user = User.objects.filter(email=email).first()
+        if not user:
             return Response({"error": "No petitioner found with this email."}, status=status.HTTP_404_NOT_FOUND)
-            
+
         if user.is_verified:
             return Response({"message": "This lineage is already verified."}, status=status.HTTP_400_BAD_REQUEST)
-            
+
         otp_sent, _ = generate_and_send_otp(user)
         if otp_sent:
             return Response({"message": "A new verification code has been dispatched."}, status=status.HTTP_200_OK)
@@ -306,9 +304,8 @@ class AdminLoginVerifyOTPView(APIView):
         if not email or not otp_code:
             return Response({"error": "Email and OTP code are required."}, status=status.HTTP_400_BAD_REQUEST)
         
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
+        user = User.objects.filter(email=email).first()
+        if not user:
             return Response({"error": "No account found."}, status=status.HTTP_404_NOT_FOUND)
             
         # Get the most recent valid OTP for login
@@ -344,13 +341,12 @@ class AdminResendLoginOTPView(APIView):
         if not email:
             return Response({"error": "Email is required."}, status=status.HTTP_400_BAD_REQUEST)
         
-        try:
-            user = User.objects.get(email=email)
-            if not (user.role == 'admin' or user.is_superuser):
-                 return Response({"error": "Invalid request for this account role."}, status=status.HTTP_403_FORBIDDEN)
-        except User.DoesNotExist:
+        user = User.objects.filter(email=email).first()
+        if not user:
             return Response({"error": "No account found."}, status=status.HTTP_404_NOT_FOUND)
             
+        if not (user.role == 'admin' or user.is_superuser):
+            return Response({"error": "Invalid request for this account role."}, status=status.HTTP_403_FORBIDDEN)
         otp_sent, otp_error = generate_and_send_otp(user, reason="admin_login")
         if otp_sent:
             return Response({"message": "A new verification code has been dispatched."}, status=status.HTTP_200_OK)
@@ -421,9 +417,8 @@ class PasswordResetRequestView(APIView):
         serializer = PasswordResetRequestSerializer(data=request.data)
         if serializer.is_valid():
             email = serializer.validated_data['email']
-            try:
-                user = User.objects.get(email=email)
-            except User.DoesNotExist:
+            user = User.objects.filter(email=email).first()
+            if not user:
                 # To prevent email enumeration, return a success response even if user doesn't exist
                 return Response({"message": "If an account with this email exists, a password reset link has been sent."}, status=status.HTTP_200_OK)
 
@@ -464,8 +459,8 @@ class PasswordResetConfirmView(APIView):
 
             try:
                 uid = force_str(urlsafe_base64_decode(uidb64))
-                user = User.objects.get(pk=uid)
-            except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+                user = User.objects.filter(pk=uid).first()
+            except (TypeError, ValueError, OverflowError):
                 user = None
 
             if user is not None and PasswordResetTokenGenerator().check_token(user, token):
@@ -497,9 +492,8 @@ class AdminKYCVerifyView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request, user_id):
-        try:
-            user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
+        user = User.objects.filter(id=user_id).first()
+        if not user:
             return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
         
         serializer = AdminKYCVerifySerializer(data=request.data)

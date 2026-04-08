@@ -9,17 +9,23 @@ import {
     Search, MapPin, Bath, Bed, Square, 
     ArrowRight, Compass, ShieldCheck, 
     Filter, LayoutGrid, List, Sparkles,
-    Landmark, Building2
+    Landmark, Building2, Map as MapIcon
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatNPR } from '@/lib/utils/currency';
+import dynamic from 'next/dynamic';
+
+const PropertyMap = dynamic(() => import('@/components/property/PropertyMap'), { 
+    ssr: false,
+    loading: () => <div className="h-[600px] w-full bg-slate-100 animate-pulse rounded-[2.5rem]" />
+});
 
 export default function DashboardPropertiesPage() {
     const [properties, setProperties] = useState<Property[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [viewMode, setViewMode] = useState<'grid' | 'list' | 'map'>('grid');
 
     useEffect(() => {
         const load = async () => {
@@ -74,6 +80,13 @@ export default function DashboardPropertiesPage() {
                     >
                         <List className="h-5 w-5" />
                     </button>
+                    <button 
+                        onClick={() => setViewMode('map')}
+                        className={`p-3.5 rounded-[1.25rem] transition-all duration-300 ${viewMode === 'map' ? 'bg-white text-indigo-600 shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
+                        title="Map View"
+                    >
+                        <MapIcon className="h-5 w-5" />
+                    </button>
                 </div>
             </header>
 
@@ -105,9 +118,22 @@ export default function DashboardPropertiesPage() {
             </div>
 
             {/* Asset Matrix */}
-            <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10" : "space-y-10"}>
+            <div className={viewMode === 'map' ? "w-full" : (viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10" : "space-y-10")}>
                 <AnimatePresence mode="popLayout">
-                    {filtered.map((property, idx) => (
+                    {viewMode === 'map' ? (
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="w-full"
+                        >
+                            <PropertyMap 
+                                properties={filtered} 
+                                height="650px"
+                                zoom={13}
+                            />
+                        </motion.div>
+                    ) : (
+                        filtered.map((property, idx) => (
                         <motion.div 
                             key={property.id || `prop-${idx}`}
                             initial={{ opacity: 0, y: 30 }}
@@ -183,7 +209,8 @@ export default function DashboardPropertiesPage() {
                                 </div>
                             </div>
                         </motion.div>
-                    ))}
+                    ))
+                )}
                     {filtered.length === 0 && (
                         <div className="col-span-full py-40 text-center bg-white rounded-[3rem] border border-slate-200/50 shadow-inner">
                             <Compass className="h-20 w-20 text-slate-200 mx-auto mb-8" />

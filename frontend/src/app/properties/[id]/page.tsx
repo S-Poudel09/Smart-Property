@@ -28,7 +28,11 @@ const ThreeDViewer = dynamic(() => import('@/components/property/ThreeDViewer').
 });
 const ThreeDInline = dynamic(() => import('@/components/property/ThreeDViewer').then(mod => mod.ThreeDInline), {
     ssr: false,
-    loading: () => <div className="w-full h-full bg-slate-950 flex items-center justify-center text-[11px] font-black uppercase tracking-[0.4em] text-white/20 italic">Initializing Imperial Engine...</div>
+    loading: () => <div className="w-full h-full bg-slate-950 flex items-center justify-center text-white/20 italic font-black uppercase tracking-[0.4em]">Initializing Imperial Engine...</div>
+});
+const ThreeDImageStack = dynamic(() => import('@/components/property/ThreeDImageStack'), { 
+    ssr: false,
+    loading: () => <div className="fixed inset-0 z-[300] bg-[#020617] flex items-center justify-center text-white/10 font-black uppercase tracking-[1em]">Scanning Registry Cluster...</div>
 });
 
 import { StatusBadge } from '@/components/common/StatusBadge';
@@ -47,6 +51,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
     const [property, setProperty] = useState<Property | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isThreeDOpen, setIsThreeDOpen] = useState(false);
+    const [isImageStackOpen, setIsImageStackOpen] = useState(false);
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
     const [activeTransactionId, setActiveTransactionId] = useState<string | null>(null);
     const [isInsightsOpen, setIsInsightsOpen] = useState(false);
@@ -111,7 +116,9 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
         </div>
     );
 
-    const handleInitiatePayment = async () => {
+    const handleInitiatePayment = async (e?: React.MouseEvent) => {
+        if (e) e.preventDefault();
+        console.log("Acquire button clicked for property:", property.id);
         const user = getUser();
         if (!user) {
             toast.error('Authentication required to acquire assets');
@@ -132,6 +139,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
                 Number(property.price)
             );
             
+            console.log("Transaction created:", transaction);
             if (transaction && (transaction.id || transaction.TransactionID)) {
                 setActiveTransactionId(transaction.id || transaction.TransactionID);
                 setIsCheckoutOpen(true);
@@ -162,7 +170,9 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
         }
     };
 
-    const handleContactSeller = async () => {
+    const handleContactSeller = async (e?: React.MouseEvent) => {
+        if (e) e.preventDefault();
+        console.log("Contact Seller button clicked for property:", property.id);
         const user = getUser();
         if (!user) { toast.error('Auth required'); router.push('/auth/login'); return; }
         try {
@@ -364,30 +374,45 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
                                 </div>
                             )}
 
-                            {/* Ultra-Wide 3D Visual Hub */}
+                            {/* Universal 3D Visual Hub */}
                             <div className="bg-slate-950 p-16 rounded-[3rem] border border-slate-800 shadow-2xl relative overflow-hidden">
                                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-10 mb-12 relative z-10">
-                                    <div>
+                                    <div className="space-y-4">
                                         <div className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400 mb-3 italic">Interactive Environment Sync</div>
-                                        <h2 className="text-4xl font-black text-white font-outfit tracking-tighter italic">Digital Twin Synthesis</h2>
+                                        <h2 className="text-4xl font-black text-white font-outfit tracking-tighter italic uppercase underline decoration-white/5 underline-offset-8">Digital Twin Synthesis</h2>
+                                        <div className="flex gap-4">
+                                            <button 
+                                                onClick={() => setIsThreeDOpen(true)}
+                                                className="h-10 px-6 rounded-xl bg-white/5 hover:bg-white text-white hover:text-slate-900 border border-white/10 text-[8px] font-black uppercase tracking-[0.3em] flex items-center gap-3 transition-all italic"
+                                            >
+                                                <Maximize2 className="h-4 w-4" /> Full Spectrum Scan
+                                            </button>
+                                            <button 
+                                                onClick={() => setIsImageStackOpen(true)}
+                                                className="h-10 px-6 rounded-xl bg-indigo-600/20 hover:bg-indigo-600 text-indigo-400 hover:text-white border border-indigo-500/20 text-[8px] font-black uppercase tracking-[0.3em] flex items-center gap-3 transition-all italic"
+                                            >
+                                                <Layers className="h-4 w-4" /> 3D Imagery Cluster
+                                            </button>
+                                        </div>
                                     </div>
-                                    <button 
-                                        onClick={() => setIsThreeDOpen(true)}
-                                        className="h-14 px-8 rounded-xl bg-white/5 hover:bg-white text-white hover:text-slate-900 border border-white/10 text-[9px] font-black uppercase tracking-[0.4em] flex items-center gap-4 transition-all"
-                                    >
-                                        <Maximize2 className="h-5 w-5" /> Executive Wide Scan
-                                    </button>
+                                    <div className="flex flex-col items-end gap-2 text-right">
+                                        <div className="flex items-center gap-2">
+                                            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Stable Sync</span>
+                                        </div>
+                                        <span className="text-[9px] font-bold text-white/20 uppercase tracking-widest">Procedural Mesh Registry v4.2</span>
+                                    </div>
                                 </div>
 
-                                <div className="rounded-[2.5rem] overflow-hidden border border-white/5 h-[600px] shadow-3xl bg-black/50">
-                                     <ThreeDInline 
+                                <div className="rounded-[2.5rem] overflow-hidden border border-white/5 h-[600px] shadow-3xl bg-black/50 relative group">
+                                    <ThreeDInline 
                                         url={property.virtualTourUrl} 
                                         propertyName={property.title} 
                                         propertyType={property.propertyType || (property as any).property_type || ''}
-                                        // @ts-ignore
-                                        image={property.images?.[0]?.image || property.images?.[0] || ''}
+                                        image={typeof property.images?.[0] === 'string' ? property.images?.[0] : (property.images?.[0] as any)?.image || ''}
                                         beds={property.bedrooms || (property as any).beds || 1}
-                                     />
+                                    />
+                                    <div className="absolute inset-0 pointer-events-none border-4 border-white/5 rounded-[2.5rem] group-hover:border-indigo-600/20 transition-all duration-700" />
                                 </div>
                             </div>
 
@@ -436,8 +461,9 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
                                 
                                 <div className="space-y-6">
                                     <button
+                                        type="button"
                                         className="w-full h-24 text-[12px] font-black uppercase tracking-[0.4em] rounded-3xl bg-indigo-600 text-white shadow-xl shadow-indigo-600/20 flex flex-col items-center justify-center gap-2 transition-all hover:bg-slate-900 active:scale-95 disabled:opacity-30 group/acquire"
-                                        onClick={handleInitiatePayment}
+                                        onClick={(e) => handleInitiatePayment(e)}
                                         disabled={isActionLoading}
                                     >
                                         <span className="flex items-center gap-4">
@@ -450,8 +476,9 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
                                      {/* CheckoutModal was here, moved to root */}
 
                                     <button 
+                                        type="button"
                                         className="w-full h-20 text-[10px] font-black uppercase tracking-[0.3em] rounded-2xl bg-white border-2 border-slate-900 text-slate-900 hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center gap-4 shadow-sm active:scale-95 italic group/comms" 
-                                        onClick={handleContactSeller}
+                                        onClick={(e) => handleContactSeller(e)}
                                     >
                                         <MessageSquare className="h-6 w-6 group-hover/comms:scale-125 transition-all" /> Established Imperial Comms
                                     </button>
@@ -513,6 +540,24 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
                     onSuccess={handlePaymentSuccess}
                 />
             )}
+
+            <ThreeDViewer
+                isOpen={isThreeDOpen}
+                onClose={() => setIsThreeDOpen(false)}
+                propertyName={property.title}
+                url={property.virtualTourUrl}
+                propertyType={property.propertyType || (property as any).property_type || ''}
+                image={typeof property.images?.[0] === 'string' ? property.images?.[0] : (property.images?.[0] as any)?.image || ''}
+                beds={property.bedrooms || (property as any).beds || 1}
+                modelUrl={property.modelUrl}
+            />
+
+            <ThreeDImageStack 
+                isOpen={isImageStackOpen}
+                onClose={() => setIsImageStackOpen(false)}
+                propertyName={property.title}
+                images={property.images?.map((img: any) => typeof img === 'string' ? img : img.image) || []}
+            />
         </div>
     );
 }

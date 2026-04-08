@@ -133,11 +133,6 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'], url_path='khalti-initiate')
     def khalti_initiate(self, request, pk=None):
-        # AUTH CHECK
-        with open('/tmp/khalti_debug.log', 'a') as f:
-            auth_header = request.headers.get('Authorization', 'MISSING')
-            f.write(f"Inbound Auth Header: {auth_header[:20]}...\n")
-            
         if not request.user.is_authenticated:
             return Response({"error": "Platform Authentication Required"}, status=status.HTTP_401_UNAUTHORIZED)
             
@@ -150,71 +145,84 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 return Response({"error": "return_url is required"}, status=status.HTTP_400_BAD_REQUEST)
 
             # KPG-2 Initiate
-            base_url = getattr(settings, 'KHALTI_BASE_URL', 'https://dev.khalti.com/api/v2/')
+            base_url = getattr(settings, 'KHALTI_BASE_URL', 'https://a.khalti.com/api/v2/')
             base_url = base_url.rstrip('/')
             initiate_url = f"{base_url}/epayment/initiate/"
-            
-            # DIAGNOSTIC LOGS to file
-            with open('/tmp/khalti_debug.log', 'a') as f:
-                f.write(f"\n[{timezone.now()}] KHALTI_INITIATE_DEBUG\n")
-                f.write(f"URL: {initiate_url}\n")
-                k_key = str(getattr(settings, 'KHALTI_SECRET_KEY', 'MISSING_KEY'))
-                f.write(f"Key loaded: {k_key[:10]}.....{k_key[-5:]}\n")
-                f.write(f"Transaction ID: {transaction.id}\n")
 
+            # FIX: Khalti requires capitalized 'Key' in Authorization header
+            secret_key = settings.KHALTI_SECRET_KEY.strip()
             headers = {
-                'Authorization': f"Key {settings.KHALTI_SECRET_KEY.strip()}",
+                'Authorization': f"Key {secret_key}",
                 'Content-Type': 'application/json'
             }
-            
-            # Amount in Paisa
+
+            # Amount in Paisa — Khalti minimum is 10 paisa
             paisa_amount = int(float(transaction.total_amount) * 100)
-            
+            if paisa_amount < 10:
+                return Response(
+                    {"error": f"Payment amount too low. Minimum is NPR 0.10. Got {paisa_amount} paisa."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             # Fetch user phone safely or use standard sandbox bypass number
             user_phone = getattr(request.user, 'phone', None)
             if not user_phone:
                 user_phone = "9800000000"
-                
+
+            # Build customer name (fallback to email prefix if blank)
+            customer_name = f"{request.user.first_name} {request.user.last_name}".strip()
+            if not customer_name:
+                customer_name = request.user.email.split('@')[0]
+
             payload = {
                 "return_url": return_url,
                 "website_url": website_url,
                 "amount": paisa_amount,
                 "purchase_order_id": str(transaction.id),
-                "purchase_order_name": f"Property Purchase: {transaction.property.title}",
+                "purchase_order_name": f"Property: {transaction.property.title[:100]}",
                 "customer_info": {
-                    "name": f"{request.user.first_name} {request.user.last_name}",
+                    "name": customer_name,
                     "email": request.user.email,
                     "phone": str(user_phone)
                 }
             }
 
-            req = urllib.request.Request(initiate_url, data=json.dumps(payload).encode('utf-8'), headers=headers)
+            logger.info(f"Khalti Initiate → URL: {initiate_url} | Amount: {paisa_amount} paisa | Order: {payload['purchase_order_id']}")
+
+            req = urllib.request.Request(
+                initiate_url,
+                data=json.dumps(payload).encode('utf-8'),
+                headers=headers
+            )
             with urllib.request.urlopen(req) as response:
                 res_data = json.loads(response.read().decode())
-                
+
                 if res_data.get('pidx'):
                     # Save pidx to transaction for later lookup
                     transaction.transaction_reference_id = res_data.get('pidx')
                     transaction.save()
-                    
+
+                    logger.info(f"Khalti Initiate SUCCESS — pidx: {res_data.get('pidx')}")
                     return Response({
                         "pidx": res_data.get('pidx'),
                         "payment_url": res_data.get('payment_url')
                     }, status=status.HTTP_200_OK)
                 else:
+                    logger.error(f"Khalti returned no pidx: {res_data}")
                     return Response({
-                        "error": "Unable to initiate Khalti sandbox payment. Please verify sandbox keys.",
+                        "error": "Khalti did not return a payment URL.",
                         "details": res_data
                     }, status=status.HTTP_400_BAD_REQUEST)
 
         except urllib.error.HTTPError as e:
-            res_err = e.read().decode()
-            logger.error(f"Khalti Initiate API Error: {res_err}")
-            with open('/tmp/khalti_debug.log', 'a') as f:
-                f.write(f"Khalti API Error Status: {e.code}\n")
-                f.write(f"Khalti API Response Body: {res_err}\n")
+            try:
+                res_err_raw = e.read().decode()
+                res_err = json.loads(res_err_raw)
+            except Exception:
+                res_err = res_err_raw if 'res_err_raw' in dir() else str(e)
+            logger.error(f"Khalti Initiate HTTP {e.code} Error: {res_err}")
             return Response({
-                "error": "Unable to initiate Khalti sandbox payment. Please verify sandbox keys.",
+                "error": f"Khalti API rejected the request (HTTP {e.code}).",
                 "details": res_err
             }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
@@ -231,51 +239,101 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 return Response({"error": "pidx required for lookup"}, status=status.HTTP_400_BAD_REQUEST)
 
             # KPG-2 Lookup
-            base_url = getattr(settings, 'KHALTI_BASE_URL', 'https://dev.khalti.com/api/v2/')
+            base_url = getattr(settings, 'KHALTI_BASE_URL', 'https://a.khalti.com/api/v2/')
             base_url = base_url.rstrip('/')
             lookup_url = f"{base_url}/epayment/lookup/"
-            
+
+            secret_key = settings.KHALTI_SECRET_KEY.strip()
             headers = {
-                'Authorization': f'Key {settings.KHALTI_SECRET_KEY}',
+                'Authorization': f'Key {secret_key}',
                 'Content-Type': 'application/json'
             }
             payload = {"pidx": pidx}
 
-            req = urllib.request.Request(lookup_url, data=json.dumps(payload).encode('utf-8'), headers=headers)
+            logger.info(f"Khalti Lookup → pidx: {pidx} | transaction: {transaction.id}")
+
+            req = urllib.request.Request(
+                lookup_url,
+                data=json.dumps(payload).encode('utf-8'),
+                headers=headers
+            )
             with urllib.request.urlopen(req) as response:
                 res_data = json.loads(response.read().decode())
-                
-                # Khalti returns status 'Completed' if successful
-                if res_data.get('status') == 'Completed':
-                    transaction.status = "COMPLETED"
+
+            khalti_status = res_data.get('status', '')
+            logger.info(f"Khalti Lookup result — status: {khalti_status} | pidx: {pidx}")
+
+            # ── Handle each Khalti status ──────────────────────────────────────
+            if khalti_status == 'Completed':
+                from django.db import transaction as db_tx
+                with db_tx.atomic():
+                    transaction.status = 'COMPLETED'
                     transaction.amount_paid = transaction.total_amount
-                    transaction.payment_method = "Khalti"
+                    transaction.payment_method = 'Khalti'
+                    transaction.transaction_reference_id = pidx
                     transaction.save()
 
-                    # PostgreSQL activity log
-                    from analytics.utils import log_activity
-                    log_activity(
-                        request.user.email, 
-                        'khalti_payment_completed', 
-                        details={'transaction_id': str(transaction.id), 'pidx': pidx}, 
-                        status='success'
+                    # Auto-create a verified PaymentProof so sellers see it immediately
+                    PaymentProof.objects.get_or_create(
+                        transaction=transaction,
+                        notes=f'Khalti pidx: {pidx}',
+                        defaults={
+                            'amount': transaction.total_amount,
+                            'is_verified': True,
+                            'verified_by': request.user,
+                            'verified_at': timezone.now(),
+                            'proof_file': '',  # no file for digital payments
+                        }
                     )
 
-                    return Response({
-                        "message": "Payment completed successfully",
-                        "data": res_data
-                    }, status=status.HTTP_200_OK)
-                else:
-                    return Response({
-                        "error": "Payment not completed", 
-                        "status": res_data.get('status'),
-                        "details": res_data
-                    }, status=status.HTTP_400_BAD_REQUEST)
+                from analytics.utils import log_activity
+                log_activity(
+                    request.user.email,
+                    'khalti_payment_completed',
+                    details={'transaction_id': str(transaction.id), 'pidx': pidx},
+                    status='success'
+                )
+                return Response({
+                    'message': 'Payment completed and verified successfully.',
+                    'pidx': pidx,
+                    'data': res_data
+                }, status=status.HTTP_200_OK)
+
+            elif khalti_status == 'Pending':
+                return Response({
+                    'error': 'Payment is still pending. Please wait and try again.',
+                    'status': khalti_status,
+                    'details': res_data
+                }, status=status.HTTP_202_ACCEPTED)
+
+            elif khalti_status in ('Canceled', 'Failed', 'Expired'):
+                transaction.status = 'FAILED'
+                transaction.save()
+                return Response({
+                    'error': f'Payment {khalti_status.lower()} on Khalti.',
+                    'status': khalti_status,
+                    'details': res_data
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            else:
+                return Response({
+                    'error': f'Unexpected Khalti status: {khalti_status}',
+                    'details': res_data
+                }, status=status.HTTP_400_BAD_REQUEST)
 
         except urllib.error.HTTPError as e:
-            res_err = e.read().decode()
-            logger.error(f"Khalti Verify API Error: {res_err}")
-            return Response({"error": "Khalti API error", "details": res_err}, status=e.code)
+            try:
+                res_err = json.loads(e.read().decode())
+            except Exception:
+                res_err = str(e)
+            logger.error(f"Khalti Verify HTTP {e.code}: {res_err}")
+            return Response(
+                {'error': f'Khalti API error (HTTP {e.code})', 'details': res_err},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         except Exception as e:
             logger.error(f"Internal Error during Khalti verify: {str(e)}")
-            return Response({"error": "Internal verification error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {'error': f'Internal verification error: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

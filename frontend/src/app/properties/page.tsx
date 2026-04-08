@@ -10,6 +10,13 @@ import { Loader2, Search, SlidersHorizontal, ChevronLeft, ChevronRight, Building
 import { Property } from '@/types/property';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getProperties } from '@/lib/api/properties';
+import dynamic from 'next/dynamic';
+import { LayoutGrid, Map as MapIcon } from 'lucide-react';
+
+const PropertyMap = dynamic(() => import('@/components/property/PropertyMap'), { 
+    ssr: false,
+    loading: () => <div className="h-[600px] w-full bg-white/50 animate-pulse rounded-[3rem] border border-slate-100" />
+});
 
 const ITEMS_PER_PAGE = 6;
 
@@ -19,6 +26,7 @@ export default function PropertiesPage() {
     const [properties, setProperties] = useState<Property[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
+    const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
 
     useEffect(() => {
         const fetchProperties = async () => {
@@ -163,6 +171,21 @@ export default function PropertiesPage() {
                                     <option value="price-high">Price: Descending</option>
                                 </select>
                             </div>
+
+                            <div className="flex bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
+                                <button 
+                                    onClick={() => setViewMode('grid')}
+                                    className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    <LayoutGrid className="h-4 w-4 mr-2 inline-block" /> Grid
+                                </button>
+                                <button 
+                                    onClick={() => setViewMode('map')}
+                                    className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${viewMode === 'map' ? 'bg-white text-indigo-600 shadow-md' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    <MapIcon className="h-4 w-4 mr-2 inline-block" /> Map
+                                </button>
+                            </div>
                         </div>
 
                         {isLoading ? (
@@ -177,6 +200,18 @@ export default function PropertiesPage() {
                                     Re-Initialize Node
                                 </button>
                             </div>
+                        ) : viewMode === 'map' ? (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="w-full"
+                            >
+                                <PropertyMap 
+                                    properties={filteredAndSortedProperties} 
+                                    height="700px"
+                                    zoom={12}
+                                />
+                            </motion.div>
                         ) : currentItems.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                                 <AnimatePresence mode="popLayout">
@@ -205,7 +240,7 @@ export default function PropertiesPage() {
                         )}
 
                         {/* Pagination Area -- Institutional Style */}
-                        {totalPages > 1 && (
+                        {totalPages > 1 && viewMode !== 'map' && (
                             <div className="mt-24 flex justify-center items-center gap-6">
                                 <button
                                     className="h-12 w-12 rounded-xl border border-slate-200 bg-white flex items-center justify-center disabled:opacity-20 text-slate-900 hover:bg-slate-50 transition-all shadow-sm active:scale-90"

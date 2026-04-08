@@ -1,11 +1,36 @@
 import * as THREE from 'three';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Stage, Environment } from '@react-three/drei';
+import { useGLTF, Center, OrbitControls, Stage, Environment, PerspectiveCamera } from '@react-three/drei';
 import { Suspense, useState, useEffect, memo } from 'react';
-import { X, Maximize2, Move, Play, RotateCcw, ShieldCheck, Zap, Globe, Sparkles, AlertCircle } from 'lucide-react';
+import { X, Maximize2, Move, Play, RotateCcw, ShieldCheck, Zap, Globe, Sparkles, AlertCircle, Box } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export function HouseModel({ propertyType = 'house', beds = 1 }: { propertyType?: string, beds?: number }) {
+export function GLTFModel({ url }: { url: string }) {
+  try {
+    const { scene } = useGLTF(url);
+    useEffect(() => {
+        if (scene) {
+            console.log("3D Model Synthesized Successfully:", url);
+        }
+    }, [scene, url]);
+    return <primitive object={scene} />;
+  } catch (e) {
+    console.error("Critical GLTF Synthesis Error:", e);
+    return null;
+  }
+}
+
+export function HouseModel({ propertyType = 'house', beds = 1, modelUrl }: { propertyType?: string, beds?: number, modelUrl?: string }) {
+  if (modelUrl) {
+    return (
+        <Suspense fallback={<mesh><boxGeometry args={[2, 2, 2]} /><meshStandardMaterial color="#6366f1" wireframe /></mesh>}>
+            <Center top>
+                <GLTFModel url={modelUrl} />
+            </Center>
+        </Suspense>
+    );
+  }
+
   if (propertyType.toLowerCase() === 'land') {
     return (
         <group dispose={null}>
@@ -139,19 +164,21 @@ interface ThreeDViewerProps {
   propertyType?: string;
   image?: string;
   beds?: number;
+  modelUrl?: string;
 }
 
-export const ThreeDViewer = memo(function ThreeDViewer({ isOpen, onClose, propertyName, url, propertyType, image, beds }: ThreeDViewerProps) {
+export const ThreeDViewer = memo(function ThreeDViewer({ isOpen, onClose, propertyName, url, propertyType, image, beds, modelUrl }: ThreeDViewerProps) {
   const [activeUrl, setActiveUrl] = useState<string | null>(null);
   const [dimensionsReady, setDimensionsReady] = useState(false);
+  const [hasTimedOut, setHasTimedOut] = useState(false);
 
   useEffect(() => {
     if (!isOpen) {
       setDimensionsReady(false);
+      setHasTimedOut(false);
       return;
     }
     
-    // Strict verification logic for production/demo stability
     const isMatterport = url?.includes('matterport.com/show/?m=');
     const modelId = url?.split('m=')[1]?.split('&')[0];
     const isDemoId = !modelId || modelId.length < 11 || ["JGPuSuihtZ9", "9S99tKz8yXz", "rnBstA7s1V7"].includes(modelId);
@@ -165,9 +192,23 @@ export const ThreeDViewer = memo(function ThreeDViewer({ isOpen, onClose, proper
       setActiveUrl(null);
     }
 
-    // Delay canvas initialization until modal animation is mostly done to avoid width(-1) issues
-    const timer = setTimeout(() => setDimensionsReady(true), 150);
-    return () => clearTimeout(timer);
+    // Preload architectural assets to reduce perceived latency
+    if (modelUrl) {
+        try {
+            useGLTF.preload(modelUrl);
+        } catch (e) {
+            console.warn("Preload failed for node:", modelUrl);
+        }
+    }
+
+    // Watchdog Timer: if meshes don't resolve in 10s, reveal the procedural hub
+    const watchdog = setTimeout(() => setHasTimedOut(true), 10000);
+    const renderDelay = setTimeout(() => setDimensionsReady(true), 200);
+
+    return () => {
+        clearTimeout(watchdog);
+        clearTimeout(renderDelay);
+    };
   }, [isOpen, url]);
 
   return (
@@ -202,7 +243,6 @@ export const ThreeDViewer = memo(function ThreeDViewer({ isOpen, onClose, proper
             </button>
           </header>
 
-          {/* Visualization Zone */}
           <div className="flex-1 relative bg-slate-950 flex items-center justify-center">
             {activeUrl ? (
                 <iframe
@@ -218,34 +258,49 @@ export const ThreeDViewer = memo(function ThreeDViewer({ isOpen, onClose, proper
                     
                     {dimensionsReady && (
                         <Suspense fallback={<div className="w-full h-full flex items-center justify-center text-white/5 font-black uppercase tracking-[1em]">Scanning Mesh...</div>}>
-                            <Canvas 
-                              shadows 
-                              gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
-                              dpr={[1, 2]} 
-                              camera={{ position: [12, 10, 12], fov: 35 }}
-                              onCreated={({ gl }) => {
-                                gl.shadowMap.enabled = true;
-                                gl.shadowMap.type = THREE.PCFShadowMap;
-                              }}
-                            >
-                                <OrbitControls makeDefault enableDamping dampingFactor={0.05} autoRotate autoRotateSpeed={0.3} />
-                                <Stage environment="city" intensity={0.4} shadows="contact" adjustCamera={false}>
-                                    <HouseModel propertyType={propertyType} beds={beds} />
-                                </Stage>
-                                <Environment preset="city" blur={1} />
-                                <fog attach="fog" args={['#020617', 20, 60]} />
-                            </Canvas>
+                            {!hasTimedOut ? (
+                                <Canvas 
+                                    shadows 
+                                    gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
+                                    dpr={[1, 2]} 
+                                    camera={{ position: [12, 10, 12], fov: 35 }}
+                                    onCreated={({ gl }) => {
+                                        gl.shadowMap.enabled = true;
+                                        gl.shadowMap.type = THREE.PCFShadowMap;
+                                    }}
+                                >
+                                    <OrbitControls makeDefault enableDamping dampingFactor={0.05} autoRotate autoRotateSpeed={0.3} />
+                                    <Stage environment="city" intensity={0.4} shadows="contact" adjustCamera>
+                                        <HouseModel propertyType={propertyType} beds={beds} modelUrl={modelUrl} />
+                                    </Stage>
+                                    <Environment preset="city" blur={1} />
+                                    <fog attach="fog" args={['#020617', 20, 60]} />
+                                </Canvas>
+                            ) : (
+                                <Canvas 
+                                    shadows 
+                                    gl={{ antialias: true, alpha: true }}
+                                    dpr={[1, 2]} 
+                                    camera={{ position: [12, 10, 12], fov: 35 }}
+                                >
+                                    <OrbitControls makeDefault enableDamping dampingFactor={0.05} autoRotate autoRotateSpeed={0.3} />
+                                    <Stage environment="city" intensity={0.4} shadows="contact" adjustCamera>
+                                        <HouseModel propertyType={propertyType} beds={beds} />
+                                    </Stage>
+                                    <Environment preset="city" blur={1} />
+                                    <fog attach="fog" args={['#020617', 20, 60]} />
+                                </Canvas>
+                            )}
                         </Suspense>
                     )}
                     
-                    {/* Diagnostic HUD */}
                     <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
                         <div className="relative">
                            <div className="absolute -inset-40 bg-indigo-500/10 blur-[120px] rounded-full animate-pulse" />
                            <div className="px-10 py-5 bg-slate-900/90 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-3xl flex items-center gap-6 relative z-10 translate-y-[-240px]">
                               <RotateCcw className="h-6 w-6 text-indigo-400 animate-[spin_6s_linear_infinite]" />
                               <div>
-                                 <p className="text-[11px] font-black uppercase tracking-[0.3em] text-white italic">Procedural Registry Active</p>
+                                 <p className="text-[11px] font-black uppercase tracking-[0.3em] text-white italic">{hasTimedOut ? 'Procedural Backup Active' : 'Procedural Registry Active'}</p>
                                  <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest mt-1 italic">High-Fidelity Internal Mesh Engine</p>
                               </div>
                            </div>
@@ -254,7 +309,6 @@ export const ThreeDViewer = memo(function ThreeDViewer({ isOpen, onClose, proper
                 </div>
             )}
 
-            {/* Telemetry Overlay */}
             <div className="absolute bottom-12 left-12 right-12 flex justify-between items-end pointer-events-none">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -264,7 +318,7 @@ export const ThreeDViewer = memo(function ThreeDViewer({ isOpen, onClose, proper
                     <div className="flex items-center justify-between border-b border-white/5 pb-4">
                         <span className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400 italic font-outfit">Node Telemetry</span>
                         <div className="flex gap-1.5">
-                            <div className="h-1.5 w-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                            <div className={`h-1.5 w-1.5 ${hasTimedOut ? 'bg-amber-500' : 'bg-emerald-500'} rounded-full animate-pulse`} />
                             <div className="h-1.5 w-1.5 bg-emerald-500/40 rounded-full" />
                         </div>
                     </div>
@@ -275,7 +329,7 @@ export const ThreeDViewer = memo(function ThreeDViewer({ isOpen, onClose, proper
                        </div>
                        <div className="flex justify-between text-[11px] font-bold italic">
                           <span className="text-white/30 uppercase tracking-widest text-[9px]">Sync Mode</span>
-                          <span>REAL-TIME</span>
+                          <span>{hasTimedOut ? 'PROCEDURAL' : 'REAL-TIME'}</span>
                        </div>
                     </div>
                 </motion.div>
@@ -291,7 +345,7 @@ export const ThreeDViewer = memo(function ThreeDViewer({ isOpen, onClose, proper
   );
 });
 
-export const ThreeDInline = memo(function ThreeDInline({ url, propertyName, propertyType, image, beds }: { url?: string, propertyName: string, propertyType?: string, image?: string, beds?: number }) {
+export const ThreeDInline = memo(function ThreeDInline({ url, propertyName, propertyType, image, beds, modelUrl }: { url?: string, propertyName: string, propertyType?: string, image?: string, beds?: number, modelUrl?: string }) {
   const [activeUrl, setActiveUrl] = useState<string | null>(null);
   const [isRendered, setIsRendered] = useState(false);
 
@@ -309,7 +363,6 @@ export const ThreeDInline = memo(function ThreeDInline({ url, propertyName, prop
       setActiveUrl(null);
     }
 
-    // Stabilize initial render to avoid width/height issues
     const timer = setTimeout(() => setIsRendered(true), 200);
     return () => clearTimeout(timer);
   }, [url]);
@@ -336,18 +389,18 @@ export const ThreeDInline = memo(function ThreeDInline({ url, propertyName, prop
                     {isRendered && (
                         <Suspense fallback={null}>
                             <Canvas 
-                              shadows 
-                              gl={{ antialias: true, alpha: true }}
-                              dpr={[1, 1.2]} 
-                              camera={{ position: [10, 8, 10], fov: 32 }}
-                              onCreated={({ gl }) => {
-                                gl.shadowMap.enabled = true;
-                                gl.shadowMap.type = THREE.PCFShadowMap;
-                              }}
+                                shadows 
+                                gl={{ antialias: true, alpha: true }}
+                                dpr={[1, 1.2]} 
+                                camera={{ position: [10, 8, 10], fov: 32 }}
+                                onCreated={({ gl }) => {
+                                  gl.shadowMap.enabled = true;
+                                  gl.shadowMap.type = THREE.PCFShadowMap;
+                                }}
                             >
                                 <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.6} />
-                                <Stage environment="city" intensity={0.4} shadows={false} adjustCamera={false}>
-                                    <HouseModel propertyType={propertyType} beds={beds} />
+                                <Stage environment="city" intensity={0.4} shadows={false} adjustCamera>
+                                    <HouseModel propertyType={propertyType} beds={beds} modelUrl={modelUrl} />
                                 </Stage>
                                 <Environment preset="city" />
                             </Canvas>
