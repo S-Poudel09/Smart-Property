@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -6,19 +6,24 @@ import {
   ScrollView, 
   TouchableOpacity, 
   ActivityIndicator,
-  RefreshControl
+  RefreshControl,
+  Dimensions
 } from 'react-native';
 import { 
-  LayoutDashboard, 
   Users, 
   Building2, 
-  CheckCircle, 
   Clock, 
-  AlertTriangle,
-  ChevronRight,
-  TrendingUp,
-  ShieldAlert
+  TrendingUp, 
+  ArrowUpRight, 
+  History, 
+  Activity, 
+  FileSearch,
+  CheckCircle2,
+  XCircle,
+  BarChart3,
+  ChevronRight
 } from 'lucide-react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import api from '../../api/client';
 
 const AdminDashboardScreen = ({ navigation }: any) => {
@@ -30,31 +35,37 @@ const AdminDashboardScreen = ({ navigation }: any) => {
     try {
       const [userCountRes, propCountRes, systemAnalyticsRes] = await Promise.all([
         api.get('/users/count/'),
-        api.get('/properties/'), // To count total and pending
+        api.get('/properties/'),
         api.get('/admin/analytics/')
       ]);
 
       const properties = propCountRes.data;
-      const pendingProps = properties.filter((p: any) => p.status === 'submitted' || p.status === 'Submitted');
+      const pendingProps = properties.filter((p: any) => p.status.toLowerCase().includes('submitted') || p.status.toLowerCase().includes('pending'));
+      const approvedProps = properties.filter((p: any) => p.status.toLowerCase().includes('published') || p.status.toLowerCase().includes('approved'));
+      const rejectedProps = properties.filter((p: any) => p.status.toLowerCase().includes('rejected'));
 
       setStats({
         totalUsers: userCountRes.data.count,
         totalProperties: properties.length,
         pendingProperties: pendingProps.length,
+        approvedProperties: approvedProps.length,
+        rejectedProperties: rejectedProps.length,
         activeTransactions: systemAnalyticsRes.data.active_transactions || 0,
-        fraudAlerts: systemAnalyticsRes.data.fraud_alerts || 0
+        recentSubmissions: properties.slice(0, 3)
       });
     } catch (error) {
-      console.error('Admin Stats Error:', error);
+      console.error('Admin Dashboard Sync Error:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchStats();
+    }, [])
+  );
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -65,88 +76,147 @@ const AdminDashboardScreen = ({ navigation }: any) => {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color="#6366f1" />
-        <Text style={styles.loadingText}>Initializing Overlord Console...</Text>
+        <Text style={styles.loadingText}>Synchronizing Nexus...</Text>
       </View>
     );
   }
 
-  const renderStatCard = (icon: any, title: string, value: string | number, color: string, onPress?: () => void) => (
-    <TouchableOpacity style={styles.statCard} onPress={onPress}>
-      <View style={[styles.statIconContainer, { backgroundColor: `${color}15` }]}>
+  const renderStatCard = (icon: any, title: string, value: string | number, color: string, trend?: string) => (
+    <View style={styles.statCard}>
+      <View style={[styles.statIconContainer, { backgroundColor: `${color}10` }]}>
         {icon}
       </View>
       <View style={styles.statInfo}>
         <Text style={styles.statLabel}>{title}</Text>
-        <Text style={[styles.statValue, { color }]}>{value}</Text>
+        <Text style={[styles.statValue, { color: '#1e293b' }]}>{value}</Text>
+        {trend && (
+            <View style={styles.trendRow}>
+                <ArrowUpRight color="#10b981" size={12} />
+                <Text style={styles.trendText}>{trend}</Text>
+            </View>
+        )}
       </View>
-      {onPress && <ChevronRight color="#cbd5e1" size={20} />}
-    </TouchableOpacity>
+    </View>
   );
 
   return (
     <ScrollView 
       style={styles.container}
       contentContainerStyle={styles.scrollContent}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />}
     >
       <View style={styles.header}>
-        <Text style={styles.greeting}>Command Center</Text>
-        <Text style={styles.subtitle}>Sovereign Overview of the Smart Property Registry</Text>
+        <View style={styles.headerRow}>
+            <View>
+                <Text style={styles.nexusTitle}>Nexus Center</Text>
+                <Text style={styles.nexusSub}>Admin Sovereignty Overview</Text>
+            </View>
+            <TouchableOpacity style={styles.historyBtn}>
+                <History color="#1e293b" size={24} />
+            </TouchableOpacity>
+        </View>
       </View>
 
-      <View style={styles.grid}>
-        {renderStatCard(<Users color="#6366f1" size={24} />, "Total Nodes", stats?.totalUsers || 0, "#6366f1")}
-        {renderStatCard(<Building2 color="#10b981" size={24} />, "Total Assets", stats?.totalProperties || 0, "#10b981")}
-        {renderStatCard(
-          <Clock color="#f59e0b" size={24} />, 
-          "Pending Review", 
-          stats?.pendingProperties || 0, 
-          "#f59e0b",
-          () => navigation.navigate('PendingProperties')
-        )}
-        {renderStatCard(<TrendingUp color="#3b82f6" size={24} />, "Active Trades", stats?.activeTransactions || 0, "#3b82f6")}
+      <View style={styles.statGrid}>
+        <View style={styles.statRow}>
+            {renderStatCard(<Users color="#6366f1" size={20} />, "Nodes", stats?.totalUsers || 0, "#6366f1", "+2%")}
+            {renderStatCard(<Building2 color="#10b981" size={20} />, "Assets", stats?.totalProperties || 0, "#10b981", "+8%")}
+        </View>
+        <View style={styles.statRow}>
+            {renderStatCard(<TrendingUp color="#3b82f6" size={20} />, "Trades", stats?.activeTransactions || 0, "#3b82f6")}
+            <View style={[styles.statCard, { backgroundColor: '#1e293b' }]}>
+                <BarChart3 color="#fff" size={20} />
+                <Text style={[styles.statLabel, { color: 'rgba(255,255,255,0.6)' }]}>SYSTEM HEALTH</Text>
+                <Text style={[styles.statValue, { color: '#fff' }]}>OPTIMAL</Text>
+            </View>
+        </View>
       </View>
-
-      {stats?.fraudAlerts > 0 && (
-        <TouchableOpacity style={styles.alertBanner}>
-          <ShieldAlert color="#ef4444" size={20} />
-          <Text style={styles.alertText}>{stats.fraudAlerts} Critical Governance Alerts Detected</Text>
-          <ChevronRight color="#ef4444" size={20} />
-        </TouchableOpacity>
-      )}
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Administrative Actions</Text>
-        <View style={styles.actionCard}>
-          <TouchableOpacity style={styles.actionItem} onPress={() => navigation.navigate('PendingProperties')}>
-            <View style={[styles.actionIcon, { backgroundColor: '#fef3c7' }]}>
-              <CheckCircle color="#d97706" size={20} />
+        <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Registry Sectors</Text>
+            <Activity color="#6366f1" size={16} />
+        </View>
+        
+        <View style={styles.actionGrid}>
+          {/* Section 1: All Awaiting */}
+          <TouchableOpacity 
+            style={[styles.sectorCard, { borderLeftColor: '#f59e0b' }]} 
+            onPress={() => navigation.navigate('AdminApprovals', { initialTab: 'pending' })}
+          >
+            <View style={[styles.sectorIcon, { backgroundColor: '#fffbeb' }]}>
+              <Clock color="#d97706" size={24} />
             </View>
-            <Text style={styles.actionLabel}>Approve Submissions</Text>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{stats?.pendingProperties || 0}</Text>
+            <View style={styles.sectorInfo}>
+                <Text style={styles.sectorLabel}>Awaiting Audit</Text>
+                <Text style={styles.sectorSub}>{stats?.pendingProperties || 0} pending submissions</Text>
+            </View>
+            <View style={styles.countBadge}><Text style={styles.countText}>{stats?.pendingProperties || 0}</Text></View>
+          </TouchableOpacity>
+
+          {/* Section 2: All Active */}
+          <TouchableOpacity 
+            style={[styles.sectorCard, { borderLeftColor: '#10b981' }]} 
+            onPress={() => navigation.navigate('AdminApprovals', { initialTab: 'published' })}
+          >
+            <View style={[styles.sectorIcon, { backgroundColor: '#f0fdf4' }]}>
+              <CheckCircle2 color="#059669" size={24} />
+            </View>
+            <View style={styles.sectorInfo}>
+                <Text style={styles.sectorLabel}>Live Registry</Text>
+                <Text style={styles.sectorSub}>{stats?.approvedProperties || 0} active property nodes</Text>
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionItem}>
-            <View style={[styles.actionIcon, { backgroundColor: '#ecfdf5' }]}>
-              <ShieldAlert color="#059669" size={20} />
+          {/* Section 3: All Rejected */}
+          <TouchableOpacity 
+            style={[styles.sectorCard, { borderLeftColor: '#ef4444' }]} 
+            onPress={() => navigation.navigate('AdminApprovals', { initialTab: 'rejected' })}
+          >
+            <View style={[styles.sectorIcon, { backgroundColor: '#fef2f2' }]}>
+              <XCircle color="#ef4444" size={24} />
             </View>
-            <Text style={styles.actionLabel}>Verify Registrants</Text>
+            <View style={styles.sectorInfo}>
+                <Text style={styles.sectorLabel}>Voided Submissions</Text>
+                <Text style={styles.sectorSub}>{stats?.rejectedProperties || 0} nodes rejected from catalog</Text>
+            </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionItem}>
-            <View style={[styles.actionIcon, { backgroundColor: '#eff6ff' }]}>
-              <AlertTriangle color="#2563eb" size={20} />
+          {/* Section 4: User Management */}
+          <TouchableOpacity 
+            style={[styles.sectorCard, { borderLeftColor: '#6366f1' }]} 
+            onPress={() => navigation.navigate('AdminUsers')}
+          >
+            <View style={[styles.sectorIcon, { backgroundColor: '#eef2ff' }]}>
+              <Users color="#6366f1" size={24} />
             </View>
-            <Text style={styles.actionLabel}>System Audit Logs</Text>
+            <View style={styles.sectorInfo}>
+                <Text style={styles.sectorLabel}>Users Management</Text>
+                <Text style={styles.sectorSub}>Manage {stats?.totalUsers || 0} platform identity nodes</Text>
+            </View>
           </TouchableOpacity>
         </View>
       </View>
 
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Recent Registry Events</Text>
+        <View style={styles.eventList}>
+            {stats?.recentSubmissions?.map((item: any, idx: number) => (
+                <TouchableOpacity key={idx} style={styles.eventItem} onPress={() => navigation.navigate('AdminPropertyDetail', { id: item.id })}>
+                    <View style={styles.eventContent}>
+                        <Text style={styles.eventTitle}>{item.title}</Text>
+                        <Text style={styles.eventMeta}>{item.location} • NPR {item.price?.toLocaleString()}</Text>
+                    </View>
+                    <ChevronRight color="#cbd5e1" size={20} />
+                </TouchableOpacity>
+            ))}
+        </View>
+      </View>
+
       <View style={styles.footer}>
-        <LayoutDashboard color="#cbd5e1" size={32} />
-        <Text style={styles.versionText}>Registry Core v2.4.11-SECURE</Text>
+        <View style={styles.versionTag}>
+            <Text style={styles.versionLabel}>PROTOCOL SECURE • NEXUS v4.5</Text>
+        </View>
       </View>
     </ScrollView>
   );
@@ -155,7 +225,7 @@ const AdminDashboardScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#fff',
   },
   scrollContent: {
     flexGrow: 1,
@@ -169,151 +239,210 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 20,
-    fontSize: 12,
-    fontWeight: '800',
+    fontSize: 10,
+    fontWeight: '900',
     color: '#6366f1',
     textTransform: 'uppercase',
     letterSpacing: 2,
   },
   header: {
     padding: 24,
-    paddingTop: 60,
-    backgroundColor: '#fff',
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    marginBottom: 24,
+    paddingTop: 64,
   },
-  greeting: {
-    fontSize: 28,
+  headerRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+  },
+  nexusTitle: {
+    fontSize: 32,
     fontWeight: '900',
     color: '#1e293b',
-    letterSpacing: -0.5,
+    letterSpacing: -1,
   },
-  subtitle: {
+  nexusSub: {
     fontSize: 14,
-    color: '#64748b',
-    marginTop: 4,
-    fontWeight: '500',
+    color: '#94a3b8',
+    marginTop: 2,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  grid: {
-    paddingHorizontal: 24,
-    gap: 16,
+  historyBtn: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: '#f8fafc',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: '#f1f5f9',
+  },
+  statGrid: {
+      paddingHorizontal: 20,
+      gap: 12,
+  },
+  statRow: {
+      flexDirection: 'row',
+      gap: 12,
   },
   statCard: {
+    flex: 1,
     backgroundColor: '#fff',
-    borderRadius: 20,
+    borderRadius: 24,
     padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
     borderWidth: 1,
     borderColor: '#f1f5f9',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
+    shadowColor: '#1e293b',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.04,
+    shadowRadius: 16,
     elevation: 2,
   },
   statIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginBottom: 12,
   },
   statInfo: {
-    flex: 1,
   },
   statLabel: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#64748b',
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#94a3b8',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   statValue: {
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: 24,
+    fontWeight: '900',
     marginTop: 2,
   },
-  alertBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fef2f2',
-    margin: 24,
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#fee2e2',
-    gap: 12,
+  trendRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 4,
+      gap: 4,
   },
-  alertText: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#ef4444',
+  trendText: {
+      fontSize: 10,
+      fontWeight: '700',
+      color: '#10b981',
   },
   section: {
     padding: 24,
+    marginTop: 8,
+  },
+  sectionHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#475569',
+    fontSize: 13,
+    fontWeight: '900',
+    color: '#1e293b',
     textTransform: 'uppercase',
     letterSpacing: 1,
-    marginBottom: 16,
   },
-  actionCard: {
+  actionGrid: {
+      gap: 16,
+  },
+  sectorCard: {
     backgroundColor: '#fff',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-    overflow: 'hidden',
-  },
-  actionItem: {
+    borderRadius: 24,
+    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-    gap: 16,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+    borderLeftWidth: 6,
+    shadowColor: '#1e293b',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.06,
+    shadowRadius: 20,
+    elevation: 3,
   },
-  actionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
+  sectorIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 16,
   },
-  actionLabel: {
-    flex: 1,
+  sectorInfo: {
+      flex: 1,
+  },
+  sectorLabel: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '800',
     color: '#1e293b',
   },
-  badge: {
+  sectorSub: {
+      fontSize: 12,
+      color: '#94a3b8',
+      fontWeight: '500',
+      marginTop: 2,
+  },
+  countBadge: {
     backgroundColor: '#f59e0b',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: 6,
   },
-  badgeText: {
+  countText: {
     color: '#fff',
-    fontSize: 12,
-    fontWeight: '800',
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  eventList: {
+      backgroundColor: '#f8fafc',
+      borderRadius: 24,
+      padding: 12,
+      gap: 8,
+  },
+  eventItem: {
+      backgroundColor: '#fff',
+      padding: 16,
+      borderRadius: 16,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+  },
+  eventContent: {
+      flex: 1,
+      marginRight: 12,
+  },
+  eventTitle: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: '#1e293b',
+  },
+  eventMeta: {
+      fontSize: 12,
+      color: '#94a3b8',
+      marginTop: 2,
   },
   footer: {
     alignItems: 'center',
     marginTop: 40,
     marginBottom: 60,
-    gap: 12,
   },
-  versionText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#cbd5e1',
-    textTransform: 'uppercase',
+  versionTag: {
+      backgroundColor: '#f1f5f9',
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 100,
+  },
+  versionLabel: {
+    fontSize: 9,
+    fontWeight: '900',
+    color: '#94a3b8',
     letterSpacing: 2,
   },
 });

@@ -2,8 +2,19 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { ActivityIndicator, View } from 'react-native';
-import { Home, Search, MessageSquare, User, LayoutDashboard, PlusCircle, Bell, Building2 } from 'lucide-react-native';
+import { ActivityIndicator, View, Platform } from 'react-native';
+import { 
+  Home, 
+  Search, 
+  MessageSquare, 
+  User, 
+  LayoutDashboard, 
+  PlusCircle, 
+  Bell, 
+  Building2,
+  Heart,
+  History
+} from 'lucide-react-native';
 
 import { useAuth } from '../context/AuthContext';
 import LoginScreen from '../screens/auth/LoginScreen';
@@ -12,6 +23,8 @@ import OTPScreen from '../screens/auth/OTPScreen';
 
 import BuyerHomeScreen from '../screens/buyer/HomeScreen';
 import PropertyListScreen from '../screens/buyer/PropertyListScreen';
+import FavoritesScreen from '../screens/buyer/FavoritesScreen';
+import TransactionsScreen from '../screens/buyer/TransactionsScreen';
 import PropertyDetailScreen from '../screens/common/PropertyDetailScreen';
 import ChatListScreen from '../screens/common/ChatListScreen';
 import ChatDetailScreen from '../screens/common/ChatDetailScreen';
@@ -26,7 +39,9 @@ import AddListingScreen from '../screens/seller/AddListingScreen';
 import SellerAnalyticsScreen from '../screens/seller/SellerAnalyticsScreen';
 
 import AdminDashboardScreen from '../screens/admin/AdminDashboardScreen';
-import PendingPropertiesScreen from '../screens/admin/PendingPropertiesScreen';
+import AdminRegistryScreen from '../screens/admin/AdminRegistryScreen';
+import AdminPropertyDetailScreen from '../screens/admin/AdminPropertyDetailScreen';
+import AdminUsersScreen from '../screens/admin/AdminUsersScreen';
 import KYCScreen from '../screens/common/KYCScreen';
 
 import EditProfileScreen from '../screens/common/EditProfileScreen';
@@ -52,14 +67,16 @@ const BuyerTabNavigator = () => (
   <BuyerTabs.Navigator screenOptions={{ 
     tabBarActiveTintColor: '#6366f1',
     tabBarInactiveTintColor: '#94a3b8',
+    tabBarStyle: { height: Platform.OS === 'ios' ? 88 : 68, paddingBottom: Platform.OS === 'ios' ? 30 : 12, paddingTop: 12 },
     headerStyle: { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
-    headerTitleStyle: { fontWeight: '600' }
+    headerTitleStyle: { fontWeight: '800', color: '#1e293b' }
   }}>
     <BuyerTabs.Screen 
       name="BuyerHome" 
       component={BuyerHomeScreen} 
       options={{ 
-        title: 'Home', 
+        title: 'Dashboard', 
+        headerShown: false,
         tabBarIcon: ({ color, size }) => <Home color={color} size={size} /> 
       }} 
     />
@@ -67,23 +84,39 @@ const BuyerTabNavigator = () => (
       name="Browse" 
       component={PropertyListScreen} 
       options={{ 
-        title: 'Search', 
+        title: 'Browse', 
         tabBarIcon: ({ color, size }) => <Search color={color} size={size} /> 
+      }} 
+    />
+    <BuyerTabs.Screen 
+      name="Favorites" 
+      component={FavoritesScreen} 
+      options={{ 
+        title: 'Collection', 
+        tabBarIcon: ({ color, size }) => <Heart color={color} size={size} /> 
+      }} 
+    />
+    <BuyerTabs.Screen 
+      name="Transactions" 
+      component={TransactionsScreen} 
+      options={{ 
+        title: 'Ledger', 
+        tabBarIcon: ({ color, size }) => <History color={color} size={size} /> 
       }} 
     />
     <BuyerTabs.Screen 
       name="Messages" 
       component={ChatListScreen} 
       options={{ 
-        title: 'Chat', 
+        title: 'Comms', 
         tabBarIcon: ({ color, size }) => <MessageSquare color={color} size={size} /> 
       }} 
     />
     <BuyerTabs.Screen 
-      name="Profile" 
+      name="CommonProfile" 
       component={ProfileScreen} 
       options={{ 
-        title: 'Profile', 
+        title: 'Identity', 
         tabBarIcon: ({ color, size }) => <User color={color} size={size} /> 
       }} 
     />
@@ -94,47 +127,14 @@ const SellerTabNavigator = () => (
   <SellerTabs.Navigator screenOptions={{ 
     tabBarActiveTintColor: '#6366f1',
     tabBarInactiveTintColor: '#94a3b8',
+    tabBarStyle: { height: Platform.OS === 'ios' ? 88 : 68, paddingBottom: Platform.OS === 'ios' ? 30 : 12, paddingTop: 12 },
+    headerShown: false
   }}>
-    <SellerTabs.Screen 
-      name="SellerDashboard" 
-      component={SellerDashboardScreen} 
-      options={{ 
-        title: 'Dashboard', 
-        tabBarIcon: ({ color, size }) => <LayoutDashboard color={color} size={size} /> 
-      }} 
-    />
-    <SellerTabs.Screen 
-      name="MyListings" 
-      component={MyListingsScreen} 
-      options={{ 
-        title: 'Listings', 
-        tabBarIcon: ({ color, size }) => <Search color={color} size={size} /> 
-      }} 
-    />
-    <SellerTabs.Screen 
-      name="AddListing" 
-      component={AddListingScreen} 
-      options={{ 
-        title: 'Add', 
-        tabBarIcon: ({ color, size }) => <PlusCircle color={color} size={size} /> 
-      }} 
-    />
-    <SellerTabs.Screen 
-      name="Messages" 
-      component={ChatListScreen} 
-      options={{ 
-        title: 'Chat', 
-        tabBarIcon: ({ color, size }) => <MessageSquare color={color} size={size} /> 
-      }} 
-    />
-    <SellerTabs.Screen 
-      name="Profile" 
-      component={ProfileScreen} 
-      options={{ 
-        title: 'Profile', 
-        tabBarIcon: ({ color, size }) => <User color={color} size={size} /> 
-      }} 
-    />
+    <SellerTabs.Screen name="SellerDashboard" component={SellerDashboardScreen} options={{ title: 'Dashboard', tabBarIcon: ({ color, size }) => <LayoutDashboard color={color} size={size} /> }} />
+    <SellerTabs.Screen name="MyListings" component={MyListingsScreen} options={{ title: 'Portfolios', tabBarIcon: ({ color, size }) => <Search color={color} size={size} /> }} />
+    <SellerTabs.Screen name="AddListing" component={AddListingScreen} options={{ title: 'Inject', tabBarIcon: ({ color, size }) => <PlusCircle color={color} size={size} /> }} />
+    <SellerTabs.Screen name="Messages" component={ChatListScreen} options={{ title: 'Comms', tabBarIcon: ({ color, size }) => <MessageSquare color={color} size={size} /> }} />
+    <SellerTabs.Screen name="SellerProfile" component={ProfileScreen} options={{ title: 'Node', tabBarIcon: ({ color, size }) => <User color={color} size={size} /> }} />
   </SellerTabs.Navigator>
 );
 
@@ -142,54 +142,21 @@ const AdminTabNavigator = () => (
   <AdminTabs.Navigator screenOptions={{ 
     tabBarActiveTintColor: '#6366f1',
     tabBarInactiveTintColor: '#94a3b8',
-    headerStyle: { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
-    headerTitleStyle: { fontWeight: '700' }
+    tabBarStyle: { height: Platform.OS === 'ios' ? 88 : 68, paddingBottom: Platform.OS === 'ios' ? 30 : 12, paddingTop: 12 },
   }}>
-    <AdminTabs.Screen 
-      name="AdminHome" 
-      component={AdminDashboardScreen} 
-      options={{ 
-        title: 'Overlord', 
-        tabBarIcon: ({ color, size }) => <LayoutDashboard color={color} size={size} /> 
-      }} 
-    />
-    <AdminTabs.Screen 
-      name="AdminApprovals" 
-      component={PendingPropertiesScreen} 
-      options={{ 
-        title: 'Registry', 
-        tabBarIcon: ({ color, size }) => <Building2 color={color} size={size} /> 
-      }} 
-    />
-    <AdminTabs.Screen 
-      name="AdminMessages" 
-      component={ChatListScreen} 
-      options={{ 
-        title: 'Comms', 
-        tabBarIcon: ({ color, size }) => <MessageSquare color={color} size={size} /> 
-      }} 
-    />
-    <AdminTabs.Screen 
-      name="AdminProfile" 
-      component={ProfileScreen} 
-      options={{ 
-        title: 'Profile', 
-        tabBarIcon: ({ color, size }) => <User color={color} size={size} /> 
-      }} 
-    />
+    <AdminTabs.Screen name="AdminHome" component={AdminDashboardScreen} options={{ title: 'Nexus', tabBarIcon: ({ color, size }) => <LayoutDashboard color={color} size={size} /> }} />
+    <AdminTabs.Screen name="AdminApprovals" component={AdminRegistryScreen} options={{ title: 'Registry', tabBarIcon: ({ color, size }) => <Building2 color={color} size={size} /> }} />
+    <AdminTabs.Screen name="Messages" component={ChatListScreen} options={{ title: 'Comms', tabBarIcon: ({ color, size }) => <MessageSquare color={color} size={size} /> }} />
+    <AdminTabs.Screen name="AdminProfile" component={ProfileScreen} options={{ title: 'Sovereign', tabBarIcon: ({ color, size }) => <User color={color} size={size} /> }} />
   </AdminTabs.Navigator>
 );
 
-// Must be a proper named component (PascalCase) for React Navigation
-const MainNavigator = ({ route }: any) => {
+const MainNavigator = () => {
   const { user } = useAuth();
   switch (user?.role) {
-    case 'admin':
-      return <AdminTabNavigator />;
-    case 'seller':
-      return <SellerTabNavigator />;
-    default:
-      return <BuyerTabNavigator />;
+    case 'admin': return <AdminTabNavigator />;
+    case 'seller': return <SellerTabNavigator />;
+    default: return <BuyerTabNavigator />;
   }
 };
 
@@ -198,7 +165,7 @@ export const RootNavigator = () => {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
         <ActivityIndicator size="large" color="#6366f1" />
       </View>
     );
@@ -210,18 +177,19 @@ export const RootNavigator = () => {
         {user ? (
           <>
             <RootStack.Screen name="Main" component={MainNavigator} />
-            <RootStack.Screen name="PropertyDetail" component={PropertyDetailScreen} options={{ headerShown: true, title: 'Property Detail' }} />
-            <RootStack.Screen name="ChatDetail" component={ChatDetailScreen} options={{ headerShown: true, title: 'Chat' }} />
-            <RootStack.Screen name="Mobile3DViewer" component={Mobile3DViewerScreen} options={({ route }: any) => ({ headerShown: true, title: route.params?.title || '3D Virtual Tour' })} />
-            <RootStack.Screen name="EditProfile" component={EditProfileScreen} options={{ headerShown: true, title: 'Edit Profile' }} />
-            <RootStack.Screen name="KYC" component={KYCScreen} options={{ headerShown: true, title: 'Identity Verification' }} />
-            <RootStack.Screen name="PendingProperties" component={PendingPropertiesScreen} options={{ headerShown: true, title: 'Registry Review' }} />
-            <RootStack.Screen name="Notifications" component={NotificationsScreen} options={{ headerShown: true, title: 'Notifications' }} />
-            <RootStack.Screen name="SellerAnalytics" component={SellerAnalyticsScreen} options={{ headerShown: true, title: 'Performance Hub' }} />
-            <RootStack.Screen name="Settings" component={SettingsScreen} options={{ headerShown: true, title: 'Preferences' }} />
-            <RootStack.Screen name="LoanCalculator" component={LoanCalculatorScreen} options={{ headerShown: true, title: 'Liquidity Analysis' }} />
-            <RootStack.Screen name="KhaltiPayment" component={KhaltiPaymentScreen} options={{ headerShown: false }} />
-            <RootStack.Screen name="MapExplorer" component={MapExplorerScreen} options={{ headerShown: false }} />
+            <RootStack.Screen name="PropertyDetail" component={PropertyDetailScreen} options={{ headerShown: false }} />
+            <RootStack.Screen name="AdminPropertyDetail" component={AdminPropertyDetailScreen} options={{ headerShown: false }} />
+            <RootStack.Screen name="AdminUsers" component={AdminUsersScreen} options={{ headerShown: false }} />
+            <RootStack.Screen name="ChatDetail" component={ChatDetailScreen} options={{ title: 'Secure Channel', headerShown: true }} />
+            <RootStack.Screen name="Mobile3DViewer" component={Mobile3DViewerScreen} />
+            <RootStack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Update Identity', headerShown: true }} />
+            <RootStack.Screen name="KYC" component={KYCScreen} options={{ title: 'Protocol Verification', headerShown: true }} />
+            <RootStack.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'Alert Pipeline', headerShown: true }} />
+            <RootStack.Screen name="SellerAnalytics" component={SellerAnalyticsScreen} options={{ title: 'KPI Hub', headerShown: true }} />
+            <RootStack.Screen name="Settings" component={SettingsScreen} options={{ title: 'System Config', headerShown: true }} />
+            <RootStack.Screen name="LoanCalculator" component={LoanCalculatorScreen} options={{ title: 'Financial Projection', headerShown: true }} />
+            <RootStack.Screen name="KhaltiPayment" component={KhaltiPaymentScreen} />
+            <RootStack.Screen name="MapExplorer" component={MapExplorerScreen} />
           </>
         ) : (
           <RootStack.Screen name="Auth" component={AuthNavigator} />

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -10,39 +10,70 @@ import {
 } from 'react-native';
 import { 
   User, 
-  Mail, 
   LogOut, 
   Settings, 
   ShieldCheck, 
   ChevronRight,
   Bell,
-  HelpCircle
+  HelpCircle,
+  History,
+  Heart,
+  LayoutDashboard,
+  ShieldAlert
 } from 'lucide-react-native';
 import { useAuth } from '../../context/AuthContext';
+import * as Storage from '../../utils/storage';
+import api from '../../api/client';
 
 const ProfileScreen = ({ navigation }: any) => {
   const { user, logout } = useAuth();
+  const [stats, setStats] = useState({ saved: 0, transactions: 0, listings: 0 });
+
+  useEffect(() => {
+    const fetchProfileStats = async () => {
+        try {
+            if (user?.role === 'buyer') {
+                const [favs, trans] = await Promise.all([
+                    Storage.getItemAsync('favorite_properties'),
+                    api.get('/transactions/')
+                ]);
+                setStats({
+                    saved: favs ? JSON.parse(favs).length : 0,
+                    transactions: trans.data.length,
+                    listings: 0
+                });
+            } else if (user?.role === 'seller') {
+                const [props, trans] = await Promise.all([
+                    api.get('/properties/?seller=me'),
+                    api.get('/transactions/')
+                ]);
+                setStats({
+                    saved: 0,
+                    transactions: trans.data.length,
+                    listings: props.data.length
+                });
+            }
+        } catch (e) {
+            console.error('Stats error:', e);
+        }
+    };
+    fetchProfileStats();
+  }, [user]);
 
   const handleLogout = () => {
-    if (Platform.OS === 'web') {
-      // Use standard web confirm
-      if (window.confirm('Are you sure you want to log out?')) {
+    const confirmLogout = () => {
         logout();
-      }
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm('Terminate secure session?')) confirmLogout();
     } else {
       Alert.alert(
-        'Logout',
-        'Are you sure you want to log out?',
+        'Terminate Session',
+        'Are you sure you want to decouple from the Registry?',
         [
           { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Logout', 
-            style: 'destructive',
-            onPress: async () => {
-              await logout();
-              // Navigation handled by root navigator reacting to auth state
-            }
-          }
+          { text: 'Logout', style: 'destructive', onPress: confirmLogout }
         ]
       );
     }
@@ -66,184 +97,102 @@ const ProfileScreen = ({ navigation }: any) => {
       <View style={styles.header}>
         <View style={styles.avatarContainer}>
           <Text style={styles.avatarText}>
-            {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+            {(user?.full_name || user?.name || 'U').charAt(0).toUpperCase()}
           </Text>
         </View>
-        <Text style={styles.userName}>{user?.name || 'User Name'}</Text>
-        <Text style={styles.userEmail}>{user?.email || 'user@example.com'}</Text>
+        <Text style={styles.userName}>{user?.full_name || user?.name || 'Inquisitor'}</Text>
+        <Text style={styles.userEmail}>{user?.email || 'authenticated-node@domain.com'}</Text>
         
-        <View style={styles.roleBadge}>
-          <Text style={styles.roleText}>{user?.role?.toUpperCase() || 'MEMBER'}</Text>
+        <View style={styles.roleRow}>
+            <View style={styles.roleBadge}>
+                <Text style={styles.roleText}>{user?.role?.toUpperCase() || 'MEMBER'}</Text>
+            </View>
+            {user?.role === 'admin' && (
+                <View style={[styles.roleBadge, { backgroundColor: '#fee2e2' }]}>
+                    <ShieldAlert size={12} color="#ef4444" />
+                    <Text style={[styles.roleText, { color: '#ef4444' }]}>SOVEREIGN</Text>
+                </View>
+            )}
         </View>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Account</Text>
+        <Text style={styles.sectionTitle}>Asset Portfolio</Text>
         <View style={styles.menuCard}>
-          {renderMenuItem(<User color="#6366f1" size={20} />, 'Personal Information', 'Update your name, phone', () => navigation.navigate('EditProfile'))}
+          {user?.role === 'buyer' && (
+              <>
+                {renderMenuItem(<Heart color="#ef4444" size={20} />, 'Saved Collection', `${stats.saved} secure nodes stored`, () => navigation.navigate('Favorites'))}
+                {renderMenuItem(<History color="#6366f1" size={20} />, 'Transaction Ledger', `${stats.transactions} verified acquisitions`, () => navigation.navigate('Transactions'))}
+              </>
+          )}
+          {user?.role === 'seller' && (
+              <>
+                {renderMenuItem(<LayoutDashboard color="#10b981" size={20} />, 'Sales Analytics', 'Performance and node reach', () => navigation.navigate('SellerAnalytics'))}
+                {renderMenuItem(<History color="#6366f1" size={20} />, 'Trade Dashboard', `${stats.listings} active assets`, () => navigation.navigate('SellerDashboard'))}
+              </>
+          )}
+          {user?.role === 'admin' && (
+              <>
+                {renderMenuItem(<ShieldCheck color="#6366f1" size={20} />, 'Registry Management', 'Approve/Reject pending nodes', () => navigation.navigate('PendingProperties'))}
+              </>
+          )}
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Identity & Security</Text>
+        <View style={styles.menuCard}>
+          {renderMenuItem(<User color="#6366f1" size={20} />, 'Profile Protocols', 'Update name and biometric links', () => navigation.navigate('EditProfile'))}
           {renderMenuItem(
-            <ShieldCheck color={user?.kyc_status === 'verified' ? '#10b981' : '#f59e0b'} size={20} />, 
-            'Verification Details', 
-            user?.kyc_status === 'verified' ? 'Identity Verified' : 'KYC and identity verification',
+            <ShieldCheck color={user?.kyc_status?.toLowerCase() === 'verified' ? '#10b981' : '#f59e0b'} size={20} />, 
+            'Identity Authentication', 
+            user?.kyc_status?.toLowerCase() === 'verified' ? 'Protocol Synchronized' : 'KYC Authentication Required',
             () => navigation.navigate('KYC')
           )}
         </View>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Preferences</Text>
+        <Text style={styles.sectionTitle}>System Preferences</Text>
         <View style={styles.menuCard}>
-          {renderMenuItem(<Bell color="#f59e0b" size={20} />, 'Notifications', 'Manage alerts and emails', () => navigation.navigate('Notifications'))}
-          {renderMenuItem(<Settings color="#64748b" size={20} />, 'Settings', 'App preferences and security', () => navigation.navigate('Settings'))}
-          {renderMenuItem(<HelpCircle color="#3b82f6" size={20} />, 'Help & Support', 'FAQs and contact info')}
+          {renderMenuItem(<Bell color="#f59e0b" size={20} />, 'Alert Pipeline', 'Manage notification triggers', () => navigation.navigate('Notifications'))}
+          {renderMenuItem(<Settings color="#64748b" size={20} />, 'Global Settings', 'App security and theme', () => navigation.navigate('Settings'))}
+          {renderMenuItem(<HelpCircle color="#3b82f6" size={20} />, 'Technical Support', 'Audit documentation')}
         </View>
       </View>
 
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <LogOut color="#ef4444" size={20} style={{ marginRight: 8 }} />
-        <Text style={styles.logoutText}>Log Out</Text>
+        <Text style={styles.logoutText}>Terminate Secure Session</Text>
       </TouchableOpacity>
       
-      <Text style={styles.versionText}>Smart Property v1.0.0</Text>
+      <Text style={styles.versionText}>Registry Prime v1.1.4 — Production Secure</Text>
       <View style={{ height: 40 }} />
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  header: {
-    alignItems: 'center',
-    padding: 32,
-    paddingTop: 60,
-    backgroundColor: '#fff',
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 3,
-  },
-  avatarContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#e0e7ff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-    borderWidth: 4,
-    borderColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  avatarText: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#6366f1',
-  },
-  userName: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#1e293b',
-    marginBottom: 4,
-  },
-  userEmail: {
-    fontSize: 15,
-    color: '#64748b',
-    marginBottom: 12,
-  },
-  roleBadge: {
-    backgroundColor: '#f1f5f9',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  roleText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#475569',
-    letterSpacing: 1,
-  },
-  section: {
-    paddingHorizontal: 20,
-    marginTop: 24,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#64748b',
-    marginBottom: 12,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  menuCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-  },
-  menuIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#f8fafc',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  menuTextContainer: {
-    flex: 1,
-  },
-  menuTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1e293b',
-    marginBottom: 2,
-  },
-  menuSubtitle: {
-    fontSize: 13,
-    color: '#94a3b8',
-  },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginHorizontal: 20,
-    marginTop: 32,
-    marginBottom: 24,
-    paddingVertical: 16,
-    backgroundColor: '#fef2f2',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#fee2e2',
-  },
-  logoutText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#ef4444',
-  },
-  versionText: {
-    textAlign: 'center',
-    color: '#cbd5e1',
-    fontSize: 13,
-    marginBottom: 24,
-  }
+  container: { flex: 1, backgroundColor: '#fcfcfd' },
+  header: { alignItems: 'center', padding: 32, paddingTop: 60, backgroundColor: '#fff', borderBottomLeftRadius: 40, borderBottomRightRadius: 40, shadowColor: '#1e293b', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.05, shadowRadius: 20, elevation: 5 },
+  avatarContainer: { width: 90, height: 90, borderRadius: 32, backgroundColor: '#e0e7ff', justifyContent: 'center', alignItems: 'center', marginBottom: 20, borderWidth: 4, borderColor: '#fff', shadowColor: '#6366f1', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 15, elevation: 10 },
+  avatarText: { fontSize: 36, fontWeight: '900', color: '#6366f1' },
+  userName: { fontSize: 24, fontWeight: '900', color: '#1e293b', marginBottom: 4, letterSpacing: -0.5 },
+  userEmail: { fontSize: 14, color: '#64748b', marginBottom: 16, fontWeight: '500' },
+  roleRow: { flexDirection: 'row', gap: 8 },
+  roleBadge: { backgroundColor: '#f1f5f9', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 100, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  roleText: { fontSize: 10, fontWeight: '900', color: '#475569', letterSpacing: 1 },
+  section: { paddingHorizontal: 24, marginTop: 32 },
+  sectionTitle: { fontSize: 11, fontWeight: '900', color: '#94a3b8', marginBottom: 14, textTransform: 'uppercase', letterSpacing: 1.5 },
+  menuCard: { backgroundColor: '#fff', borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: '#f1f5f9' },
+  menuItem: { flexDirection: 'row', alignItems: 'center', padding: 18, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
+  menuIconContainer: { width: 44, height: 44, borderRadius: 14, backgroundColor: '#f8fafc', justifyContent: 'center', alignItems: 'center', marginRight: 16 },
+  menuTextContainer: { flex: 1 },
+  menuTitle: { fontSize: 15, fontWeight: '700', color: '#1e293b', marginBottom: 2 },
+  menuSubtitle: { fontSize: 12, color: '#94a3b8', fontWeight: '500' },
+  logoutButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginHorizontal: 24, marginTop: 40, marginBottom: 24, paddingVertical: 18, backgroundColor: '#fff', borderRadius: 20, borderWidth: 1, borderColor: '#fee2e2' },
+  logoutText: { fontSize: 15, fontWeight: '800', color: '#ef4444' },
+  versionText: { textAlign: 'center', color: '#cbd5e1', fontSize: 11, fontWeight: '700', marginBottom: 24, letterSpacing: 0.5 }
 });
 
 export default ProfileScreen;

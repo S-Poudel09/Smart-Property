@@ -52,23 +52,30 @@ const LoginScreen = ({ navigation }: any) => {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <View style={styles.topDecoration} />
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <View style={styles.logoCircle}>
-            <LogIn color="#fff" size={32} />
+          <View style={styles.logoContainer}>
+            <View style={styles.logoCircle}>
+              <LogIn color="#fff" size={32} />
+            </View>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>SMART PROPERTY V2.0</Text>
+            </View>
           </View>
-          <Text style={styles.title}>Smart Property</Text>
-          <Text style={styles.subtitle}>Sign in to your account</Text>
+          <Text style={styles.title}>Secure Gateway</Text>
+          <Text style={styles.subtitle}>Unlock your premium real estate portfolio</Text>
         </View>
 
         <View style={styles.formCard}>
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email Address</Text>
+            <Text style={styles.label}>Identity (Email)</Text>
             <View style={styles.inputContainer}>
-              <Mail color="#94a3b8" size={18} style={styles.inputIcon} />
+              <Mail color="#6366f1" size={18} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="you@example.com"
+                placeholder="you@domain.com"
+                placeholderTextColor="#94a3b8"
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -78,12 +85,13 @@ const LoginScreen = ({ navigation }: any) => {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password</Text>
+            <Text style={styles.label}>Access Key (Password)</Text>
             <View style={styles.inputContainer}>
-              <Lock color="#94a3b8" size={18} style={styles.inputIcon} />
+              <Lock color="#6366f1" size={18} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="••••••••"
+                placeholderTextColor="#94a3b8"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
@@ -95,26 +103,38 @@ const LoginScreen = ({ navigation }: any) => {
                 {showPassword ? <EyeOff color="#94a3b8" size={18} /> : <Eye color="#94a3b8" size={18} />}
               </TouchableOpacity>
             </View>
+            <TouchableOpacity style={styles.forgotBtn}>
+              <Text style={styles.forgotText}>Request Key Reset</Text>
+            </TouchableOpacity>
           </View>
 
           <TouchableOpacity 
-            style={styles.loginButton}
+            style={[styles.loginButton, isLoading && styles.disabledButton]}
             onPress={handleLogin}
             disabled={isLoading}
           >
             {isLoading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.loginButtonText}>Sign In</Text>
+              <View style={styles.loginBtnContent}>
+                <Text style={styles.loginButtonText}>Initialize Session</Text>
+                <LogIn color="#fff" size={20} />
+              </View>
             )}
           </TouchableOpacity>
 
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Don't have an account? </Text>
+            <Text style={styles.footerText}>New to the Registry? </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-              <Text style={styles.footerLink}>Register</Text>
+              <Text style={styles.footerLink}>Forge Account</Text>
             </TouchableOpacity>
           </View>
+        </View>
+
+        <View style={styles.bottomHud}>
+          <Text style={styles.hudText}>IMPERIAL SHIELD ACTIVE</Text>
+          <View style={styles.dot} />
+          <Text style={styles.hudText}>ENCRYPTED CONNECTION</Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -124,96 +144,153 @@ const LoginScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#0f172a', // Premium dark theme background
+  },
+  topDecoration: {
+    position: 'absolute',
+    top: -100,
+    right: -100,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: 'rgba(99, 102, 241, 0.15)',
   },
   scrollContent: {
     padding: 24,
-    paddingTop: 80,
+    paddingTop: 100,
     paddingBottom: 40,
     flexGrow: 1,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 40,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
   },
   logoCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 72,
+    height: 72,
+    borderRadius: 24,
     backgroundColor: '#6366f1',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 8,
+    transform: [{ rotate: '-10deg' }],
+  },
+  badge: {
+    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 100,
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.2)',
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#6366f1',
+    letterSpacing: 2,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#1e293b',
-    marginBottom: 8,
+    fontSize: 32,
+    fontWeight: '900',
+    color: '#fff',
+    marginBottom: 12,
+    letterSpacing: -1,
   },
   subtitle: {
     fontSize: 16,
-    color: '#64748b',
+    color: '#94a3b8',
+    textAlign: 'center',
+    lineHeight: 24,
   },
   formCard: {
-    backgroundColor: '#fff',
-    borderRadius: 24,
-    padding: 24,
+    backgroundColor: '#1e293b',
+    borderRadius: 32,
+    padding: 32,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.05,
-    shadowRadius: 16,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.4,
+    shadowRadius: 40,
+    elevation: 10,
     borderWidth: 1,
-    borderColor: '#f1f5f9',
+    borderColor: '#334155',
   },
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#475569',
-    marginBottom: 8,
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#6366f1',
+    marginBottom: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    height: 56,
-    backgroundColor: '#f8fafc',
+    borderColor: '#334155',
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    height: 64,
+    backgroundColor: '#0f172a',
   },
   inputIcon: {
-    marginRight: 12,
+    marginRight: 16,
   },
   input: {
     flex: 1,
     fontSize: 16,
-    color: '#1e293b',
+    color: '#fff',
+    fontWeight: '500',
   },
   eyeIcon: {
-    padding: 4,
+    padding: 8,
+  },
+  forgotBtn: {
+    alignSelf: 'flex-end',
+    marginTop: 8,
+  },
+  forgotText: {
+    color: '#64748b',
+    fontSize: 12,
+    fontWeight: '600',
   },
   loginButton: {
     backgroundColor: '#6366f1',
-    height: 56,
-    borderRadius: 12,
+    height: 64,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: 12,
     shadowColor: '#6366f1',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 5,
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  loginBtnContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   loginButtonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 17,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   footer: {
     flexDirection: 'row',
@@ -221,13 +298,32 @@ const styles = StyleSheet.create({
     marginTop: 32,
   },
   footerText: {
-    color: '#64748b',
+    color: '#94a3b8',
     fontSize: 14,
   },
   footerLink: {
     color: '#6366f1',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '800',
+  },
+  bottomHud: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 40,
+    gap: 12,
+  },
+  hudText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#334155',
+    letterSpacing: 2,
+  },
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#334155',
   },
 });
 

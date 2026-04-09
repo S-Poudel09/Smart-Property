@@ -5,6 +5,7 @@ import api from '../api/client';
 interface User {
   id: string;
   name: string;
+  full_name?: string;
   email: string;
   role: 'buyer' | 'seller' | 'admin';
   kyc_status: 'unverified' | 'pending' | 'verified' | 'rejected';

@@ -21,18 +21,17 @@ const MapExplorerScreen = ({ navigation }: any) => {
     const fetchProperties = async () => {
         try {
             const response = await api.get('/properties/');
-            setProperties(response.data);
+            const data = response.data;
+            setProperties(data);
             
-            // Adjust map to first property if exists
-            if (response.data.length > 0) {
-                const first = response.data[0];
-                if (first.latitude && first.longitude) {
-                    setRegion({
-                        ...region,
-                        latitude: Number(first.latitude),
-                        longitude: Number(first.longitude),
-                    });
-                }
+            // Adjust map to first valid property cluster
+            const valid = data.find((p: any) => p.latitude && p.longitude);
+            if (valid) {
+                setRegion({
+                    ...region,
+                    latitude: Number(valid.latitude),
+                    longitude: Number(valid.longitude),
+                });
             }
         } catch (error) {
             console.error('Map fetch error:', error);
@@ -45,7 +44,7 @@ const MapExplorerScreen = ({ navigation }: any) => {
         return (
             <View style={styles.centered}>
                 <ActivityIndicator size="large" color="#6366f1" />
-                <Text style={styles.loadingText}>Syncing Geospatial Nodes...</Text>
+                <Text style={styles.loadingText}>SYNCING GEOSPATIAL REGISTRY...</Text>
             </View>
         );
     }
@@ -57,38 +56,32 @@ const MapExplorerScreen = ({ navigation }: any) => {
                 initialRegion={region}
                 provider="google"
             >
-                {properties.map((prop: any) => (
-                    <React.Fragment key={prop.id || prop.PropertyID}>
-                        <Marker
-                            coordinate={{
-                                latitude: Number(prop.latitude) || 27.7172 + (Math.random() - 0.5) * 0.02,
-                                longitude: Number(prop.longitude) || 85.3240 + (Math.random() - 0.5) * 0.02,
-                            }}
-                            pinColor="#6366f1"
-                        >
-                            <Callout onPress={() => navigation.navigate('PropertyDetail', { id: prop.id || prop.PropertyID })}>
-                                <View style={styles.callout}>
-                                    <Text style={styles.calloutTitle}>{prop.title}</Text>
-                                    <Text style={styles.calloutPrice}>NPR {prop.price}</Text>
-                                    <View style={styles.calloutFooter}>
-                                        <Text style={styles.calloutLink}>Inspect Cluster</Text>
+                {properties.map((prop: any) => {
+                    const lat = Number(prop.latitude);
+                    const lng = Number(prop.longitude);
+                    if (!lat || !lng) return null;
+
+                    return (
+                        <React.Fragment key={prop.id || prop.PropertyID}>
+                            <Marker
+                                coordinate={{ latitude: lat, longitude: lng }}
+                                pinColor="#6366f1"
+                            >
+                                <Callout onPress={() => navigation.navigate('PropertyDetail', { id: prop.id || prop.PropertyID })}>
+                                    <View style={styles.callout}>
+                                        <Text style={styles.calloutTitle}>{prop.title || 'Unknown Asset'}</Text>
+                                        <Text style={styles.calloutPrice}>NPR {parseFloat(prop.price).toLocaleString()}</Text>
+                                        <View style={styles.calloutFooter}>
+                                            <Text style={styles.calloutLink}>INSPECT CLUSTER</Text>
+                                        </View>
                                     </View>
-                                </View>
-                            </Callout>
-                        </Marker>
-                        {prop.boundary_coordinates && (
-                            <Polygon
-                                coordinates={prop.boundary_coordinates}
-                                fillColor="rgba(99, 102, 241, 0.1)"
-                                strokeColor="#6366f1"
-                                strokeWidth={1}
-                            />
-                        )}
-                    </React.Fragment>
-                ))}
+                                </Callout>
+                            </Marker>
+                        </React.Fragment>
+                    );
+                })}
             </MapView>
 
-            {/* Overlays */}
             <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
                 <ChevronLeft color="#1e293b" size={24} />
             </TouchableOpacity>

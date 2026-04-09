@@ -5,7 +5,8 @@ import {
   StyleSheet, 
   Switch, 
   ScrollView, 
-  TouchableOpacity 
+  TouchableOpacity,
+  Platform
 } from 'react-native';
 import { Settings, Bell, Shield, Eye, HelpCircle } from 'lucide-react-native';
 
@@ -64,9 +65,6 @@ const SettingsScreen = () => {
     </ScrollView>
   );
 };
-
-// Simple platform check for the switch color logic above
-import { Platform } from 'react-native';
 
 const styles = StyleSheet.create({
   container: {

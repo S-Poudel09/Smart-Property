@@ -1,62 +1,59 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
   ScrollView, 
   TouchableOpacity, 
-  ActivityIndicator, 
+  ActivityIndicator,
   RefreshControl,
-  Dimensions
+  Dimensions,
+  Alert
 } from 'react-native';
 import { 
-  LayoutDashboard, 
+  BarChart3, 
   PlusCircle, 
-  TrendingUp, 
   MessageSquare, 
-  Clock, 
+  User, 
+  LayoutDashboard, 
+  Building2, 
+  TrendingUp, 
+  Eye, 
+  ChevronRight,
+  Shield,
+  Search,
   CheckCircle,
-  XCircle,
-  Eye,
-  ChevronRight
+  Clock,
+  AlertTriangle
 } from 'lucide-react-native';
 import api from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
-import { Alert } from '../../utils/alert';
 
 const { width } = Dimensions.get('window');
 
 const SellerDashboardScreen = ({ navigation }: any) => {
   const { user } = useAuth();
-  const [stats, setStats] = useState({
-    total: 0,
-    published: 0,
-    pending: 0,
-    rejected: 0,
-    views: 0
-  });
-  const [recentListings, setRecentListings] = useState([]);
+  const [stats, setStats] = useState<any>(null);
+  const [recentListings, setRecentListings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const fetchDashboardData = async () => {
     try {
-      // Fetch user's own properties
-      const response = await api.get('/properties/?seller=me');
-      const properties = response.data;
+      const propRes = await api.get('/properties/?seller=me');
+      const properties = propRes.data;
       
-      const statsUpdate = {
+      const counts = {
         total: properties.length,
-        published: properties.filter((p: any) => p.status === 'published').length,
-        pending: properties.filter((p: any) => p.status === 'submitted' || p.status === 'approved').length,
-        rejected: properties.filter((p: any) => p.status === 'rejected').length,
-        views: properties.reduce((acc: number, p: any) => acc + (p.view_count || 0), 0)
+        published: properties.filter((p: any) => p.status?.toLowerCase() === 'published').length,
+        pending: properties.filter((p: any) => ['submitted', 'pending'].includes(p.status?.toLowerCase())).length,
+        rejected: properties.filter((p: any) => p.status?.toLowerCase() === 'rejected').length,
       };
-      
-      setStats(statsUpdate);
-      setRecentListings(properties.slice(0, 3));
+
+      setStats(counts);
+      setRecentListings(properties.slice(0, 5));
     } catch (error) {
-      console.error('Dashboard data fetch error:', error);
+      console.error('Seller Dashboard Error:', error);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -72,71 +69,89 @@ const SellerDashboardScreen = ({ navigation }: any) => {
     fetchDashboardData();
   };
 
-  if (isLoading) {
+  if (isLoading && !isRefreshing) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color="#6366f1" />
+        <Text style={styles.loadingText}>SYNCING PORTFOLIO...</Text>
       </View>
     );
   }
 
   return (
     <ScrollView 
-      style={styles.container}
-      refreshControl={
-        <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
-      }
+      style={styles.container} 
+      showsVerticalScrollIndicator={false}
+      refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={['#6366f1']} />}
     >
       <View style={styles.header}>
         <View>
-          <Text style={styles.welcomeText}>Welcome back,</Text>
-          <Text style={styles.nameText}>{user?.name || 'Seller'}</Text>
+          <Text style={styles.greeting}>Registry Command</Text>
+          <Text style={styles.userName}>{user?.full_name || 'Verified Member'}</Text>
         </View>
-        <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate('AddListing')}>
-          <PlusCircle color="#fff" size={20} />
-          <Text style={styles.addButtonText}>Add New</Text>
+        <TouchableOpacity 
+            style={styles.profileBtn}
+            onPress={() => navigation.navigate('SellerProfile')}
+        >
+          <User color="#1e293b" size={20} />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.statsGrid}>
-        <View style={[styles.statCard, { backgroundColor: '#eff6ff' }]}>
-            <View style={styles.statIconContainer}>
-                <TrendingUp color="#3b82f6" size={20} />
-            </View>
-            <Text style={styles.statValue}>{stats.total}</Text>
-            <Text style={styles.statLabel}>Total Listings</Text>
-        </View>
-        <View style={[styles.statCard, { backgroundColor: '#ecfdf5' }]}>
-            <View style={styles.statIconContainer}>
-                <CheckCircle color="#10b981" size={20} />
-            </View>
-            <Text style={styles.statValue}>{stats.published}</Text>
-            <Text style={styles.statLabel}>Published</Text>
-        </View>
-        <View style={[styles.statCard, { backgroundColor: '#fff7ed' }]}>
-            <View style={styles.statIconContainer}>
-                <Clock color="#f97316" size={20} />
-            </View>
-            <Text style={styles.statValue}>{stats.pending}</Text>
-            <Text style={styles.statLabel}>Pending</Text>
-        </View>
-        <View style={[styles.statCard, { backgroundColor: '#fef2f2' }]}>
-            <View style={styles.statIconContainer}>
-                <XCircle color="#ef4444" size={20} />
-            </View>
-            <Text style={styles.statValue}>{stats.rejected}</Text>
-            <Text style={styles.statLabel}>Rejected</Text>
+      <View style={styles.statsContainer}>
+        <View style={styles.statsGrid}>
+          <TouchableOpacity style={[styles.statItem, { backgroundColor: '#eff6ff' }]}>
+            <Text style={styles.statLabel}>Managed Nodes</Text>
+            <Text style={[styles.statValue, { color: '#2563eb' }]}>{stats?.total || 0}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.statItem, { backgroundColor: '#ecfdf5' }]}>
+            <Text style={styles.statLabel}>Active Public</Text>
+            <Text style={[styles.statValue, { color: '#059669' }]}>{stats?.published || 0}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.statItem, { backgroundColor: '#fffbeb' }]}>
+            <Text style={styles.statLabel}>In Verification</Text>
+            <Text style={[styles.statValue, { color: '#d97706' }]}>{stats?.pending || 0}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.statItem, { backgroundColor: '#fef2f2' }]}>
+            <Text style={styles.statLabel}>Registry Revoked</Text>
+            <Text style={[styles.statValue, { color: '#dc2626' }]}>{stats?.rejected || 0}</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
-      <View style={styles.section}>
+      <View style={styles.actionSection}>
+        <Text style={styles.sectionTitle}>Quick Operations</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.actionRow}>
+            <TouchableOpacity style={styles.actionCard} onPress={() => navigation.navigate('Messages')}>
+                <MessageSquare color="#6366f1" size={24} />
+                <Text style={styles.actionCardText}>Inbox</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionCard} onPress={() => navigation.navigate('SellerAnalytics')}>
+                <TrendingUp color="#10b981" size={24} />
+                <Text style={styles.actionCardText}>Analytics</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionCard} onPress={() => navigation.navigate('AddListing')}>
+                <PlusCircle color="#f59e0b" size={24} />
+                <Text style={styles.actionCardText}>Inject Node</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionCard} onPress={() => navigation.navigate('KYC')}>
+                <Shield color="#6366f1" size={24} />
+                <Text style={styles.actionCardText}>Identity</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionCard} onPress={() => navigation.navigate('Settings')}>
+                <Search color="#64748b" size={24} />
+                <Text style={styles.actionCardText}>Config</Text>
+            </TouchableOpacity>
+        </ScrollView>
+      </View>
+
+      <View style={styles.listingsSection}>
         <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Listings</Text>
+            <Text style={styles.sectionTitle}>Local Node Buffer</Text>
             <TouchableOpacity onPress={() => navigation.navigate('MyListings')}>
-                <Text style={styles.seeAllText}>View all</Text>
+                <Text style={styles.viewAllText}>VIEW ALL</Text>
             </TouchableOpacity>
         </View>
-
+        
         {recentListings.length > 0 ? (
           recentListings.map((item: any) => (
             <TouchableOpacity 
@@ -145,10 +160,10 @@ const SellerDashboardScreen = ({ navigation }: any) => {
                 onPress={() => navigation.navigate('PropertyDetail', { id: item.PropertyID || item.id })}
             >
               <View style={styles.listingLeft}>
-                <View style={[styles.statusDot, { backgroundColor: item.status === 'published' ? '#10b981' : (item.status === 'rejected' ? '#ef4444' : '#f97316') }]} />
+                <View style={[styles.statusDot, { backgroundColor: item.status?.toLowerCase() === 'published' ? '#10b981' : (item.status?.toLowerCase() === 'rejected' ? '#ef4444' : '#f97316') }]} />
                 <View>
                     <Text style={styles.listingTitle} numberOfLines={1}>{item.title}</Text>
-                    <Text style={styles.listingPrice}>NPR {item.price}</Text>
+                    <Text style={styles.listingPrice}>NPR {parseFloat(item.price).toLocaleString()}</Text>
                 </View>
               </View>
               <View style={styles.listingRight}>
@@ -162,216 +177,55 @@ const SellerDashboardScreen = ({ navigation }: any) => {
           ))
         ) : (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No listings found. Start adding your properties!</Text>
+            <Building2 color="#cbd5e1" size={48} />
+            <Text style={styles.emptyText}>No registered nodes detected.</Text>
+            <TouchableOpacity 
+                style={styles.emptyBtn}
+                onPress={() => navigation.navigate('AddListing')}
+            >
+                <Text style={styles.emptyBtnText}>Inject First Listing</Text>
+            </TouchableOpacity>
           </View>
         )}
       </View>
-
-      <View style={styles.actionSection}>
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.actionRow}>
-            <TouchableOpacity style={styles.actionCard} onPress={() => navigation.navigate('Messages')}>
-                <MessageSquare color="#6366f1" size={24} />
-                <Text style={styles.actionCardText}>Inbox</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionCard} onPress={() => navigation.navigate('SellerAnalytics')}>
-                <LayoutDashboard color="#10b981" size={24} />
-                <Text style={styles.actionCardText}>Analytics</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionCard} onPress={() => Alert.alert('Verification module coming soon')}>
-                <CheckCircle color="#f97316" size={24} />
-                <Text style={styles.actionCardText}>Verification</Text>
-            </TouchableOpacity>
-        </ScrollView>
-      </View>
+      <View style={{ height: 40 }} />
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 24,
-    paddingTop: 20,
-    backgroundColor: '#fff',
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 3,
-  },
-  welcomeText: {
-    fontSize: 14,
-    color: '#64748b',
-    marginBottom: 4,
-  },
-  nameText: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#1e293b',
-  },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#6366f1',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
-    gap: 8,
-  },
-  addButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 18,
-    gap: 12,
-    marginBottom: 32,
-  },
-  statCard: {
-    width: (width - 48) / 2,
-    padding: 20,
-    borderRadius: 16,
-    gap: 10,
-  },
-  statIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#1e293b',
-  },
-  statLabel: {
-    fontSize: 13,
-    color: '#64748b',
-    fontWeight: '500',
-  },
-  section: {
-    paddingHorizontal: 24,
-    marginBottom: 32,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1e293b',
-  },
-  seeAllText: {
-    color: '#6366f1',
-    fontWeight: '600',
-  },
-  listingItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-  },
-  listingLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    flex: 1,
-  },
-  statusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  listingTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1e293b',
-    marginBottom: 2,
-  },
-  listingPrice: {
-    fontSize: 14,
-    color: '#64748b',
-  },
-  listingRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  viewCount: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#f8fafc',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  viewCountText: {
-    fontSize: 12,
-    color: '#94a3b8',
-    fontWeight: '600',
-  },
-  emptyContainer: {
-    padding: 32,
-    backgroundColor: '#f8fafc',
-    borderRadius: 16,
-    alignItems: 'center',
-  },
-  emptyText: {
-    textAlign: 'center',
-    color: '#94a3b8',
-    lineHeight: 20,
-  },
-  actionSection: {
-    paddingLeft: 24,
-    paddingBottom: 40,
-  },
-  actionRow: {
-    paddingRight: 24,
-    marginTop: 16,
-    gap: 16,
-  },
-  actionCard: {
-    width: 120,
-    height: 100,
-    backgroundColor: '#f8fafc',
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
-    borderWidth: 1,
-    borderColor: '#f1f5f9',
-  },
-  actionCardText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#475569',
-  }
+  container: { flex: 1, backgroundColor: '#fcfcfd' },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
+  loadingText: { marginTop: 16, fontSize: 10, fontWeight: '900', color: '#6366f1', letterSpacing: 2 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 24, paddingTop: 60, backgroundColor: '#fff', borderBottomLeftRadius: 32, borderBottomRightRadius: 32, marginBottom: 24, shadowColor: '#1e293b', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 3 },
+  greeting: { fontSize: 13, color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 },
+  userName: { fontSize: 24, fontWeight: '900', color: '#1e293b', letterSpacing: -0.5 },
+  profileBtn: { width: 44, height: 44, borderRadius: 14, backgroundColor: '#f8fafc', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#f1f5f9' },
+  statsContainer: { paddingHorizontal: 24, marginBottom: 32 },
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap' },
+  statItem: { flex: 1, minWidth: (width - 60) / 2, padding: 20, borderRadius: 24, borderWidth: 1, borderColor: 'rgba(0,0,0,0.02)' },
+  statLabel: { fontSize: 11, fontWeight: '800', color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 },
+  statValue: { fontSize: 28, fontWeight: '900' },
+  actionSection: { marginBottom: 32 },
+  sectionTitle: { fontSize: 12, fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1.5, marginHorizontal: 24, marginBottom: 16 },
+  actionRow: { paddingLeft: 24, paddingRight: 8 },
+  actionCard: { width: 100, height: 100, backgroundColor: '#fff', borderRadius: 24, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#f1f5f9', shadowColor: '#1e293b', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 10, elevation: 2, marginRight: 12 },
+  actionCardText: { fontSize: 10, fontWeight: '800', color: '#475569', textTransform: 'uppercase' },
+  listingsSection: { paddingHorizontal: 24 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  viewAllText: { fontSize: 11, fontWeight: '800', color: '#6366f1' },
+  listingItem: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 20, padding: 16, marginBottom: 12, alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: '#f1f5f9' },
+  listingLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  statusDot: { width: 8, height: 8, borderRadius: 4 },
+  listingTitle: { fontSize: 15, fontWeight: '700', color: '#1e293b', marginBottom: 2 },
+  listingPrice: { fontSize: 13, fontWeight: '800', color: '#6366f1' },
+  listingRight: { flexDirection: 'row', alignItems: 'center' },
+  viewCount: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f8fafc', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, marginRight: 8 },
+  viewCountText: { fontSize: 11, fontWeight: '700', color: '#94a3b8' },
+  emptyContainer: { alignItems: 'center', padding: 40, backgroundColor: '#f8fafc', borderRadius: 24, borderStyle: 'dashed', borderWidth: 1, borderColor: '#cbd5e1' },
+  emptyText: { marginTop: 16, fontSize: 14, color: '#64748b', fontWeight: '500', textAlign: 'center' },
+  emptyBtn: { marginTop: 20, backgroundColor: '#1e293b', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12 },
+  emptyBtnText: { color: '#fff', fontSize: 12, fontWeight: '800' }
 });
 
 export default SellerDashboardScreen;

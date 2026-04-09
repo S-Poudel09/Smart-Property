@@ -8,7 +8,8 @@ import {
   Image, 
   ActivityIndicator,
   RefreshControl,
-  Alert
+  Alert,
+  StatusBar
 } from 'react-native';
 import { 
   CheckCircle, 
@@ -18,8 +19,12 @@ import {
   User, 
   ChevronRight,
   ShieldCheck,
-  Building2
+  Building2,
+  FileText,
+  BadgeCheck,
+  AlertCircle
 } from 'lucide-react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import api, { getFullImageUrl } from '../../api/client';
 
 const PendingPropertiesScreen = ({ navigation }: any) => {
@@ -30,7 +35,7 @@ const PendingPropertiesScreen = ({ navigation }: any) => {
   const fetchPendingProperties = async () => {
     try {
       const response = await api.get('/properties/');
-      // Filter for submitted/pending
+      // Filter for submitted/pending status
       const pending = response.data.filter((p: any) => 
         p.status.toLowerCase() === 'submitted' || 
         p.status.toLowerCase() === 'pending'
@@ -55,19 +60,19 @@ const PendingPropertiesScreen = ({ navigation }: any) => {
 
   const handleApprove = async (id: string, title: string) => {
     Alert.alert(
-      'Approve Property',
-      `Are you sure you want to approve "${title}"?`,
+      'APPROVE ASSET',
+      `Execute production release for "${title}" into the global registry?`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: 'CANCEL', style: 'cancel' },
         { 
-          text: 'Approve', 
+          text: 'EXECUTE APPROVAL', 
           onPress: async () => {
             try {
               await api.post(`/properties/${id}/approve/`);
-              Alert.alert('Success', 'Property approved and published.');
+              Alert.alert('SUCCESS', 'Registry node published successfully.');
               fetchPendingProperties();
             } catch (error) {
-              Alert.alert('Error', 'Failed to approve property.');
+              Alert.alert('ERROR', 'System failed to update registry state.');
             }
           }
         }
@@ -77,20 +82,20 @@ const PendingPropertiesScreen = ({ navigation }: any) => {
 
   const handleReject = (id: string, title: string) => {
     Alert.prompt(
-      'Reject Property',
-      'Please enter the reason for rejection:',
+      'REJECT SUBMISSION',
+      'Provide governance reason for rejection:',
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: 'CANCEL', style: 'cancel' },
         { 
-          text: 'Reject', 
+          text: 'CONFIRM REJECT', 
           style: 'destructive',
           onPress: async (reason: string | undefined) => {
             try {
-              await api.post(`/properties/${id}/reject/`, { rejection_reason: reason });
-              Alert.alert('Success', 'Property rejected.');
+              await api.post(`/properties/${id}/reject/`, { rejection_reason: reason || 'Missing documentation' });
+              Alert.alert('VOIDED', 'Submission node rejected.');
               fetchPendingProperties();
             } catch (error) {
-              Alert.alert('Error', 'Failed to reject property.');
+              Alert.alert('ERROR', 'Failed to void submission.');
             }
           }
         }
@@ -101,44 +106,68 @@ const PendingPropertiesScreen = ({ navigation }: any) => {
   const renderItem = ({ item }: any) => (
     <View style={styles.card}>
       <TouchableOpacity 
-        style={styles.cardContent}
-        onPress={() => navigation.navigate('PropertyDetail', { id: item.id })}
+        style={styles.cardHeader}
+        onPress={() => navigation.navigate('AdminPropertyDetail', { id: item.id })}
       >
         <Image 
-          source={{ uri: getFullImageUrl(item.property_images?.[0]?.image) || 'https://via.placeholder.com/150' }} 
-          style={styles.thumbnail} 
+          source={{ uri: getFullImageUrl(item.property_images?.[0]?.image) || 'https://via.placeholder.com/400' }} 
+          style={styles.heroImage} 
         />
-        <View style={styles.info}>
-          <Text style={styles.title} numberOfLines={1}>{item.title}</Text>
-          <View style={styles.metaRow}>
-            <MapPin color="#64748b" size={14} />
-            <Text style={styles.metaText} numberOfLines={1}>{item.location}</Text>
-          </View>
-          <View style={styles.metaRow}>
-            <User color="#64748b" size={14} />
-            <Text style={styles.metaText}>Seller: {item.owner_name || 'Verified User'}</Text>
-          </View>
-          <Text style={styles.price}>NPR {item.price}</Text>
+        <View style={styles.statusFloat}>
+           <Clock color="#f59e0b" size={12} />
+           <Text style={styles.statusFloatText}>AWAITING AUDIT</Text>
         </View>
-        <ChevronRight color="#cbd5e1" size={20} />
       </TouchableOpacity>
 
-      <View style={styles.actions}>
-        <TouchableOpacity 
-          style={[styles.actionBtn, styles.rejectBtn]} 
-          onPress={() => handleReject(item.id, item.title)}
-        >
-          <XCircle color="#ef4444" size={18} />
-          <Text style={styles.rejectText}>Reject</Text>
-        </TouchableOpacity>
+      <View style={styles.cardContent}>
+        <View style={styles.mainInfo}>
+            <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
+            <View style={styles.coordRow}>
+                <MapPin color="#94a3b8" size={12} />
+                <Text style={styles.coordText}>{item.location}</Text>
+            </View>
+        </View>
         
-        <TouchableOpacity 
-          style={[styles.actionBtn, styles.approveBtn]} 
-          onPress={() => handleApprove(item.id, item.title)}
-        >
-          <CheckCircle color="#10b981" size={18} />
-          <Text style={styles.approveText}>Approve</Text>
-        </TouchableOpacity>
+        <View style={styles.valuationRow}>
+            <Text style={styles.valLabel}>VALUATION</Text>
+            <Text style={styles.valPrice}>NPR {item.price?.toLocaleString() || item.price}</Text>
+        </View>
+
+        <View style={styles.sellerNode}>
+            <View style={styles.sellerAvatar}>
+                <User color="#6366f1" size={16} />
+            </View>
+            <View style={styles.sellerDetails}>
+                <Text style={styles.sellerLabel}>SUBMITTED BY</Text>
+                <Text style={styles.sellerName}>{item.owner_name || 'Registry User'}</Text>
+            </View>
+            <BadgeCheck color="#10b981" size={18} />
+        </View>
+
+        <View style={styles.actions}>
+            <TouchableOpacity 
+              style={[styles.btn, styles.rejectBtn]} 
+              onPress={() => handleReject(item.id, item.title)}
+            >
+              <XCircle color="#ef4444" size={16} />
+              <Text style={styles.rejectText}>VOID</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.btn, styles.approveBtn]} 
+              onPress={() => handleApprove(item.id, item.title)}
+            >
+              <CheckCircle color="#10b981" size={16} />
+              <Text style={styles.approveText}>PUBLISH</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.detailBtn}
+              onPress={() => navigation.navigate('AdminPropertyDetail', { id: item.id })}
+            >
+              <ChevronRight color="#6366f1" size={20} />
+            </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -147,17 +176,20 @@ const PendingPropertiesScreen = ({ navigation }: any) => {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color="#6366f1" />
-        <Text style={styles.loadingText}>Loading Registry Submissions...</Text>
+        <Text style={styles.loadingText}>Fetching Compliance Queue...</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Building2 color="#6366f1" size={32} />
-        <Text style={styles.headerTitle}>Pending Approvals</Text>
-        <Text style={styles.headerCount}>{properties.length} Active Requests</Text>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
+      <StatusBar barStyle="dark-content" />
+      <View style={styles.topBar}>
+        <Building2 color="#1e293b" size={28} />
+        <View style={styles.topBarText}>
+            <Text style={styles.topBarTitle}>Registry Audit</Text>
+            <Text style={styles.topBarSub}>{properties.length} submissions pending verification</Text>
+        </View>
       </View>
 
       <FlatList
@@ -165,16 +197,19 @@ const PendingPropertiesScreen = ({ navigation }: any) => {
         renderItem={renderItem}
         keyExtractor={(item: any) => item.id}
         contentContainerStyle={styles.list}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366f1" />}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Clock color="#cbd5e1" size={64} />
-            <Text style={styles.emptyText}>All submissions cleared</Text>
-            <Text style={styles.emptySubtext}>New requests will appear here after seller validation.</Text>
+            <ShieldCheck color="#cbd5e1" size={80} />
+            <Text style={styles.emptyText}>Registry Synthesized</Text>
+            <Text style={styles.emptySubtext}>All property nodes have been cleared for production release.</Text>
+            <TouchableOpacity style={styles.refreshBtn} onPress={onRefresh}>
+                <Text style={styles.refreshBtnText}>REFRESH PIPELINE</Text>
+            </TouchableOpacity>
           </View>
         }
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -191,121 +226,196 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 20,
-    fontSize: 12,
-    fontWeight: '800',
+    fontSize: 10,
+    fontWeight: '900',
     color: '#6366f1',
-    textTransform: 'uppercase',
     letterSpacing: 2,
+    textTransform: 'uppercase',
   },
-  header: {
+  topBar: {
     padding: 24,
-    paddingTop: 60,
     backgroundColor: '#fff',
+    flexDirection: 'row',
+    alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#f1f5f9',
-    alignItems: 'center',
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '800',
+  topBarText: {
+      marginLeft: 16,
+  },
+  topBarTitle: {
+    fontSize: 24,
+    fontWeight: '900',
     color: '#1e293b',
-    marginTop: 8,
+    letterSpacing: -0.5,
   },
-  headerCount: {
-    fontSize: 13,
-    color: '#64748b',
+  topBarSub: {
+    fontSize: 12,
+    color: '#94a3b8',
     fontWeight: '600',
+    marginTop: 2,
     textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginTop: 4,
   },
   list: {
-    padding: 24,
-    gap: 20,
+    padding: 20,
+    paddingBottom: 40,
   },
   card: {
     backgroundColor: '#fff',
-    borderRadius: 20,
+    borderRadius: 32,
+    marginBottom: 24,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#f1f5f9',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 2,
+    shadowColor: '#1e293b',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.06,
+    shadowRadius: 24,
+    elevation: 4,
   },
-  cardContent: {
-    flexDirection: 'row',
-    padding: 16,
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-  },
-  thumbnail: {
-    width: 80,
-    height: 80,
-    borderRadius: 12,
+  cardHeader: {
+    height: 200,
     backgroundColor: '#f1f5f9',
   },
-  info: {
-    flex: 1,
-    marginLeft: 16,
-    gap: 4,
+  heroImage: {
+    width: '100%',
+    height: '100%',
+  },
+  statusFloat: {
+      position: 'absolute',
+      top: 16,
+      left: 16,
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 100,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      borderWidth: 1,
+      borderColor: '#fef3c7',
+  },
+  statusFloatText: {
+      fontSize: 9,
+      fontWeight: '900',
+      color: '#d97706',
+      letterSpacing: 0.5,
+  },
+  cardContent: {
+    padding: 24,
+  },
+  mainInfo: {
+      marginBottom: 20,
   },
   title: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 20,
+    fontWeight: '900',
     color: '#1e293b',
+    lineHeight: 26,
   },
-  metaRow: {
+  coordRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    marginTop: 8,
   },
-  metaText: {
+  coordText: {
     fontSize: 13,
-    color: '#64748b',
+    color: '#94a3b8',
+    fontWeight: '600',
   },
-  price: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#6366f1',
-    marginTop: 2,
+  valuationRow: {
+      padding: 16,
+      backgroundColor: '#f8fafc',
+      borderRadius: 20,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 20,
+  },
+  valLabel: {
+      fontSize: 10,
+      fontWeight: '900',
+      color: '#cbd5e1',
+      letterSpacing: 1,
+  },
+  valPrice: {
+      fontSize: 18,
+      fontWeight: '900',
+      color: '#6366f1',
+  },
+  sellerNode: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 24,
+      paddingHorizontal: 4,
+  },
+  sellerAvatar: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: '#eff6ff',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 12,
+  },
+  sellerDetails: {
+      flex: 1,
+  },
+  sellerLabel: {
+      fontSize: 8,
+      fontWeight: '900',
+      color: '#cbd5e1',
+      letterSpacing: 0.5,
+  },
+  sellerName: {
+      fontSize: 14,
+      fontWeight: '800',
+      color: '#475569',
   },
   actions: {
     flexDirection: 'row',
-    padding: 12,
     gap: 12,
-    backgroundColor: '#fcfdfe',
   },
-  actionBtn: {
+  btn: {
     flex: 1,
+    height: 52,
+    borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingVertical: 10,
-    borderRadius: 12,
     borderWidth: 1,
   },
   approveBtn: {
-    backgroundColor: '#ecfdf5',
-    borderColor: '#a7f3d0',
+    backgroundColor: '#10b981',
+    borderColor: '#10b981',
   },
   rejectBtn: {
-    backgroundColor: '#fef2f2',
-    borderColor: '#fecaca',
+    backgroundColor: '#fff',
+    borderColor: '#fee2e2',
   },
   approveText: {
-    color: '#059669',
-    fontSize: 14,
-    fontWeight: '700',
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 1,
   },
   rejectText: {
     color: '#ef4444',
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  detailBtn: {
+      width: 52,
+      height: 52,
+      borderRadius: 16,
+      backgroundColor: '#f8fafc',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: '#f1f5f9',
   },
   empty: {
     alignItems: 'center',
@@ -313,17 +423,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   emptyText: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 22,
+    fontWeight: '900',
     color: '#1e293b',
-    marginTop: 20,
+    marginTop: 24,
+    letterSpacing: -0.5,
   },
   emptySubtext: {
     fontSize: 14,
     color: '#94a3b8',
     textAlign: 'center',
-    marginTop: 8,
-    lineHeight: 20,
+    marginTop: 12,
+    lineHeight: 22,
+    fontWeight: '500',
+  },
+  refreshBtn: {
+      marginTop: 32,
+      paddingHorizontal: 24,
+      paddingVertical: 14,
+      borderRadius: 16,
+      backgroundColor: '#1e293b',
+  },
+  refreshBtnText: {
+      color: '#fff',
+      fontSize: 12,
+      fontWeight: '900',
+      letterSpacing: 1,
   },
 });
 

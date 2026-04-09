@@ -8,7 +8,8 @@ import {
   FlatList, 
   KeyboardAvoidingView, 
   Platform,
-  ActivityIndicator
+  ActivityIndicator,
+  Alert
 } from 'react-native';
 import { Send, ChevronLeft } from 'lucide-react-native';
 import api from '../../api/client';
@@ -73,8 +74,8 @@ const ChatDetailScreen = ({ route, navigation }: any) => {
 
     try {
       const payload = {
-        room: roomId,
-        text: tempMessage.text
+        RoomID: roomId,
+        MessageText: tempMessage.text
       };
       const response = await api.post('/chat/messages/', payload);
       
@@ -86,6 +87,7 @@ const ChatDetailScreen = ({ route, navigation }: any) => {
       console.error('Failed to send message:', error);
       // Revert optimism if failed
       setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
+      Alert.alert('Send Failed', 'Could not transmit message to the registry.');
     }
   };
 

@@ -109,6 +109,25 @@ class TransactionViewSet(viewsets.ModelViewSet):
             else:
                 transaction.status = "PARTIAL"
             transaction.save()
+            
+            # Update property status to SOLD and notify seller if payment is fully verified
+            if transaction.status == "COMPLETED":
+                property_obj = transaction.property
+                property_obj.status = 'SOLD'
+                property_obj.save()
+                
+                # Notify notification engine
+                try:
+                    from notifications.models import Notification
+                    Notification.objects.create(
+                        user=transaction.seller,
+                        type='transaction_update',
+                        title='Property Sold!',
+                        message=f'Great news! Your property "{property_obj.title}" has been successfully sold to {request.user.full_name}.',
+                        link=f'/dashboard/seller/transactions/{transaction.id}'
+                    )
+                except Exception:
+                    pass
         
         # PostgreSQL activity log
         from analytics.utils import log_activity
@@ -129,6 +148,24 @@ class TransactionViewSet(viewsets.ModelViewSet):
         transaction.status = "COMPLETED"
         transaction.amount_paid = transaction.total_amount
         transaction.save()
+
+        # Update property status to SOLD
+        try:
+            property_obj = transaction.property
+            property_obj.status = 'SOLD'
+            property_obj.save()
+            
+            from notifications.models import Notification
+            Notification.objects.create(
+                user=transaction.seller,
+                type='transaction_update',
+                title='System Settlement Confirmed',
+                message=f'The administrator has manually confirmed the settlement for your property "{property_obj.title}". Status updated to SOLD.',
+                link=f'/dashboard/seller/transactions/{transaction.id}'
+            )
+        except Exception:
+            pass
+
         return Response({"status": "Transaction confirmed"})
 
     @action(detail=True, methods=['post'], url_path='khalti-initiate')
@@ -157,7 +194,20 @@ class TransactionViewSet(viewsets.ModelViewSet):
             }
 
             # Amount in Paisa — Khalti minimum is 10 paisa
-            paisa_amount = int(float(transaction.total_amount) * 100)
+            real_paisa_amount = int(float(transaction.total_amount) * 100)
+            paisa_amount = real_paisa_amount
+            
+            # Detect environment
+            is_test_env = 'test-pay' in initiate_url or 'a.khalti.com' in initiate_url
+            is_demo_adjustment = False
+
+            # SANDBOX STRATEGY: Khalti Test environment rejects amounts > Rs 1000 (100,000 paisa).
+            # To prevent 'HTTP 400' rejection while on sandbox, we apply a professional demo fee.
+            if is_test_env and paisa_amount > 100000:
+                logger.info(f"[Sandbox] High valuation (Rs {paisa_amount/100.0}) detected in test mode. Adjusting to demo fee (Rs 100.00).")
+                paisa_amount = 10000 
+                is_demo_adjustment = True
+
             if paisa_amount < 10:
                 return Response(
                     {"error": f"Payment amount too low. Minimum is NPR 0.10. Got {paisa_amount} paisa."},
@@ -165,21 +215,17 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 )
 
             # Fetch user phone safely or use standard sandbox bypass number
-            user_phone = getattr(request.user, 'phone', None)
-            if not user_phone:
-                user_phone = "9800000000"
-
+            user_phone = getattr(request.user, 'phone', "9800000000")
+            
             # Build customer name (fallback to email prefix if blank)
-            customer_name = f"{request.user.first_name} {request.user.last_name}".strip()
-            if not customer_name:
-                customer_name = request.user.email.split('@')[0]
+            customer_name = f"{request.user.first_name} {request.user.last_name}".strip() or request.user.email.split('@')[0]
 
             payload = {
                 "return_url": return_url,
                 "website_url": website_url,
                 "amount": paisa_amount,
                 "purchase_order_id": str(transaction.id),
-                "purchase_order_name": f"Property: {transaction.property.title[:100]}",
+                "purchase_order_name": f"Property Acquisition: {transaction.property.title[:80]}",
                 "customer_info": {
                     "name": customer_name,
                     "email": request.user.email,
@@ -187,7 +233,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 }
             }
 
-            logger.info(f"Khalti Initiate → URL: {initiate_url} | Amount: {paisa_amount} paisa | Order: {payload['purchase_order_id']}")
+            logger.info(f"Khalti Initiate → Env: {'Sandbox' if is_test_env else 'Live'} | Adjusted: {is_demo_adjustment} | Amount: {paisa_amount}")
 
             req = urllib.request.Request(
                 initiate_url,
@@ -198,14 +244,16 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 res_data = json.loads(response.read().decode())
 
                 if res_data.get('pidx'):
-                    # Save pidx to transaction for later lookup
                     transaction.transaction_reference_id = res_data.get('pidx')
                     transaction.save()
 
-                    logger.info(f"Khalti Initiate SUCCESS — pidx: {res_data.get('pidx')}")
                     return Response({
                         "pidx": res_data.get('pidx'),
-                        "payment_url": res_data.get('payment_url')
+                        "payment_url": res_data.get('payment_url'),
+                        "applied_amount": paisa_amount / 100.0,
+                        "original_amount": float(transaction.total_amount),
+                        "is_sandbox": is_test_env,
+                        "is_demo_adjustment": is_demo_adjustment
                     }, status=status.HTTP_200_OK)
                 else:
                     logger.error(f"Khalti returned no pidx: {res_data}")
@@ -273,6 +321,11 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     transaction.transaction_reference_id = pidx
                     transaction.save()
 
+                    # Update property status to SOLD
+                    property_obj = transaction.property
+                    property_obj.status = 'SOLD'
+                    property_obj.save()
+
                     # Auto-create a verified PaymentProof so sellers see it immediately
                     PaymentProof.objects.get_or_create(
                         transaction=transaction,
@@ -285,6 +338,19 @@ class TransactionViewSet(viewsets.ModelViewSet):
                             'proof_file': '',  # no file for digital payments
                         }
                     )
+                    
+                    # Notify seller
+                    try:
+                        from notifications.models import Notification
+                        Notification.objects.create(
+                            user=transaction.seller,
+                            type='transaction_update',
+                            title='Property Procured via Khalti',
+                            message=f'Your property "{property_obj.title}" has been successfully purchased by {request.user.full_name} via Khalti.',
+                            link=f'/dashboard/seller/transactions/{transaction.id}'
+                        )
+                    except Exception:
+                        pass
 
                 from analytics.utils import log_activity
                 log_activity(

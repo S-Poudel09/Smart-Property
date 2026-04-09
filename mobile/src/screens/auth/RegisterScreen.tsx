@@ -29,7 +29,6 @@ const RegisterScreen = ({ navigation }: any) => {
 
     setIsLoading(true);
     try {
-      // Backend expects 'name' which is mapped to 'full_name' in serializer
       await api.post('/auth/register/', { 
         name, 
         email, 
@@ -66,13 +65,19 @@ const RegisterScreen = ({ navigation }: any) => {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <View style={styles.topDecoration} />
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <View style={styles.logoCircle}>
-            <UserPlus color="#fff" size={32} />
+          <View style={styles.logoContainer}>
+            <View style={styles.logoCircle}>
+              <UserPlus color="#fff" size={32} />
+            </View>
+            <View style={styles.badge}>
+                <Text style={styles.badgeText}>ENROLLMENT PHASE</Text>
+            </View>
           </View>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join Smart Property today</Text>
+          <Text style={styles.title}>Forge Identity</Text>
+          <Text style={styles.subtitle}>Join the premium real estate network</Text>
         </View>
 
         <View style={styles.formCard}>
@@ -81,25 +86,26 @@ const RegisterScreen = ({ navigation }: any) => {
               style={[styles.roleButton, role === 'buyer' && styles.roleButtonActive]}
               onPress={() => setRole('buyer')}
             >
-              <User color={role === 'buyer' ? '#fff' : '#64748b'} size={20} />
+              <User color={role === 'buyer' ? '#fff' : '#6366f1'} size={20} />
               <Text style={[styles.roleButtonText, role === 'buyer' && styles.roleButtonTextActive]}>Buyer</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={[styles.roleButton, role === 'seller' && styles.roleButtonActive]}
               onPress={() => setRole('seller')}
             >
-              <UserCheck color={role === 'seller' ? '#fff' : '#64748b'} size={20} />
+              <UserCheck color={role === 'seller' ? '#fff' : '#6366f1'} size={20} />
               <Text style={[styles.roleButtonText, role === 'seller' && styles.roleButtonTextActive]}>Seller</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Full Name</Text>
+            <Text style={styles.label}>Legal Name</Text>
             <View style={styles.inputContainer}>
-              <User color="#94a3b8" size={18} style={styles.inputIcon} />
+              <User color="#6366f1" size={18} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="John Doe"
+                placeholder="Ex: Alexander Pierce"
+                placeholderTextColor="#94a3b8"
                 value={name}
                 onChangeText={setName}
               />
@@ -107,12 +113,13 @@ const RegisterScreen = ({ navigation }: any) => {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email Address</Text>
+            <Text style={styles.label}>Registry Email</Text>
             <View style={styles.inputContainer}>
-              <Mail color="#94a3b8" size={18} style={styles.inputIcon} />
+              <Mail color="#6366f1" size={18} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="you@example.com"
+                placeholder="you@domain.com"
+                placeholderTextColor="#94a3b8"
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -122,12 +129,13 @@ const RegisterScreen = ({ navigation }: any) => {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password</Text>
+            <Text style={styles.label}>Security Phrase (Password)</Text>
             <View style={styles.inputContainer}>
-              <Lock color="#94a3b8" size={18} style={styles.inputIcon} />
+              <Lock color="#6366f1" size={18} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Minimum 6 characters"
+                placeholder="••••••••"
+                placeholderTextColor="#94a3b8"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
@@ -136,23 +144,32 @@ const RegisterScreen = ({ navigation }: any) => {
           </View>
 
           <TouchableOpacity 
-            style={styles.registerButton}
+            style={[styles.registerButton, isLoading && styles.disabledButton]}
             onPress={handleRegister}
             disabled={isLoading}
           >
             {isLoading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.registerButtonText}>Register Now</Text>
+              <View style={styles.btnContent}>
+                <Text style={styles.registerButtonText}>Initialize Account</Text>
+                <UserPlus color="#fff" size={20} />
+              </View>
             )}
           </TouchableOpacity>
 
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Already have an account? </Text>
+            <Text style={styles.footerText}>Already in the Registry? </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-              <Text style={styles.footerLink}>Sign In</Text>
+              <Text style={styles.footerLink}>Initialize Session</Text>
             </TouchableOpacity>
           </View>
+        </View>
+
+        <View style={styles.bottomHud}>
+          <Text style={styles.hudText}>IMPERIAL GUARD ACTIVE</Text>
+          <View style={styles.dot} />
+          <Text style={styles.hudText}>256-BIT ENCRYPTION</Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -162,137 +179,207 @@ const RegisterScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#0f172a',
+  },
+  topDecoration: {
+    position: 'absolute',
+    top: -100,
+    left: -100,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: 'rgba(99, 102, 241, 0.15)',
   },
   scrollContent: {
     padding: 24,
-    paddingTop: 60,
+    paddingTop: 80,
     paddingBottom: 40,
     flexGrow: 1,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 40,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
   },
   logoCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 72,
+    height: 72,
+    borderRadius: 24,
     backgroundColor: '#6366f1',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 8,
+    transform: [{ rotate: '5deg' }],
+  },
+  badge: {
+    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 100,
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.2)',
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#6366f1',
+    letterSpacing: 2,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#1e293b',
-    marginBottom: 8,
+    fontSize: 32,
+    fontWeight: '900',
+    color: '#fff',
+    marginBottom: 12,
+    letterSpacing: -1,
   },
   subtitle: {
     fontSize: 16,
-    color: '#64748b',
+    color: '#94a3b8',
+    textAlign: 'center',
+    lineHeight: 24,
   },
   formCard: {
-    backgroundColor: '#fff',
-    borderRadius: 24,
-    padding: 24,
+    backgroundColor: '#1e293b',
+    borderRadius: 32,
+    padding: 32,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.05,
-    shadowRadius: 16,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.4,
+    shadowRadius: 40,
+    elevation: 10,
     borderWidth: 1,
-    borderColor: '#f1f5f9',
+    borderColor: '#334155',
   },
   roleSelection: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 24,
+    marginBottom: 32,
   },
   roleButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
+    height: 56,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
+    borderColor: '#334155',
+    borderRadius: 16,
     gap: 8,
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#0f172a',
   },
   roleButtonActive: {
     backgroundColor: '#6366f1',
     borderColor: '#6366f1',
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
   },
   roleButtonText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#64748b',
+    fontWeight: '800',
+    color: '#94a3b8',
   },
   roleButtonTextActive: {
     color: '#fff',
   },
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#475569',
-    marginBottom: 8,
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#6366f1',
+    marginBottom: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    height: 56,
-    backgroundColor: '#f8fafc',
+    borderColor: '#334155',
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    height: 64,
+    backgroundColor: '#0f172a',
   },
   inputIcon: {
-    marginRight: 12,
+    marginRight: 16,
   },
   input: {
     flex: 1,
     fontSize: 16,
-    color: '#1e293b',
+    color: '#fff',
+    fontWeight: '500',
   },
   registerButton: {
     backgroundColor: '#6366f1',
-    height: 56,
-    borderRadius: 12,
+    height: 64,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: 12,
     shadowColor: '#6366f1',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 5,
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  btnContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   registerButtonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 17,
+    fontWeight: '800',
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
     marginTop: 32,
-    marginBottom: 40,
   },
   footerText: {
-    color: '#64748b',
+    color: '#94a3b8',
     fontSize: 14,
   },
   footerLink: {
     color: '#6366f1',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '800',
+  },
+  bottomHud: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 40,
+    gap: 12,
+    marginBottom: 40,
+  },
+  hudText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#334155',
+    letterSpacing: 2,
+  },
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#334155',
   },
 });
 

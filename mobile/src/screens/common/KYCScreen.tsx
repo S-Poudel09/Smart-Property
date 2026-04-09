@@ -10,7 +10,7 @@ import {
   Alert
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { Camera, FileText, CheckCircle, Shield, Upload, X } from 'lucide-react-native';
+import { Camera, FileText, CheckCircle, Shield, Upload, X, Clock } from 'lucide-react-native';
 import api from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 
@@ -19,6 +19,26 @@ const KYCScreen = ({ navigation }: any) => {
   const [documentType, setDocumentType] = useState<'citizenship' | 'passport' | 'pan'>('citizenship');
   const [image, setImage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // If already pending or verified, show status
+  if (user?.kyc_status === 'pending' || user?.kyc_status === 'verified') {
+      return (
+          <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 40 }]}>
+              <View style={[styles.statusIconBg, { backgroundColor: user.kyc_status === 'verified' ? '#ecfdf5' : '#fffbeb' }]}>
+                {user.kyc_status === 'verified' ? <CheckCircle color="#10b981" size={60} /> : <Clock color="#f59e0b" size={60} />}
+              </View>
+              <Text style={styles.title}>{user.kyc_status === 'verified' ? 'Identity Verified' : 'Verification Pending'}</Text>
+              <Text style={styles.subtitle}>
+                  {user.kyc_status === 'verified' 
+                    ? 'Your node identity is fully synchronized and verified on the registry.' 
+                    : 'Your documents are being audited by human agents. This usually takes 24-48 hours.'}
+              </Text>
+              <TouchableOpacity style={[styles.submitButton, { marginTop: 40, width: '100%' }]} onPress={() => navigation.goBack()}>
+                  <Text style={styles.submitButtonText}>Return to Command</Text>
+              </TouchableOpacity>
+          </View>
+      );
+  }
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -59,7 +79,7 @@ const KYCScreen = ({ navigation }: any) => {
         type,
       } as any);
 
-      const response = await api.post('/auth/kyc/upload/', formData, {
+      await api.post('/auth/kyc/upload/', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -157,6 +177,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  statusIconBg: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
   },
   content: {
     padding: 24,
