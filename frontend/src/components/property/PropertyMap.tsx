@@ -4,22 +4,14 @@ import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Polygon, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Map as MapIcon, Layers, Maximize2, Building2, MapPin, ArrowUpRight } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Map as MapIcon, Layers, Building2, ArrowUpRight } from 'lucide-react';
 import { Property } from '@/types/property';
 import Link from 'next/link';
 import { formatNPR } from '@/lib/utils/currency';
 
-// Fix for default marker icon in Leaflet + Next.js
-if (typeof window !== 'undefined') {
-    const DefaultIcon = L.icon({
-        iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-        shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-    });
-    L.Marker.prototype.options.icon = DefaultIcon;
-}
+// Track if Leaflet icons have been configured to avoid repeated mutation
+let leafletIconsInitialized = false;
 
 interface PropertyMapProps {
     center?: [number, number];
@@ -62,6 +54,22 @@ export default function PropertyMap({
 
     useEffect(() => {
         setMounted(true);
+
+        // One-time Leaflet marker icon setup (runs only on client side)
+        if (typeof window !== 'undefined' && !leafletIconsInitialized) {
+            // Fix: Delete the default icon getter function that causes 404 errors in Next.js builds.
+            // This is necessary because Webpack/Next.js messes up the relative paths Leaflet expects.
+            delete (L.Icon.Default.prototype as any)._getIconUrl;
+
+            // Use the standard Leaflet icons from CDN as fallback (version 1.9.4 matches package.json)
+            L.Icon.Default.mergeOptions({
+                iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+                iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+                shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+            });
+            
+            leafletIconsInitialized = true;
+        }
     }, []);
 
     if (!mounted) return <div style={{ height }} className="w-full bg-slate-900/5 animate-pulse rounded-[2.5rem] border border-slate-200" />;
