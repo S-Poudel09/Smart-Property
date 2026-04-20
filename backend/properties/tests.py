@@ -57,4 +57,37 @@ class PropertyViewSetTests(APITestCase):
         self.assertEqual(property_obj.property_type, "hostel")
         self.assertEqual(str(property_obj.price), "2500000.00")
 
+    # Test property submission with missing required fields
+    def test_property_creation_missing_required_fields(self):
+        # Create seller user
+        seller = User.objects.create_user(
+            username="seller2@example.com",
+            email="seller2@example.com",
+            password="StrongPass123",
+            full_name="Seller Two",
+            role="seller",
+            is_verified=True,
+        )
+
+        # Authenticate seller
+        self.client.force_authenticate(user=seller)
+
+        # Invalid property data
+        payload = {
+            "title": "",
+            "location": "",
+            "price": "",
+            "property_type": ""
+        }
+
+        # Send POST request
+        response = self.client.post(self.list_url, payload, format="json")
+
+        # Check validation response
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("title", response.data)
+        self.assertIn("location", response.data)
+        self.assertIn("price", response.data)
+        self.assertIn("property_type", response.data)
+
     
