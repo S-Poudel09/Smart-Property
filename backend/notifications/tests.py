@@ -60,3 +60,35 @@ class NotificationViewSetTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["title"], "Notification 1")
+
+            # Test notification read/unread update
+    def test_notification_mark_read(self):
+        # Create user
+        user = User.objects.create_user(
+            username="notifyread@example.com",
+            email="notifyread@example.com",
+            password="StrongPass123",
+            full_name="Notify Read",
+            role="buyer",
+            is_verified=True,
+        )
+
+        # Create unread notification
+        notification = Notification.objects.create(
+            user=user,
+            type="system",
+            title="Unread Notification",
+            message="Please read this",
+            is_read=False
+        )
+
+        # Authenticate user
+        self.client.force_authenticate(user=user)
+
+        mark_read_url = reverse("notifications-mark-read", kwargs={"pk": notification.id})
+        response = self.client.patch(mark_read_url, {}, format="json")
+
+        # Refresh and check
+        notification.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(notification.is_read)
