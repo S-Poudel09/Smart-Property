@@ -90,4 +90,46 @@ class PropertyViewSetTests(APITestCase):
         self.assertIn("price", response.data)
         self.assertIn("property_type", response.data)
 
-    
+    # Test admin property approval
+    def test_admin_can_approve_property(self):
+        # Create admin and seller
+        admin_user = User.objects.create_user(
+            username="admin1@example.com",
+            email="admin1@example.com",
+            password="StrongPass123",
+            full_name="Admin One",
+            role="admin",
+            is_verified=True,
+        )
+        seller = User.objects.create_user(
+            username="seller3@example.com",
+            email="seller3@example.com",
+            password="StrongPass123",
+            full_name="Seller Three",
+            role="seller",
+            is_verified=True,
+        )
+
+        # Create submitted property
+        property_obj = Property.objects.create(
+            title="Submitted House",
+            location="Kathmandu",
+            price="3000000.00",
+            property_type="house",
+            owner=seller,
+            status="submitted"
+        )
+
+        # Authenticate admin
+        self.client.force_authenticate(user=admin_user)
+
+        approve_url = reverse("property-approve", kwargs={"pk": property_obj.id})
+        response = self.client.post(approve_url, {}, format="json")
+
+        # Refresh and check
+        property_obj.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(property_obj.status, "published")
+        self.assertTrue(property_obj.is_verified)
+
+   
