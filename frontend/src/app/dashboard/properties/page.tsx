@@ -25,7 +25,10 @@ export default function DashboardPropertiesPage() {
     const [properties, setProperties] = useState<Property[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [minPrice, setMinPrice] = useState('');
+    const [maxPrice, setMaxPrice] = useState('');
     const [viewMode, setViewMode] = useState<'grid' | 'list' | 'map'>('grid');
+    const [activeFilters, setActiveFilters] = useState({ search: '', minPrice: '', maxPrice: '' });
 
     useEffect(() => {
         const load = async () => {
@@ -41,10 +44,31 @@ export default function DashboardPropertiesPage() {
         load();
     }, []);
 
-    const filtered = properties.filter(p => 
-        p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.location.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const handleApplyFilters = () => {
+        setActiveFilters({
+            search: searchTerm,
+            minPrice,
+            maxPrice
+        });
+    };
+
+    const handleResetFilters = () => {
+        setSearchTerm('');
+        setMinPrice('');
+        setMaxPrice('');
+        setActiveFilters({ search: '', minPrice: '', maxPrice: '' });
+    };
+
+    const filtered = properties.filter(p => {
+        const matchesSearch = !activeFilters.search || 
+            p.title.toLowerCase().includes(activeFilters.search.toLowerCase()) ||
+            p.location.toLowerCase().includes(activeFilters.search.toLowerCase());
+        
+        const matchesMinPrice = !activeFilters.minPrice || p.price >= parseFloat(activeFilters.minPrice);
+        const matchesMaxPrice = !activeFilters.maxPrice || p.price <= parseFloat(activeFilters.maxPrice);
+        
+        return matchesSearch && matchesMinPrice && matchesMaxPrice;
+    });
 
     if (loading) return <div className="h-[60vh] flex items-center justify-center"><Loader size="lg" /></div>;
 
@@ -100,20 +124,44 @@ export default function DashboardPropertiesPage() {
                         className="w-full bg-transparent pl-14 pr-4 py-1.5 outline-none text-sm font-bold tracking-tight placeholder:font-medium placeholder:italic placeholder:text-slate-400 text-slate-700"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleApplyFilters()}
                     />
                 </div>
                 <div className="flex gap-4">
                     <div className="flex items-center gap-3 bg-slate-50/80 px-6 rounded-[2rem] border border-slate-200/50">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Price Range</span>
                         <div className="flex items-center gap-2">
-                             <input type="number" placeholder="Min" className="w-20 bg-transparent border-none outline-none text-xs font-bold text-slate-700" />
+                             <input 
+                                type="number" 
+                                placeholder="Min" 
+                                className="w-20 bg-transparent border-none outline-none text-xs font-bold text-slate-700" 
+                                value={minPrice}
+                                onChange={(e) => setMinPrice(e.target.value)}
+                             />
                              <span className="text-slate-300 text-xs">-</span>
-                             <input type="number" placeholder="Max" className="w-20 bg-transparent border-none outline-none text-xs font-bold text-slate-700" />
+                             <input 
+                                type="number" 
+                                placeholder="Max" 
+                                className="w-20 bg-transparent border-none outline-none text-xs font-bold text-slate-700" 
+                                value={maxPrice}
+                                onChange={(e) => setMaxPrice(e.target.value)}
+                             />
                         </div>
                     </div>
-                    <button className="bg-slate-900 text-white px-10 py-5 rounded-[2rem] font-black uppercase tracking-[0.2em] text-[10px] hover:bg-indigo-600 transition-all shadow-xl shadow-indigo-900/10 flex items-center gap-4 active:scale-95">
+                    <button 
+                        onClick={handleApplyFilters}
+                        className="bg-slate-900 text-white px-10 py-5 rounded-[2rem] font-black uppercase tracking-[0.2em] text-[10px] hover:bg-indigo-600 transition-all shadow-xl shadow-indigo-900/10 flex items-center gap-4 active:scale-95"
+                    >
                         <Filter className="h-4 w-4" /> Filter Catalog
                     </button>
+                    {(searchTerm || minPrice || maxPrice) && (
+                        <button 
+                            onClick={handleResetFilters}
+                            className="text-slate-400 hover:text-slate-600 text-[10px] font-bold uppercase tracking-widest"
+                        >
+                            Reset
+                        </button>
+                    )}
                 </div>
             </div>
 

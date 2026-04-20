@@ -98,7 +98,8 @@ class PropertyViewSet(viewsets.ModelViewSet):
     # Record the activity in the analytics/audit log
     def get_queryset(self):
         """
-        Return properties based on the requesting user's role and visibility rules.
+        Return properties based on the requesting user's role and visibility rules,
+        with support for searching and filtering.
 
         Visibility rules:
         - Admin: can see all properties
@@ -115,16 +116,44 @@ class PropertyViewSet(viewsets.ModelViewSet):
         
         # Apply visibility rules universally
         if user.is_authenticated and user.role == 'admin':
-            return queryset
+            pass # Admins see all
         elif user.is_authenticated:
             if is_seller_me:
-                return queryset.filter(owner=user)
-            # Authenticated users can see their own properties
-            # plus all publicly published listings
-            return queryset.filter(models.Q(status__iexact="published") | models.Q(owner=user))
+                queryset = queryset.filter(owner=user)
+            else:
+                # Authenticated users can see their own properties
+                # plus all publicly published listings
+                queryset = queryset.filter(models.Q(status__iexact="published") | models.Q(owner=user))
         else:
             # Unauthenticated users can only access published listings
-            return queryset.filter(status__iexact="published")
+            queryset = queryset.filter(status__iexact="published")
+
+        # --- TACTICAL FILTER MATRIX ---
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                models.Q(title__icontains=search) | 
+                models.Q(location__icontains=search) |
+                models.Q(description__icontains=search)
+            )
+
+        min_price = self.request.query_params.get('min_price')
+        if min_price:
+            queryset = queryset.filter(price__gte=min_price)
+
+        max_price = self.request.query_params.get('max_price')
+        if max_price:
+            queryset = queryset.filter(price__lte=max_price)
+
+        property_type = self.request.query_params.get('type')
+        if property_type and property_type != 'all':
+            queryset = queryset.filter(property_type__iexact=property_type)
+
+        category = self.request.query_params.get('category')
+        if category and category != 'all':
+            queryset = queryset.filter(category__iexact=category)
+
+        return queryset
 
     def retrieve(self, request, *args, **kwargs):
         """
