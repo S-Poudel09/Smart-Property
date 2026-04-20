@@ -132,4 +132,48 @@ class PropertyViewSetTests(APITestCase):
         self.assertEqual(property_obj.status, "published")
         self.assertTrue(property_obj.is_verified)
 
-   
+   # Test admin property rejection
+    def test_admin_can_reject_property(self):
+        # Create admin and seller
+        admin_user = User.objects.create_user(
+            username="admin2@example.com",
+            email="admin2@example.com",
+            password="StrongPass123",
+            full_name="Admin Two",
+            role="admin",
+            is_verified=True,
+        )
+        seller = User.objects.create_user(
+            username="seller4@example.com",
+            email="seller4@example.com",
+            password="StrongPass123",
+            full_name="Seller Four",
+            role="seller",
+            is_verified=True,
+        )
+
+        # Create submitted property
+        property_obj = Property.objects.create(
+            title="Rejected Flat",
+            location="Pokhara",
+            price="2000000.00",
+            property_type="flat",
+            owner=seller,
+            status="submitted"
+        )
+
+        # Authenticate admin
+        self.client.force_authenticate(user=admin_user)
+
+        reject_url = reverse("property-reject", kwargs={"pk": property_obj.id})
+        response = self.client.post(
+            reject_url,
+            {"rejection_reason": "Invalid documents"},
+            format="json"
+        )
+
+        # Refresh and check
+        property_obj.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(property_obj.status, "rejected")
+        self.assertEqual(property_obj.rejection_reason, "Invalid documents")
