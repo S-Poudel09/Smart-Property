@@ -217,3 +217,74 @@ class TransactionViewSetTests(APITestCase):
         # Check only buyer1 transaction is returned
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
+
+            # Test payment proof verification
+    def test_payment_proof_verification(self):
+        # Create buyer and seller
+        buyer = User.objects.create_user(
+            username="buyerverify@example.com",
+            email="buyerverify@example.com",
+            password="StrongPass123",
+            full_name="Buyer Verify",
+            role="buyer",
+            is_verified=True,
+        )
+
+        seller = User.objects.create_user(
+            username="sellerverify@example.com",
+            email="sellerverify@example.com",
+            password="StrongPass123",
+            full_name="Seller Verify",
+            role="seller",
+            is_verified=True,
+        )
+
+        # Create property and transaction
+        property_obj = Property.objects.create(
+            title="Verify Property",
+            location="Bhaktapur",
+            price="5500000.00",
+            property_type="house",
+            owner=seller,
+            status="published"
+        )
+
+        transaction = Transaction.objects.create(
+            buyer=buyer,
+            seller=seller,
+            property=property_obj,
+            total_amount="1000000.00",
+            amount_paid="0.00",
+            status="PENDING"
+        )
+
+        proof = PaymentProof.objects.create(
+            transaction=transaction,
+            proof_file=SimpleUploadedFile(
+                "verify_proof.pdf",
+                b"%PDF-1.4 verify proof content",
+                content_type="application/pdf"
+            ),
+            amount="500000.00",
+            is_verified=False
+        )
+
+        # Authenticate seller
+        self.client.force_authenticate(user=seller)
+
+        verify_url = reverse(
+            "transaction-verify-proof",
+            kwargs={"pk": transaction.id, "proof_id": proof.id}
+        )
+
+        # Send POST request
+        response = self.client.post(verify_url, {}, format="json")
+
+        # Refresh objects
+        proof.refresh_from_db()
+        transaction.refresh_from_db()
+
+        # Check verification result
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(proof.is_verified)
+        self.assertEqual(str(transaction.amount_paid), "500000.00")
