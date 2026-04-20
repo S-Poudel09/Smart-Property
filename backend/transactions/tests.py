@@ -139,3 +139,81 @@ class TransactionViewSetTests(APITestCase):
         proof = PaymentProof.objects.first()
         self.assertEqual(proof.transaction, transaction)
         self.assertEqual(str(proof.amount), "500000.00")
+
+            # Test transaction tracking / retrieval
+    def test_transaction_tracking_retrieval(self):
+        # Create users
+        buyer1 = User.objects.create_user(
+            username="buyertrack1@example.com",
+            email="buyertrack1@example.com",
+            password="StrongPass123",
+            full_name="Buyer Track One",
+            role="buyer",
+            is_verified=True,
+        )
+
+        buyer2 = User.objects.create_user(
+            username="buyertrack2@example.com",
+            email="buyertrack2@example.com",
+            password="StrongPass123",
+            full_name="Buyer Track Two",
+            role="buyer",
+            is_verified=True,
+        )
+
+        seller = User.objects.create_user(
+            username="sellertrack@example.com",
+            email="sellertrack@example.com",
+            password="StrongPass123",
+            full_name="Seller Track",
+            role="seller",
+            is_verified=True,
+        )
+
+        # Create properties
+        property1 = Property.objects.create(
+            title="Track Property One",
+            location="Kathmandu",
+            price="4000000.00",
+            property_type="house",
+            owner=seller,
+            status="published"
+        )
+
+        property2 = Property.objects.create(
+            title="Track Property Two",
+            location="Lalitpur",
+            price="6000000.00",
+            property_type="flat",
+            owner=seller,
+            status="published"
+        )
+
+        # Create transactions
+        Transaction.objects.create(
+            buyer=buyer1,
+            seller=seller,
+            property=property1,
+            total_amount="1000000.00",
+            amount_paid="0.00",
+            status="PENDING"
+        )
+
+        Transaction.objects.create(
+            buyer=buyer2,
+            seller=seller,
+            property=property2,
+            total_amount="2000000.00",
+            amount_paid="0.00",
+            status="PENDING"
+        )
+
+        # Authenticate buyer1
+        self.client.force_authenticate(user=buyer1)
+
+        # Send GET request
+        response = self.client.get(self.transaction_list_url)
+
+        # Check only buyer1 transaction is returned
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
