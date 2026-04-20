@@ -177,3 +177,49 @@ class PropertyViewSetTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(property_obj.status, "rejected")
         self.assertEqual(property_obj.rejection_reason, "Invalid documents")
+
+    
+class PropertyVisibilityTests(APITestCase):
+
+    # Setup before each test
+    def setUp(self):
+        self.list_url = reverse("property-list")
+
+    # Test public only sees published properties
+    def test_public_only_sees_published_properties(self):
+        # Create seller
+        seller = User.objects.create_user(
+            username="seller8@example.com",
+            email="seller8@example.com",
+            password="StrongPass123",
+            full_name="Seller Eight",
+            role="seller",
+            is_verified=True,
+        )
+
+        # Create one published and one submitted property
+        Property.objects.create(
+            title="Published Property",
+            location="Kathmandu",
+            price="5000000.00",
+            property_type="house",
+            owner=seller,
+            status="published"
+        )
+
+        Property.objects.create(
+            title="Submitted Property",
+            location="Bhaktapur",
+            price="2200000.00",
+            property_type="flat",
+            owner=seller,
+            status="submitted"
+        )
+
+        # Public request without authentication
+        response = self.client.get(self.list_url)
+
+        # Check only published property is visible
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["title"], "Published Property")
