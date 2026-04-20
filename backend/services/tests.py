@@ -43,3 +43,45 @@ class ServiceViewSetTests(APITestCase):
         # Check response
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 2)
+
+            # Test service booking creation
+    def test_service_booking_creation(self):
+        # Create buyer user
+        buyer = User.objects.create_user(
+            username="buyerservice@example.com",
+            email="buyerservice@example.com",
+            password="StrongPass123",
+            full_name="Buyer Service",
+            role="buyer",
+            is_verified=True,
+        )
+
+        # Create service
+        service = Service.objects.create(
+            name="Construction Help",
+            category="construction",
+            description="Construction and repair service",
+            base_price="8000.00",
+            is_active=True
+        )
+
+        # Authenticate buyer
+        self.client.force_authenticate(user=buyer)
+
+        payload = {
+            "service": str(service.id),
+            "status": "PENDING",
+            "notes": "Need urgent support"
+        }
+
+        # Send POST request
+        response = self.client.post(self.booking_list_url, payload, format="json")
+
+        # Check response
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(ServiceBooking.objects.count(), 1)
+
+        booking = ServiceBooking.objects.first()
+        self.assertEqual(booking.user, buyer)
+        self.assertEqual(booking.service, service)
+        self.assertEqual(booking.status, "PENDING")
