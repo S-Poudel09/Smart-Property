@@ -312,3 +312,40 @@ class PropertyViewSetTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         property_obj = Property.objects.first()
         self.assertEqual(property_obj.property_type, "commercial")
+
+            # Test property price prediction
+    def test_property_price_prediction(self):
+        # Create seller and property
+        seller = User.objects.create_user(
+            username="seller9@example.com",
+            email="seller9@example.com",
+            password="StrongPass123",
+            full_name="Seller Nine",
+            role="seller",
+            is_verified=True,
+        )
+
+        property_obj = Property.objects.create(
+            title="Prediction House",
+            location="Kathmandu",
+            price="5000000.00",
+            property_type="house",
+            owner=seller,
+            status="published",
+            area_sqft=1200,
+            beds=3,
+            baths=2,
+            stories=2
+        )
+
+        # Authenticate user
+        self.client.force_authenticate(user=seller)
+
+        predict_url = reverse("property-predict-price", kwargs={"pk": property_obj.id})
+        response = self.client.post(predict_url, {}, format="json")
+
+        # Check prediction response
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("status", response.data)
+        self.assertIn("prediction", response.data)
+        self.assertIn("estimated_price", response.data["prediction"])
