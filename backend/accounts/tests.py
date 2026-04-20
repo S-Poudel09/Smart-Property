@@ -138,3 +138,138 @@ class RegisterViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("role", response.data)
         self.assertFalse(User.objects.filter(email="princess.satyanarayan108vision@gmail.com").exists())
+
+class LoginViewTests(APITestCase):
+    # Runs before each test
+    def setUp(self):
+        self.url = reverse("login")
+
+    # Test login with valid credentials for verified user
+    @patch("accounts.views.get_tokens_for_user")
+    def test_login_valid_verified_user(self, mock_get_tokens_for_user):
+        # Create verified user
+        user = User.objects.create_user(
+            username="worknestpro1@gmail.com.com",
+            email="worknestpro1@gmail.com.com",
+            password="StrongPass123",
+            full_name="Verified Buyer",
+            role="buyer",
+            is_verified=True,
+        )
+
+        # Mock token response
+        mock_get_tokens_for_user.return_value = {
+            "refresh": "mock_refresh_token",
+            "access": "mock_access_token",
+            "user": {
+                "id": user.id,
+                "name": user.full_name,
+                "email": user.email,
+                "role": user.role,
+                "kyc_status": user.kyc_status,
+                "identity_document": None,
+                "document_type": None,
+                "is_2fa_enabled": user.is_2fa_enabled,
+                "is_verified": user.is_verified,
+            },
+        }
+
+        # Valid login payload
+        payload = {
+            "email": "worknestpro1@gmail.com.com",
+            "password": "StrongPass123",
+        }
+
+        # Send POST request
+        response = self.client.post(self.url, payload, format="json")
+
+        # Check successful login response
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("refresh", response.data)
+        self.assertIn("access", response.data)
+        self.assertIn("user", response.data)
+        self.assertEqual(response.data["user"]["email"], "worknestpro1@gmail.com.com")
+
+    # Test login with incorrect password
+    def test_login_incorrect_password(self):
+        # Create verified user
+        User.objects.create_user(
+            username="worknestpro1@gmail.com.com",
+            email="worknestpro1@gmail.com.com",
+            password="StrongPass123",
+            full_name="Verified Buyer",
+            role="buyer",
+            is_verified=True,
+        )
+
+        # Invalid password payload
+        payload = {
+            "email": "worknestpro1@gmail.com.com",
+            "password": "WrongPassword123",
+        }
+
+        # Send POST request
+        response = self.client.post(self.url, payload, format="json")
+
+        # Check invalid credentials error
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("detail", response.data)
+
+    # Test login with unverified account
+    def test_login_unverified_account(self):
+        # Create unverified user
+        User.objects.create_user(
+            username="unworknestpro1@gmail.com.com",
+            email="unworknestpro1@gmail.com.com",
+            password="StrongPass123",
+            full_name="Unverified Buyer",
+            role="buyer",
+            is_verified=False,
+        )
+
+        # Valid credentials but account not verified
+        payload = {
+            "email": "unworknestpro1@gmail.com.com",
+            "password": "StrongPass123",
+        }
+
+        # Send POST request
+        response = self.client.post(self.url, payload, format="json")
+
+        # Check verification required error
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("detail", response.data)
+        self.assertIn("verify your email", str(response.data["detail"]))
+        
+
+    # Test admin login requiring OTP flow
+    @patch("accounts.views.generate_and_send_otp")
+    def test_admin_login_requires_otp(self, mock_generate_and_send_otp):
+        # Mock OTP sending
+        mock_generate_and_send_otp.return_value = (True, "Imperial Dispatch successful.")
+
+        # Create verified admin user
+        User.objects.create_user(
+            username="princesspoudel38@gmail.com",
+            email="princesspoudel38@gmail.com",
+            password="StrongPass123",
+            full_name="Admin User",
+            role="admin",
+            is_verified=True,
+        )
+
+        # Valid admin login payload
+        payload = {
+            "email": "princesspoudel38@gmail.com",
+            "password": "StrongPass123",
+        }
+
+        # Send POST request
+        response = self.client.post(self.url, payload, format="json")
+
+        # Check OTP flow response
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("requires_otp", response.data)
+        self.assertTrue(response.data["requires_otp"])
+        self.assertEqual(response.data["email"], "princesspoudel38@gmail.com")
+        self.assertIn("message", response.data)
