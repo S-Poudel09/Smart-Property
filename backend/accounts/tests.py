@@ -663,3 +663,35 @@ class AdminModuleTests(APITestCase):
         # Check response
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("count", response.data)
+
+            # Test admin user management list access
+    def test_admin_user_management_list_access(self):
+        # Create admin user
+        admin_user = User.objects.create_user(
+            username="adminusers@example.com",
+            email="adminusers@example.com",
+            password="StrongPass123",
+            full_name="Admin Users",
+            role="admin",
+            is_verified=True,
+        )
+
+        # Create another user
+        User.objects.create_user(
+            username="buyerusers@example.com",
+            email="buyerusers@example.com",
+            password="StrongPass123",
+            full_name="Buyer Users",
+            role="buyer",
+            is_verified=True,
+        )
+
+        # Authenticate admin
+        self.client.force_authenticate(user=admin_user)
+
+        # Send GET request
+        response = self.client.get(self.admin_users_url)
+
+        # Check response
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(len(response.data) >= 1)
