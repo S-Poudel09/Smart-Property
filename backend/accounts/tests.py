@@ -5,6 +5,10 @@ from django.urls import reverse  # Used to reverse URL names to actual paths for
 from rest_framework import status
 from rest_framework.test import APITestCase  # Django REST Framework's test case for API testing
 from accounts.models import OTP # OTP model for testing OTP flows
+from django.contrib.auth.tokens import PasswordResetTokenGenerator  # generate reset token
+from django.utils.http import urlsafe_base64_encode  # encode user id
+from django.utils.encoding import force_bytes  # convert to bytes
+
 
 User = get_user_model()
 
@@ -418,11 +422,6 @@ class VerifyOTPViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("message", response.data)
 
-from django.contrib.auth.tokens import PasswordResetTokenGenerator  # generate reset token
-from django.utils.http import urlsafe_base64_encode  # encode user id
-from django.utils.encoding import force_bytes  # convert to bytes
-
-
 class PasswordResetViewTests(APITestCase):
 
     # Setup URLs before each test
@@ -532,3 +531,96 @@ class PasswordResetViewTests(APITestCase):
         # Check failure
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("error", response.data)
+
+class SecurityAndPermissionTests(APITestCase):
+
+    # Setup URLs before each test
+    def setUp(self):
+        self.toggle_2fa_url = reverse("toggle-2fa")
+        self.profile_url = reverse("me")
+        self.user_count_url = reverse("user-count")
+
+    # Test enabling/disabling 2FA for authenticated user
+    def test_toggle_2fa_on_off(self):
+        # Create authenticated user
+        user = User.objects.create_user(
+            username="buyer2@example.com",
+            email="buyer2@example.com",
+            password="StrongPass123",
+            full_name="Buyer Two",
+            role="buyer",
+            is_verified=True,
+            is_2fa_enabled=False,
+        )
+
+        # Authenticate user
+        self.client.force_authenticate(user=user)
+
+        # Enable 2FA
+        response_enable = self.client.post(
+            self.toggle_2fa_url,
+            {"enabled": True},
+            format="json"
+        )
+
+        # Check enable response
+        self.assertEqual(response_enable.status_code, status.HTTP_200_OK)
+        self.assertIn("is_2fa_enabled", response_enable.data)
+        self.assertTrue(response_enable.data["is_2fa_enabled"])
+
+        # Disable 2FA
+        response_disable = self.client.post(
+            self.toggle_2fa_url,
+            {"enabled": False},
+            format="json"
+        )
+
+        # Check disable response
+        self.assertEqual(response_disable.status_code, status.HTTP_200_OK)
+        self.assertIn("is_2fa_enabled", response_disable.data)
+        self.assertFalse(response_disable.data["is_2fa_enabled"])
+
+    # Test protected route without authentication
+    def test_protected_route_access_without_authentication(self):
+        # Send request without login
+        response = self.client.get(self.profile_url)
+
+        # Check unauthorized response
+        self.assertIn(response.status_code, [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
+
+    # Test admin-only endpoint access for admin and non-admin
+    def test_role_based_access_validation(self):
+        # Create admin user
+        admin_user = User.objects.create_user(
+            username="admincheck@example.com",
+            email="admincheck@example.com",
+            password="StrongPass123",
+            full_name="Admin Check",
+            role="admin",
+            is_verified=True,
+        )
+
+        # Create normal buyer user
+        buyer_user = User.objects.create_user(
+            username="buyercheck@example.com",
+            email="buyercheck@example.com",
+            password="StrongPass123",
+            full_name="Buyer Check",
+            role="buyer",
+            is_verified=True,
+        )
+
+        # Authenticate as buyer and try admin-only endpoint
+        self.client.force_authenticate(user=buyer_user)
+        response_buyer = self.client.get(self.user_count_url)
+
+        # Buyer should be denied
+        self.assertEqual(response_buyer.status_code, status.HTTP_403_FORBIDDEN)
+
+        # Authenticate as admin and try same endpoint
+        self.client.force_authenticate(user=admin_user)
+        response_admin = self.client.get(self.user_count_url)
+
+        # Admin should be allowed
+        self.assertEqual(response_admin.status_code, status.HTTP_200_OK)
+        self.assertIn("count", response_admin.data)
