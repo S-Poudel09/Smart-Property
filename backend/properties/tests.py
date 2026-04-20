@@ -4,6 +4,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
 from .models import Property, PropertyImage
+from .models import Property, PropertyImage, PropertyDocument
 
 from .models import Property
 
@@ -442,3 +443,42 @@ class PropertyViewSetTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Property.objects.count(), 1)
         self.assertEqual(PropertyImage.objects.count(), 1)
+
+    # Test property document upload during creation
+    def test_property_document_upload(self):
+        # Create seller user
+        seller = User.objects.create_user(
+            username="seller12@example.com",
+            email="seller12@example.com",
+            password="StrongPass123",
+            full_name="Seller Twelve",
+            role="seller",
+            is_verified=True,
+        )
+
+        # Authenticate seller
+        self.client.force_authenticate(user=seller)
+
+        # Create a simple test document file
+        document_file = SimpleUploadedFile(
+            "test_document.pdf",
+            b"%PDF-1.4 test pdf content",
+            content_type="application/pdf"
+        )
+
+        payload = {
+            "title": "Document Upload Property",
+            "description": "Property with document upload.",
+            "location": "Kathmandu",
+            "price": "4200000.00",
+            "property_type": "house",
+            "listing_type": "sale",
+            "uploaded_documents": [document_file]
+        }
+
+        response = self.client.post(self.list_url, payload, format="multipart")
+
+        # Check property created successfully
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Property.objects.count(), 1)
+        self.assertEqual(PropertyDocument.objects.count(), 1)
