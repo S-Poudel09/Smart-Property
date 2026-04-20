@@ -178,8 +178,6 @@ class PropertyViewSetTests(APITestCase):
         self.assertEqual(property_obj.status, "rejected")
         self.assertEqual(property_obj.rejection_reason, "Invalid documents")
 
-    
-class PropertyVisibilityTests(APITestCase):
 
     # Setup before each test
     def setUp(self):
@@ -223,3 +221,30 @@ class PropertyVisibilityTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["title"], "Published Property")
+
+    # Test property detail retrieval
+        # Test property detail retrieval
+    def test_property_detail_retrieval_valid_id(self):
+        seller = User.objects.create_user(
+            username="seller5@example.com",
+            email="seller5@example.com",
+            password="StrongPass123",
+            full_name="Seller Five",
+            role="seller",
+            is_verified=True,
+        )
+
+        property_obj = Property.objects.create(
+            title="Luxury Apartment",
+            location="Lalitpur",
+            price="4500000.00",
+            property_type="apartment",
+            owner=seller,
+            status="published"
+        )
+
+        detail_url = reverse("property-detail", kwargs={"pk": property_obj.id})
+        response = self.client.get(detail_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["title"], "Luxury Apartment")
