@@ -85,3 +85,57 @@ class ServiceViewSetTests(APITestCase):
         self.assertEqual(booking.user, buyer)
         self.assertEqual(booking.service, service)
         self.assertEqual(booking.status, "PENDING")
+
+            # Test booking history retrieval
+    def test_booking_history_retrieval(self):
+        # Create two users
+        user1 = User.objects.create_user(
+            username="user1service@example.com",
+            email="user1service@example.com",
+            password="StrongPass123",
+            full_name="User One",
+            role="buyer",
+            is_verified=True,
+        )
+
+        user2 = User.objects.create_user(
+            username="user2service@example.com",
+            email="user2service@example.com",
+            password="StrongPass123",
+            full_name="User Two",
+            role="buyer",
+            is_verified=True,
+        )
+
+        # Create service
+        service = Service.objects.create(
+            name="Finance Support",
+            category="finance",
+            description="Financial guidance service",
+            base_price="6000.00",
+            is_active=True
+        )
+
+        # Create bookings for both users
+        ServiceBooking.objects.create(
+            user=user1,
+            service=service,
+            status="PENDING"
+        )
+
+        ServiceBooking.objects.create(
+            user=user2,
+            service=service,
+            status="COMPLETED"
+        )
+
+        # Authenticate user1
+        self.client.force_authenticate(user=user1)
+
+        # Send GET request
+        response = self.client.get(self.booking_list_url)
+
+        # Check only user1 booking is returned
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["user_email"], "user1service@example.com")
