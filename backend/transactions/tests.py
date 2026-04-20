@@ -70,3 +70,72 @@ class TransactionViewSetTests(APITestCase):
         self.assertEqual(transaction.buyer, buyer)
         self.assertEqual(transaction.property, property_obj)
         self.assertEqual(str(transaction.total_amount), "1000000.00")
+
+            # Test payment proof upload
+    def test_payment_proof_upload(self):
+        # Create buyer and seller
+        buyer = User.objects.create_user(
+            username="buyerproof@example.com",
+            email="buyerproof@example.com",
+            password="StrongPass123",
+            full_name="Buyer Proof",
+            role="buyer",
+            is_verified=True,
+        )
+
+        seller = User.objects.create_user(
+            username="sellerproof@example.com",
+            email="sellerproof@example.com",
+            password="StrongPass123",
+            full_name="Seller Proof",
+            role="seller",
+            is_verified=True,
+        )
+
+        # Create property and transaction
+        property_obj = Property.objects.create(
+            title="Proof Property",
+            location="Pokhara",
+            price="4500000.00",
+            property_type="house",
+            owner=seller,
+            status="published"
+        )
+
+        transaction = Transaction.objects.create(
+            buyer=buyer,
+            seller=seller,
+            property=property_obj,
+            total_amount="1000000.00",
+            amount_paid="0.00",
+            payment_method="Bank Transfer",
+            status="PENDING"
+        )
+
+        # Authenticate buyer
+        self.client.force_authenticate(user=buyer)
+
+        proof_file = SimpleUploadedFile(
+            "payment_proof.pdf",
+            b"%PDF-1.4 payment proof content",
+            content_type="application/pdf"
+        )
+
+        upload_url = reverse("transaction-upload-proof", kwargs={"pk": transaction.id})
+
+        payload = {
+            "amount": "500000.00",
+            "proof_file": proof_file,
+            "notes": "Advance payment proof"
+        }
+
+        # Send POST request
+        response = self.client.post(upload_url, payload, format="multipart")
+
+        # Check response
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(PaymentProof.objects.count(), 1)
+
+        proof = PaymentProof.objects.first()
+        self.assertEqual(proof.transaction, transaction)
+        self.assertEqual(str(proof.amount), "500000.00")
