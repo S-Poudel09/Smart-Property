@@ -1,10 +1,10 @@
-from unittest.mock import patch  # Mock external calls like OTP/email
+from unittest.mock import patch  # Used to mock functions and methods during testing, such as sending emails or generating OTPs
 
 from django.contrib.auth import get_user_model
-from django.urls import reverse  # Resolve URL names
+from django.urls import reverse  # Used to reverse URL names to actual paths for testing API endpoints
 from rest_framework import status
-from rest_framework.test import APITestCase  # API test client
-from accounts.models import OTP
+from rest_framework.test import APITestCase  # Django REST Framework's test case for API testing
+from accounts.models import OTP # OTP model for testing OTP flows
 
 User = get_user_model()
 
@@ -417,3 +417,118 @@ class VerifyOTPViewTests(APITestCase):
         # Check resend response
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("message", response.data)
+
+from django.contrib.auth.tokens import PasswordResetTokenGenerator  # generate reset token
+from django.utils.http import urlsafe_base64_encode  # encode user id
+from django.utils.encoding import force_bytes  # convert to bytes
+
+
+class PasswordResetViewTests(APITestCase):
+
+    # Setup URLs before each test
+    def setUp(self):
+        self.request_url = reverse("password-reset-request")
+        self.confirm_url = reverse("password-reset-confirm")
+
+    # Test password reset request with valid email
+    @patch("accounts.views.send_mail")
+    def test_password_reset_request_valid_email(self, mock_send_mail):
+        mock_send_mail.return_value = 1  # mock email send success
+
+        # Create test user
+        User.objects.create_user(
+            username="resetuser@example.com",
+            email="resetuser@example.com",
+            password="OldPass123",
+            full_name="Reset User",
+            role="buyer",
+            is_verified=True,
+        )
+
+        payload = {
+            "email": "resetuser@example.com"
+        }
+
+        # Send request
+        response = self.client.post(self.request_url, payload, format="json")
+
+        # Check response
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("message", response.data)
+
+    # Test password reset request with invalid email
+    def test_password_reset_request_invalid_email(self):
+
+        payload = {
+            "email": "nouser@example.com"
+        }
+
+        # Send request
+        response = self.client.post(self.request_url, payload, format="json")
+
+        # Should still return success (security reason)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("message", response.data)
+
+    # Test password reset confirm with valid token
+    def test_password_reset_confirm_valid_token(self):
+
+        # Create test user
+        user = User.objects.create_user(
+            username="resetuser@example.com",
+            email="resetuser@example.com",
+            password="OldPass123",
+            full_name="Reset User",
+            role="buyer",
+            is_verified=True,
+        )
+
+        # Generate valid uid and token
+        uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+        token = PasswordResetTokenGenerator().make_token(user)
+
+        payload = {
+            "uidb64": uidb64,
+            "token": token,
+            "new_password": "NewStrongPass123"
+        }
+
+        # Send request
+        response = self.client.post(self.confirm_url, payload, format="json")
+
+        # Check success
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("message", response.data)
+
+        # Verify password changed
+        user.refresh_from_db()
+        self.assertTrue(user.check_password("NewStrongPass123"))
+
+    # Test password reset confirm with invalid token
+    def test_password_reset_confirm_invalid_token(self):
+
+        # Create test user
+        user = User.objects.create_user(
+            username="resetuser@example.com",
+            email="resetuser@example.com",
+            password="OldPass123",
+            full_name="Reset User",
+            role="buyer",
+            is_verified=True,
+        )
+
+        # Generate uid but use invalid token
+        uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+
+        payload = {
+            "uidb64": uidb64,
+            "token": "invalid-token-123",
+            "new_password": "NewStrongPass123"
+        }
+
+        # Send request
+        response = self.client.post(self.confirm_url, payload, format="json")
+
+        # Check failure
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", response.data)
