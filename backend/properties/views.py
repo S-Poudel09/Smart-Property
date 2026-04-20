@@ -9,12 +9,28 @@ from accounts.permissions import IsSellerUser, IsAdminUser
 
 class PropertyViewSet(viewsets.ModelViewSet):
     """
-    Standard ViewSet for Property CRUD.
+    ViewSet responsible for managing property-related CRUD operations.
+
+    This class handles:
+    - Public property listing and retrieval
+    - Seller property creation and submission
+    - Admin approval and rejection of listings
+    - Property price prediction
+    - OCR-based document verification
+    - Property review submission
     """
     queryset = Property.objects.all()
     serializer_class = PropertySerializer
 
     def get_permissions(self):
+        """
+        Assign permissions dynamically based on the current action.
+
+        Rules:
+        - list/retrieve: public access
+        - create: authenticated seller only
+        - update/delete/other actions: authenticated users only
+        """
         if self.action in ['list', 'retrieve']:
             permission_classes = [permissions.AllowAny]
         elif self.action == 'create':
@@ -25,6 +41,12 @@ class PropertyViewSet(viewsets.ModelViewSet):
         return [permission() for permission in permission_classes]
 
     def create(self, request, *args, **kwargs):
+        """
+        Create a new property record.
+
+        Validates serializer input first. If valid, delegates saving
+        to perform_create(). Returns proper success or error responses.
+        """
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -42,10 +64,11 @@ class PropertyViewSet(viewsets.ModelViewSet):
             from rest_framework.exceptions import PermissionDenied
             raise PermissionDenied("Only sellers can submit properties.")
         
-        # Set initial status as 'submitted' as requested
+        # Save property with the authenticated seller as owner
+        # and set its initial review status as 'submitted'
         property_obj = serializer.save(owner=self.request.user, status='submitted')
         
-        # Notify admins of the submission
+        # Notify admins about the new property submission
         try:
             from accounts.models import User
             from notifications.models import Notification
@@ -59,9 +82,11 @@ class PropertyViewSet(viewsets.ModelViewSet):
                     link='/dashboard/admin/properties'
                 )
         except Exception:
+            # Notification failure should not block property creation
             pass
 
         # PostgreSQL activity log
+        # Notify admins about the new property submission
         from analytics.utils import log_activity
         log_activity(
             self.request.user.email, 
@@ -70,11 +95,22 @@ class PropertyViewSet(viewsets.ModelViewSet):
             status='success'
         )
 
+    # Record the activity in the analytics/audit log
     def get_queryset(self):
+        """
+        Return properties based on the requesting user's role and visibility rules.
+
+        Visibility rules:
+        - Admin: can see all properties
+        - Authenticated users:
+            - if seller=me query param is provided, only own properties
+            - otherwise own properties + published properties
+        - Anonymous users: only published properties
+        """
         queryset = Property.objects.all().order_by('-created_at')
         user = self.request.user
         
-        # Check for specific seller filter (?seller=me)
+        # Query parameter used for seller dashboard filtering
         is_seller_me = self.request.query_params.get('seller') == 'me'
         
         # Apply visibility rules universally
@@ -82,17 +118,20 @@ class PropertyViewSet(viewsets.ModelViewSet):
             return queryset
         elif user.is_authenticated:
             if is_seller_me:
-                # Strictly only the user's OWN properties
                 return queryset.filter(owner=user)
-            # Standard visibility: own properties + all published ones
+            # Authenticated users can see their own properties
+            # plus all publicly published listings
             return queryset.filter(models.Q(status__iexact="published") | models.Q(owner=user))
         else:
-            # Complete public anon visibility strictly bound to published
+            # Unauthenticated users can only access published listings
             return queryset.filter(status__iexact="published")
 
     def retrieve(self, request, *args, **kwargs):
+        """
+        Retrieve a single property and log the view activity.
+        """
         instance = self.get_object()
-        # PostgreSQL track property view
+        # Log property view for analytics
         from analytics.utils import log_property_view
         log_property_view(
             property_id=str(instance.id),
@@ -101,9 +140,13 @@ class PropertyViewSet(viewsets.ModelViewSet):
         return super().retrieve(request, *args, **kwargs)
 
     def perform_update(self, serializer):
-        # Admins can update anything.
-        # Sellers can update their own properties, but cannot manually set status to 'approved' or 'published'
-        # without using the admin approval flow.
+        """
+        Update an existing property.
+
+        Business rule:
+        - Non-admin users cannot manually change property status
+          to protected states such as 'approved' or 'published'
+        """
         user = self.request.user
         
         # If the user is trying to change status to protected states without being admin
@@ -116,6 +159,11 @@ class PropertyViewSet(viewsets.ModelViewSet):
         serializer.save()
 
     def update(self, request, *args, **kwargs):
+        """
+        Update a property only if the requester is:
+        - the property owner, or
+        - an admin
+        """
         try:
             instance = self.get_object()
         except Exception:
@@ -127,6 +175,11 @@ class PropertyViewSet(viewsets.ModelViewSet):
         return super().update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
+        """
+        Delete a property only if the requester is:
+        - the property owner, or
+        - an admin
+        """
         try:
             instance = self.get_object()
         except Exception:
@@ -138,6 +191,12 @@ class PropertyViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated, IsSellerUser])
     def submit(self, request, pk=None):
+        """
+        Submit an existing seller-owned property for admin approval.
+
+        This changes the property status to 'submitted',
+        notifies admins, and logs the submission event.
+        """
         try:
             property_obj = self.get_object()
         except Exception:
@@ -148,7 +207,7 @@ class PropertyViewSet(viewsets.ModelViewSet):
         property_obj.status = "submitted"
         property_obj.save()
         
-        # Notify admins
+        # Notify admins about the submission
         from accounts.models import User
         from notifications.models import Notification
         admins = User.objects.filter(role='admin')
@@ -161,7 +220,7 @@ class PropertyViewSet(viewsets.ModelViewSet):
                 link='/dashboard/admin/properties'
             )
 
-        # PostgreSQL activity log
+         # Log submission activity
         from analytics.utils import log_activity
         log_activity(request.user.email, 'submit_property', details={'property_id': str(property_obj.id)}, status='success')
 
@@ -183,6 +242,12 @@ class PropertyViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated, IsAdminUser])
     def reject(self, request, pk=None):
+        """
+        Admin action to reject a property submission.
+
+        Stores the rejection reason, sends an email to the owner,
+        and creates an in-app notification.
+        """
         property_obj = self.get_object()
         reason = request.data.get("rejection_reason", "No reason provided")
         property_obj.status = "rejected"
@@ -219,7 +284,10 @@ class PropertyViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], url_path='predict-price', permission_classes=[permissions.IsAuthenticated])
     def predict_price(self, request, pk=None):
         """
-        Use rule-based logic to estimate property value based on node telemetry.
+        Predict an estimated price for the selected property.
+
+        Uses rule-based logic from the custom PropertyPricePredictor class.
+        The request body may override some feature values for simulation.
         """
         from .ml_utils import PropertyPricePredictor
         try:
@@ -261,7 +329,10 @@ class PropertyViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], url_path='verify-document/(?P<doc_id>[^/.]+)', permission_classes=[permissions.IsAuthenticated, IsSellerUser])
     def ocr_verify(self, request, pk=None, doc_id=None):
         """
-        Simulate OCR verification for a specific document.
+        Simulate OCR-based verification for a property document.
+
+        This method verifies ownership, marks the document as verified,
+        and stores mock OCR metadata in the document record.
         """
         try:
             doc = PropertyDocument.objects.get(id=doc_id, property_id=pk)
@@ -290,7 +361,12 @@ class PropertyViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], url_path='add-review', permission_classes=[permissions.IsAuthenticated])
     def add_review(self, request, pk=None):
         """
-        Add a social proof review for this property node.
+        Add or update a review for a property.
+
+        Features:
+        - Requires comment
+        - Validates rating range (1 to 5)
+        - Marks review as verified purchase if user completed a transaction
         """
         from .models import Review
         # Importing ReviewSerializer locally to avoid circulars if any
