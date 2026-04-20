@@ -288,3 +288,62 @@ class TransactionViewSetTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(proof.is_verified)
         self.assertEqual(str(transaction.amount_paid), "500000.00")
+
+            # Test admin transaction monitoring access
+    def test_admin_transaction_monitoring_access(self):
+        # Create admin, buyer, seller
+        admin_user = User.objects.create_user(
+            username="admintransaction@example.com",
+            email="admintransaction@example.com",
+            password="StrongPass123",
+            full_name="Admin Transaction",
+            role="admin",
+            is_verified=True,
+        )
+
+        buyer = User.objects.create_user(
+            username="buyeradmintransaction@example.com",
+            email="buyeradmintransaction@example.com",
+            password="StrongPass123",
+            full_name="Buyer Admin Transaction",
+            role="buyer",
+            is_verified=True,
+        )
+
+        seller = User.objects.create_user(
+            username="selleradmintransaction@example.com",
+            email="selleradmintransaction@example.com",
+            password="StrongPass123",
+            full_name="Seller Admin Transaction",
+            role="seller",
+            is_verified=True,
+        )
+
+        # Create property and transaction
+        property_obj = Property.objects.create(
+            title="Admin Monitor Property",
+            location="Kathmandu",
+            price="5000000.00",
+            property_type="house",
+            owner=seller,
+            status="published"
+        )
+
+        Transaction.objects.create(
+            buyer=buyer,
+            seller=seller,
+            property=property_obj,
+            total_amount="1000000.00",
+            amount_paid="0.00",
+            status="PENDING"
+        )
+
+        # Authenticate admin
+        self.client.force_authenticate(user=admin_user)
+
+        # Send GET request
+        response = self.client.get(self.transaction_list_url)
+
+        # Check response
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(len(response.data) >= 1)
