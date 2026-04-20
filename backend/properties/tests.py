@@ -248,3 +248,36 @@ class PropertyViewSetTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["title"], "Luxury Apartment")
+
+            # Test hostel listing support
+    def test_hostel_property_creation(self):
+        # Create seller user
+        seller = User.objects.create_user(
+            username="seller6@example.com",
+            email="seller6@example.com",
+            password="StrongPass123",
+            full_name="Seller Six",
+            role="seller",
+            is_verified=True,
+        )
+
+        # Authenticate seller
+        self.client.force_authenticate(user=seller)
+
+        payload = {
+            "title": "Girls Hostel in Chabahil",
+            "description": "Safe girls hostel with WiFi and food.",
+            "location": "Kathmandu",
+            "price": "1800000.00",
+            "property_type": "hostel",
+            "listing_type": "rent",
+            "hostel_gender": "girls",
+            "available_beds": 10
+        }
+
+        response = self.client.post(self.list_url, payload, format="json")
+
+        # Check hostel property created
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        property_obj = Property.objects.first()
+        self.assertEqual(property_obj.property_type, "hostel")
