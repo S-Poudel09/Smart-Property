@@ -349,3 +349,52 @@ class PropertyViewSetTests(APITestCase):
         self.assertIn("status", response.data)
         self.assertIn("prediction", response.data)
         self.assertIn("estimated_price", response.data["prediction"])
+
+            # Test property review submission
+    def test_property_review_submission(self):
+        # Create seller and buyer
+        seller = User.objects.create_user(
+            username="seller10@example.com",
+            email="seller10@example.com",
+            password="StrongPass123",
+            full_name="Seller Ten",
+            role="seller",
+            is_verified=True,
+        )
+
+        buyer = User.objects.create_user(
+            username="buyer10@example.com",
+            email="buyer10@example.com",
+            password="StrongPass123",
+            full_name="Buyer Ten",
+            role="buyer",
+            is_verified=True,
+        )
+
+        # Create property
+        property_obj = Property.objects.create(
+            title="Review House",
+            location="Pokhara",
+            price="3500000.00",
+            property_type="house",
+            owner=seller,
+            status="published"
+        )
+
+        # Authenticate buyer
+        self.client.force_authenticate(user=buyer)
+
+        review_url = reverse("property-add-review", kwargs={"pk": property_obj.id})
+        payload = {
+            "rating": 5,
+            "comment": "Very good property."
+        }
+
+        response = self.client.post(review_url, payload, format="json")
+
+        # Check review response
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("message", response.data)
+        self.assertIn("review", response.data)
+        self.assertEqual(response.data["review"]["rating"], 5)
+        self.assertEqual(response.data["review"]["comment"], "Very good property.")
