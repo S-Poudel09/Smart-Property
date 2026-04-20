@@ -2,6 +2,8 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
+from .models import Property, PropertyImage
 
 from .models import Property
 
@@ -398,3 +400,45 @@ class PropertyViewSetTests(APITestCase):
         self.assertIn("review", response.data)
         self.assertEqual(response.data["review"]["rating"], 5)
         self.assertEqual(response.data["review"]["comment"], "Very good property.")
+
+
+            # Test property image upload during creation
+    def test_property_image_upload(self):
+        # Create seller user
+        seller = User.objects.create_user(
+            username="seller11@example.com",
+            email="seller11@example.com",
+            password="StrongPass123",
+            full_name="Seller Eleven",
+            role="seller",
+            is_verified=True,
+        )
+
+        # Authenticate seller
+        self.client.force_authenticate(user=seller)
+
+        # Create a simple test image file
+        image_file = SimpleUploadedFile(
+            "test_image.gif",
+            b"GIF87a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff!"
+            b"\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00"
+            b"\x00\x02\x02D\x01\x00;",
+            content_type="image/gif"
+        )
+
+        payload = {
+            "title": "Image Upload Property",
+            "description": "Property with image upload.",
+            "location": "Kathmandu",
+            "price": "4000000.00",
+            "property_type": "house",
+            "listing_type": "sale",
+            "uploaded_images": [image_file]
+        }
+
+        response = self.client.post(self.list_url, payload, format="multipart")
+
+        # Check property created successfully
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Property.objects.count(), 1)
+        self.assertEqual(PropertyImage.objects.count(), 1)
