@@ -19,7 +19,7 @@ const NotificationsScreen = ({ navigation }: any) => {
 
   const fetchNotifications = async () => {
     try {
-      const response = await api.get('/notifications/');
+      const response = await api.get('notifications/');
       setNotifications(response.data);
     } catch (error) {
       console.log('Failed to fetch notifications');
@@ -41,7 +41,7 @@ const NotificationsScreen = ({ navigation }: any) => {
 
   const markAsRead = async (id: any) => {
       try {
-          await api.patch(`/notifications/${id}/mark-read/`);
+          await api.patch(`notifications/${id}/mark-read/`);
           setNotifications(notifications.map((n: any) => n.id === id ? { ...n, is_read: true } : n));
       } catch (e) {
           console.error(e);
@@ -107,7 +107,7 @@ const NotificationsScreen = ({ navigation }: any) => {
         ListHeaderComponent={() => (
             <View style={styles.listHeader}>
                 <Text style={styles.headerTitle}>Timeline</Text>
-                <TouchableOpacity onPress={() => api.post('/notifications/mark-all-read/').then(fetchNotifications)}>
+                <TouchableOpacity onPress={() => api.post('notifications/mark-all-read/').then(fetchNotifications)}>
                     <Text style={styles.markAllText}>Mark all as read</Text>
                 </TouchableOpacity>
             </View>

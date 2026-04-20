@@ -28,7 +28,7 @@ const EditProfileScreen = ({ navigation }: any) => {
     setIsLoading(true);
     try {
       // Backend update profile
-      const response = await api.put('/auth/profile/update/', { 
+      const response = await api.put('auth/profile/update/', { 
         full_name: name,
         phone: phone 
       });

@@ -43,7 +43,7 @@ export default function HomePage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        api.get('/properties/')
+        api.get('properties/')
             .then(res => {
                 const data = Array.isArray(res.data) ? res.data : res.data?.results ?? [];
                 const published = data.filter((p: any) => p.status === 'published' || !p.status);

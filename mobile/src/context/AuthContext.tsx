@@ -43,7 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(JSON.parse(storedUser));
         // Verify token by getting fresh profile
         try {
-          const response = await api.get('/auth/me/');
+          const response = await api.get('auth/me/');
           setUser(response.data);
           await Storage.setItemAsync('userData', JSON.stringify(response.data));
         } catch (error) {

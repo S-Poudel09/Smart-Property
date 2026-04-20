@@ -186,7 +186,7 @@ export default function SellerListingDetailsPage() {
                                     <div className="col-span-full pt-4 flex flex-wrap gap-6 border-t border-indigo-100/50">
                                         {(property.food_included || property.foodIncluded) && <span className="inline-flex items-center gap-2 text-[9px] font-black text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100 uppercase italic">Food Included</span>}
                                         {(property.has_wifi || property.hasWifi) && <span className="inline-flex items-center gap-2 text-[9px] font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 uppercase italic">High-Speed Wifi</span>}
-                                        {(property.has_laundry || property.hasLaundry) && <span className="inline-flex items-center gap-2 text-[9px] font-black text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 uppercase italic">Laundry System</span>}
+                                        {(property.has_laundry || property.hasLaundry) && <span className="inline-flex items-center gap-2 text-[9px] font-black text-purple-600 bg-purple-50 px-3 py-1.5 rounded-lg border border-purple-100 uppercase italic">Laundry System</span>}
                                     </div>
                                 </div>
                             )}

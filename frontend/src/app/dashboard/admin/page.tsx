@@ -56,7 +56,7 @@ export default function AdminDashboard() {
     if (loading || !stats) return <div className="h-[60vh] flex items-center justify-center"><Loader size="lg" /></div>;
 
     const metrics = [
-        { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100', trend: `+${stats.userGrowth}% Growth` },
+        { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-100', trend: `+${stats.userGrowth}% Growth` },
         { label: 'Asset Inventory', value: stats.totalProperties, icon: Building, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100', trend: 'Global Registry' },
         { label: 'Total Revenue', value: `Rs ${(stats.revenue / 100000).toFixed(1)}L`, icon: ReceiptText, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', trend: 'Audit Synchronized' },
         { label: 'Fraud Alerts', value: stats.activeFraudAlerts || 0, icon: ShieldCheck, color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-100', trend: 'Immediate Action' },

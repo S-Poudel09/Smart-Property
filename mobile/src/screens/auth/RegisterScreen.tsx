@@ -29,7 +29,7 @@ const RegisterScreen = ({ navigation }: any) => {
 
     setIsLoading(true);
     try {
-      await api.post('/auth/register/', { 
+      await api.post('auth/register/', { 
         name, 
         email, 
         password, 

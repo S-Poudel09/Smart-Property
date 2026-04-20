@@ -4,7 +4,7 @@ import Constants from 'expo-constants';
 
 // For physical devices, we should use the local IP instead of 127.0.0.1
 // You can change this to your actual local IP (e.g. 192.168.x.x) for testing
-const BASE_URL = 'http://10.0.2.2:8000/api';
+const BASE_URL = 'http://10.0.2.2:8000/api/';
 
 export const getFullImageUrl = (path: string | null | undefined) => {
   if (!path) return null;

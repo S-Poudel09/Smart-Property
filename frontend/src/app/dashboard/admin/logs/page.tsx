@@ -33,7 +33,7 @@ export default function ActivityLogsPage() {
         else setRefreshing(true);
         
         try {
-            const res = await api.get('/admin/activity_logs/');
+            const res = await api.get('admin/activity_logs/');
             setLogs(res.data);
         } catch (e) {
             console.error('Failed to fetch logs', e);

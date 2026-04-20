@@ -6,6 +6,8 @@ import KYCUpload from '@/components/auth/KYCUpload';
 import Container from '@/components/layout/Container';
 import { User, Mail, Settings, Lock, Crown, Gem, BadgeCheck, Sparkles, Fingerprint } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { toast } from 'react-hot-toast';
+import api from '@/lib/api/http';
 
 interface UserProfile {
     name: string;
@@ -147,8 +149,18 @@ export default function ProfilePage() {
                                         </div>
                                     </div>
                                     <button 
+                                        id="dual-shield-toggle"
                                         className={`h-7 w-12 rounded-full transition-all relative border-2 ${user.is_2fa_enabled ? 'bg-accent border-accent' : 'bg-transparent border-white/20'}`}
-                                        disabled
+                                        onClick={async () => {
+                                            const newState = !user.is_2fa_enabled;
+                                            try {
+                                                await api.post('accounts/2fa/toggle/', { enabled: newState });
+                                                setUser({ ...user, is_2fa_enabled: newState });
+                                                toast.success(newState ? "Dual-Shield enabled" : "Dual-Shield disabled");
+                                            } catch (error) {
+                                                toast.error("Failed to update security protocol");
+                                            }
+                                        }}
                                     >
                                         <span className={`absolute top-1 left-1 h-3.5 w-3.5 rounded-full bg-white transition-transform ${user.is_2fa_enabled ? 'translate-x-5' : ''}`} />
                                     </button>

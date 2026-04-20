@@ -11,9 +11,9 @@ export default function NotFound() {
             <Container>
                 <div className="text-center max-w-2xl mx-auto">
                     <div className="relative mb-12">
-                        <h1 className="text-[180px] font-black text-blue-600/10 leading-none">404</h1>
+                        <h1 className="text-[180px] font-black text-purple-600/10 leading-none">404</h1>
                         <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-2xl font-bold text-gray-900 border-b-4 border-blue-600 pb-2">Page Not Found</span>
+                            <span className="text-2xl font-bold text-gray-900 border-b-4 border-purple-600 pb-2">Page Not Found</span>
                         </div>
                     </div>
 
@@ -24,7 +24,7 @@ export default function NotFound() {
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <Link href="/">
-                            <Button className="rounded-2xl h-14 px-10 text-lg font-bold gap-3 shadow-xl shadow-blue-100">
+                            <Button className="rounded-2xl h-14 px-10 text-lg font-bold gap-3 shadow-xl shadow-purple-100">
                                 <Home className="h-6 w-6" /> Back to Home
                             </Button>
                         </Link>

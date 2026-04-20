@@ -46,9 +46,9 @@ export default function BuyerDashboard() {
         const load = async () => {
             try {
                 const [loansRes, transactionsRes, propertiesRes] = await Promise.all([
-                    api.get('/loans/').catch(() => ({ data: [] })),
-                    api.get('/transactions/').catch(() => ({ data: [] })),
-                    api.get('/properties/').catch(() => ({ data: [] })),
+                    api.get('loans/').catch(() => ({ data: [] })),
+                    api.get('transactions/').catch(() => ({ data: [] })),
+                    api.get('properties/').catch(() => ({ data: [] })),
                 ]);
                 const loans = loansRes.data?.results ?? loansRes.data ?? [];
                 const transactions = transactionsRes.data?.results ?? transactionsRes.data ?? [];
@@ -75,7 +75,7 @@ export default function BuyerDashboard() {
     if (loading) return <div className="min-h-[60vh] flex justify-center items-center"><Loader size="lg" /></div>;
 
     const summaryCards = [
-        { label: 'Available Assets', value: stats!.recommended_properties.length, icon: Building, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100', trend: 'Global registry' },
+        { label: 'Available Assets', value: stats!.recommended_properties.length, icon: Building, color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-100', trend: 'Global registry' },
         { label: 'My Settlements', value: stats!.transaction_count, icon: ReceiptText, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100', trend: 'Signed contracts' },
         { label: 'Loan Status', value: stats!.loan_count, icon: CreditCard, color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100', trend: 'Bank review' },
         { label: 'Saved Items', value: '0', icon: Heart, color: 'text-rose-500', bg: 'bg-rose-50', border: 'border-rose-100', trend: 'Registry watchlist' },

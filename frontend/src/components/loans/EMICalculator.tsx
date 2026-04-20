@@ -45,12 +45,12 @@ export default function EMICalculator() {
     };
 
     return (
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-xl shadow-blue-900/5 overflow-hidden">
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-xl shadow-purple-900/5 overflow-hidden">
             <div className="grid grid-cols-1 lg:grid-cols-2">
                 {/* Inputs */}
                 <div className="p-8 lg:p-10 border-r border-gray-100">
                     <div className="flex items-center gap-3 mb-8">
-                        <div className="h-10 w-10 bg-blue-600 rounded-xl flex items-center justify-center text-white">
+                        <div className="h-10 w-10 bg-purple-600 rounded-xl flex items-center justify-center text-white">
                             <Calculator className="h-5 w-5" />
                         </div>
                         <div>
@@ -68,7 +68,7 @@ export default function EMICalculator() {
                                     type="number"
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}
-                                    className="w-full bg-gray-50 border-none rounded-2xl pl-10 pr-4 py-4 text-sm focus:ring-2 focus:ring-blue-500 transition-all outline-none font-bold"
+                                    className="w-full bg-gray-50 border-none rounded-2xl pl-10 pr-4 py-4 text-sm focus:ring-2 focus:ring-purple-500 transition-all outline-none font-bold"
                                 />
                             </div>
                         </div>
@@ -82,7 +82,7 @@ export default function EMICalculator() {
                                         type="number"
                                         value={rate}
                                         onChange={(e) => setRate(e.target.value)}
-                                        className="w-full bg-gray-50 border-none rounded-2xl pl-10 pr-4 py-4 text-sm focus:ring-2 focus:ring-blue-500 transition-all outline-none font-bold"
+                                        className="w-full bg-gray-50 border-none rounded-2xl pl-10 pr-4 py-4 text-sm focus:ring-2 focus:ring-purple-500 transition-all outline-none font-bold"
                                     />
                                 </div>
                             </div>
@@ -94,7 +94,7 @@ export default function EMICalculator() {
                                         type="number"
                                         value={tenure}
                                         onChange={(e) => setTenure(e.target.value)}
-                                        className="w-full bg-gray-50 border-none rounded-2xl pl-10 pr-4 py-4 text-sm focus:ring-2 focus:ring-blue-500 transition-all outline-none font-bold"
+                                        className="w-full bg-gray-50 border-none rounded-2xl pl-10 pr-4 py-4 text-sm focus:ring-2 focus:ring-purple-500 transition-all outline-none font-bold"
                                     />
                                 </div>
                             </div>
@@ -106,14 +106,14 @@ export default function EMICalculator() {
                                 type="number"
                                 value={income}
                                 onChange={(e) => setIncome(e.target.value)}
-                                className="w-full bg-gray-50 border-none rounded-2xl px-4 py-4 text-sm focus:ring-2 focus:ring-blue-500 transition-all outline-none font-bold"
+                                className="w-full bg-gray-50 border-none rounded-2xl px-4 py-4 text-sm focus:ring-2 focus:ring-purple-500 transition-all outline-none font-bold"
                             />
                         </div>
 
                         <Button 
                             onClick={handleCalculate} 
                             disabled={loading}
-                            className="w-full !py-4 rounded-2xl font-bold shadow-lg shadow-blue-500/20"
+                            className="w-full !py-4 rounded-2xl font-bold shadow-lg shadow-purple-500/20"
                         >
                             {loading ? <Loader size="sm" /> : 'Calculate My Options'}
                         </Button>
@@ -121,11 +121,11 @@ export default function EMICalculator() {
                 </div>
 
                 {/* Results */}
-                <div className="p-8 lg:p-10 bg-blue-50/50">
+                <div className="p-8 lg:p-10 bg-purple-50/50">
                     {!emiResult ? (
                         <div className="h-full flex flex-col items-center justify-center text-center">
                             <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
-                                <Calculator className="h-8 w-8 text-blue-200" />
+                                <Calculator className="h-8 w-8 text-purple-200" />
                             </div>
                             <h3 className="text-lg font-bold text-gray-900 mb-2">No Results Yet</h3>
                             <p className="text-sm text-gray-500 max-w-[240px]">Fill in the details to see your monthly commitments and eligibility status.</p>
@@ -133,9 +133,9 @@ export default function EMICalculator() {
                     ) : (
                         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                             {/* EMI Card */}
-                            <div className="bg-white p-6 rounded-3xl shadow-sm border border-blue-100">
+                            <div className="bg-white p-6 rounded-3xl shadow-sm border border-purple-100">
                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Monthly EMI</p>
-                                <p className="text-4xl font-black text-blue-600 mb-4">{formatNPR(emiResult.MonthlyEMI)}</p>
+                                <p className="text-4xl font-black text-purple-600 mb-4">{formatNPR(emiResult.MonthlyEMI)}</p>
                                 
                                 <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-50">
                                     <div>

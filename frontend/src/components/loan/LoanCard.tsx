@@ -21,7 +21,7 @@ export const LoanCard = ({ loan, baseUrl }: LoanCardProps) => {
             <div className="p-6">
                 <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+                        <div className="h-10 w-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600">
                             <Building2 className="h-5 w-5" />
                         </div>
                         <div>

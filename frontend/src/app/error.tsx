@@ -20,7 +20,7 @@ export default function Error({
     return (
         <div className="min-h-[80vh] flex items-center justify-center py-20 bg-gray-100/50">
             <Container>
-                <div className="text-center max-w-2xl mx-auto bg-white p-12 rounded-[40px] shadow-2xl shadow-blue-100 border border-gray-100">
+                <div className="text-center max-w-2xl mx-auto bg-white p-12 rounded-[40px] shadow-2xl shadow-purple-100 border border-gray-100">
                     <div className="h-24 w-24 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-8 animate-pulse">
                         <AlertCircle className="h-12 w-12 text-rose-500" />
                     </div>
@@ -33,7 +33,7 @@ export default function Error({
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
                         <Button
                             onClick={() => reset()}
-                            className="w-full sm:w-auto rounded-2xl h-14 px-10 text-lg font-bold gap-3 shadow-xl shadow-blue-100"
+                            className="w-full sm:w-auto rounded-2xl h-14 px-10 text-lg font-bold gap-3 shadow-xl shadow-purple-100"
                         >
                             <RefreshCw className="h-6 w-6" /> Try Again
                         </Button>

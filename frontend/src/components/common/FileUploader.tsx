@@ -50,24 +50,28 @@ export const FileUploader = ({ label, accept, multiple = false, onFilesChange, e
         <div className="space-y-4">
             <label className="block text-sm font-medium text-gray-700">{label}</label>
 
-            <div className="flex items-center justify-center w-full">
-                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <Upload className="w-8 h-8 mb-3 text-primary/40" />
-                        <p className="mb-2 text-sm text-gray-500">
-                            <span className="font-bold text-primary">Click to upload</span> or drag and drop
-                        </p>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{accept.split(',').join(' ')}</p>
-                    </div>
-                    <input
-                        type="file"
-                        className="hidden"
-                        accept={accept}
-                        multiple={multiple}
-                        onChange={handleFileChange}
-                    />
-                </label>
-            </div>
+<div className="flex items-center justify-center w-full">
+    <label 
+        htmlFor="file-upload"
+        className="upload-btn group"
+    >
+        <div className="flex flex-col items-center justify-center py-2">
+            <Upload className="w-6 h-6 mb-2 text-white/80 group-hover:text-white transition-colors" />
+            <p className="text-sm font-bold bg-transparent">
+                Click to upload Registry Documents
+            </p>
+            <p className="text-[10px] text-white/60 font-medium uppercase tracking-[0.2em] mt-1">({accept.split(',').join(' ')})</p>
+        </div>
+        <input
+            id="file-upload"
+            type="file"
+            className="hidden"
+            accept={accept}
+            multiple={multiple}
+            onChange={handleFileChange}
+        />
+    </label>
+</div>
 
             {previews.length > 0 && (
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">

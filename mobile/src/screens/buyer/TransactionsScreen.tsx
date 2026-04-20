@@ -173,7 +173,7 @@ const TransactionsScreen = ({ navigation }: any) => {
 
     const fetchTransactions = async () => {
         try {
-            const response = await api.get('/transactions/');
+            const response = await api.get('transactions/');
             setTransactions(response.data);
         } catch (error) {
             console.error('Failed to fetch transactions:', error);

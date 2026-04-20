@@ -64,7 +64,7 @@ export default function NotificationsPage() {
         if (t.includes('success') || t.includes('approved')) return <CheckCircle2 className="h-5 w-5 text-indigo-500" />;
         if (t.includes('warning') || t.includes('submission')) return <Zap className="h-5 w-5 text-amber-500" />;
         if (t.includes('error') || t.includes('rejected')) return <XCircle className="h-5 w-5 text-red-500" />;
-        if (t.includes('info') || t.includes('system')) return <Info className="h-5 w-5 text-blue-500" />;
+        if (t.includes('info') || t.includes('system')) return <Info className="h-5 w-5 text-purple-500" />;
         return <Bell className="h-5 w-5 text-slate-400" />;
     };
 

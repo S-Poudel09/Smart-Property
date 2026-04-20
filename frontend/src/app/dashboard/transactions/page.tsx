@@ -146,7 +146,7 @@ export default function TransactionsPage() {
                                                 </div>
                                                 <span className={`text-[9px] px-3 py-1 rounded-full font-black uppercase tracking-widest border ${
                                                     tx.status === 'COMPLETED' ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' :
-                                                    tx.status === 'PARTIAL' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
+                                                    tx.status === 'PARTIAL' ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' :
                                                     'bg-amber-500/20 text-amber-400 border-amber-500/30'
                                                 }`}>
                                                     {tx.status}

@@ -3,10 +3,10 @@
 :root {
   --background: #f5f5f5; /* Light gray */
   --foreground: #333333; /* Dark gray text */
-  --primary: #007BFF;    /* Blue accent */
-  --primary-light: #3B82F6;
-  --accent: #007BFF;    /* Blue accent */
-  --accent-soft: rgba(0, 123, 255, 0.1);
+  --primary: #6D28D9;    /* Purple accent */
+  --primary-light: #7C3AED;
+  --accent: #6D28D9;    /* Purple accent */
+  --accent-soft: rgba(109, 40, 217, 0.1);
   --card: #FFFFFF;
   --border: #dddddd;    /* Subtle border */
   --muted: #64748B;     
@@ -87,6 +87,73 @@
 
 ::-webkit-scrollbar-thumb {
   @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
+}
+
+/* Identity Verification Styling */
+.upload-btn {
+  background-color: #6D28D9; /* Purple background */
+  color: white; /* Text color */
+  padding: 12px 24px; /* Padding for button */
+  border-radius: 8px; /* Rounded corners */
+  cursor: pointer; /* Make it look clickable */
+  text-align: center; /* Center the text */
+  border: none; /* Remove any default border */
+  width: 100%; /* Full width */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  font-weight: 600;
+}
+
+.upload-btn:hover {
+  background-color: #7C3AED; /* Hover effect (lighter purple) */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(109, 40, 217, 0.2);
+}
+
+.upload-btn:active {
+  background-color: #8B5CF6; /* Active effect */
+  transform: translateY(0);
+}
+
+.document-type-btn {
+  display: block;
+  visibility: visible;
+  transition: all 0.3s ease;
+}
+
+.seal-submit-btn {
+  background-color: #E5E7EB;  /* Light gray background */
+  color: #4B5563;  /* Text color */
+  border: 1px solid #D1D5DB;  /* Border color */
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%; /* Make button fill the container if needed */
+  text-align: center;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: all 0.3s ease;
+}
+
+.seal-submit-btn:hover {
+  background-color: #D1D5DB;  /* Slight hover effect */
+  color: #1F2937;
+}
+
+.seal-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Visibility Force Fix */
+button, .upload-btn, .document-type-btn, .seal-submit-btn {
+  display: block;
+  visibility: visible !important;
 }
 
 /* Animation Utilities */

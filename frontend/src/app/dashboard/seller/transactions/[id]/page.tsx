@@ -69,7 +69,7 @@ export default function SellerTransactionDetailPage({ params }: { params: Promis
     if (isLoading) {
         return (
             <div className="flex h-[60vh] items-center justify-center">
-                <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+                <div className="h-12 w-12 animate-spin rounded-full border-4 border-purple-600 border-t-transparent"></div>
             </div>
         );
     }
@@ -78,7 +78,7 @@ export default function SellerTransactionDetailPage({ params }: { params: Promis
         return (
             <Container className="py-20 text-center">
                 <h2 className="text-2xl font-bold text-gray-900">Transaction Not Found</h2>
-                <Link href="/dashboard/seller/transactions" className="mt-4 inline-block text-blue-600 hover:underline">
+                <Link href="/dashboard/seller/transactions" className="mt-4 inline-block text-purple-600 hover:underline">
                     Back to My Sales
                 </Link>
             </Container>
@@ -89,7 +89,7 @@ export default function SellerTransactionDetailPage({ params }: { params: Promis
         <ProtectedRoute allowedRoles={['seller']}>
             <div className="min-h-screen bg-gray-50 py-12">
                 <Container>
-                    <Link href="/dashboard/seller/transactions" className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-blue-600 transition-colors">
+                    <Link href="/dashboard/seller/transactions" className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-purple-600 transition-colors">
                         <ArrowLeft className="h-4 w-4" />
                         Back to Sales
                     </Link>

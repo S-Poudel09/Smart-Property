@@ -45,7 +45,7 @@ const ChatDetailScreen = ({ route, navigation }: any) => {
 
     if (showLoader) setIsLoading(true);
     try {
-      const response = await api.get(`/chat/messages/room/${roomId}/`);
+      const response = await api.get(`chat/messages/room/${roomId}/`);
       setMessages(response.data);
     } catch (error) {
       console.error('Failed to fetch messages:', error);
@@ -77,7 +77,7 @@ const ChatDetailScreen = ({ route, navigation }: any) => {
         RoomID: roomId,
         MessageText: tempMessage.text
       };
-      const response = await api.post('/chat/messages/', payload);
+      const response = await api.post('chat/messages/', payload);
       
       // Update local message list with actual sent message
       setMessages(prev => 

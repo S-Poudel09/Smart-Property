@@ -520,3 +520,27 @@ class UserCountView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
     def get(self, request):
         return Response({"count": User.objects.count()}, status=status.HTTP_200_OK)
+
+# Toggles the Two-Factor Authentication (2FA) status for the authenticated user.
+class Toggle2FAView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        enabled = request.data.get('enabled', not user.is_2fa_enabled)
+        user.is_2fa_enabled = enabled
+        user.save()
+
+        # PostgreSQL activity log
+        try:
+            from analytics.utils import log_activity
+            action = 'enable_2fa' if enabled else 'disable_2fa'
+            log_activity(user.email, action, status='success')
+        except Exception:
+            pass
+
+        return Response({
+            'status': 'success',
+            'is_2fa_enabled': user.is_2fa_enabled,
+            'message': f"Two-Factor Authentication {'enabled' if enabled else 'disabled'} successfully."
+        }, status=status.HTTP_200_OK)

@@ -34,7 +34,7 @@ const PendingPropertiesScreen = ({ navigation }: any) => {
 
   const fetchPendingProperties = async () => {
     try {
-      const response = await api.get('/properties/');
+      const response = await api.get('properties/');
       // Filter for submitted/pending status
       const pending = response.data.filter((p: any) => 
         p.status.toLowerCase() === 'submitted' || 

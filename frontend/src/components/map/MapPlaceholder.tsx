@@ -10,7 +10,7 @@ const MapPlaceholder = ({ location = 'Property Location', className = '' }: MapP
         <div className={`relative flex items-center justify-center overflow-hidden rounded-2xl bg-gray-100 border-2 border-dashed border-gray-300 ${className}`}>
             <div className="absolute inset-0 bg-[url('https://api.mapbox.com/styles/v1/mapbox/light-v10/static/0,0,0,0,0/800x400?access_token=none')] opacity-20 filter grayscale"></div>
             <div className="relative z-10 flex flex-col items-center gap-3 text-center p-8">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-purple-600">
                     <MapPin className="h-6 w-6" />
                 </div>
                 <div>

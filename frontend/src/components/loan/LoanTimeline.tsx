@@ -43,7 +43,7 @@ export const LoanTimeline = ({ status, updatedAt }: LoanTimelineProps) => {
                             <div className={cn(
                                 "relative z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 transition-colors",
                                 isCompleted ? "bg-indigo-500 border-indigo-500 text-white" :
-                                    isActive ? (status === 'REJECTED' ? "bg-rose-500 border-rose-500 text-white" : "bg-blue-600 border-blue-600 text-white") :
+                                    isActive ? (status === 'REJECTED' ? "bg-rose-500 border-rose-500 text-white" : "bg-purple-600 border-purple-600 text-white") :
                                         "bg-white border-gray-200 text-gray-400"
                             )}>
                                 <Icon className="h-4 w-4" />

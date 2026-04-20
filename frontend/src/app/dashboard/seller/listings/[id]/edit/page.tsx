@@ -354,7 +354,7 @@ export default function EditListingPage() {
                             {currentStep === 3 && (
                                 <div className="space-y-12 animate-in slide-in-from-right-8 duration-500">
                                      <h2 className="text-2xl font-black text-slate-900 font-outfit tracking-tighter italic flex items-center gap-4">
-                                        <div className="h-2 w-10 bg-blue-500 rounded-full" /> Sector Placement
+                                        <div className="h-2 w-10 bg-purple-500 rounded-full" /> Sector Placement
                                      </h2>
                                      <Input label="Tactical Address" {...register('address')} error={errors.address?.message} />
                                      <Input label="Central Hub (City)" {...register('city')} error={errors.city?.message} />

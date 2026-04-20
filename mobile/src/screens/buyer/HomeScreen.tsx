@@ -44,9 +44,9 @@ const BuyerHomeScreen = ({ navigation }: any) => {
   const fetchData = async () => {
     try {
       const [propRes, transRes, notifRes] = await Promise.all([
-        api.get('/properties/'),
-        api.get('/transactions/'),
-        api.get('/notifications/')
+        api.get('properties/'),
+        api.get('transactions/'),
+        api.get('notifications/')
       ]);
 
       // Featured properties: High price + verified

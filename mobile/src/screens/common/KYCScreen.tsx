@@ -79,7 +79,7 @@ const KYCScreen = ({ navigation }: any) => {
         type,
       } as any);
 
-      await api.post('/auth/kyc/upload/', formData, {
+      await api.post('auth/kyc/upload/', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

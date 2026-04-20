@@ -149,9 +149,9 @@ export const KhaltiPaymentDemo = ({
             <div className="p-8 space-y-4">
 
                 {/* Notice */}
-                <div className="bg-blue-50 border border-blue-100 p-4 rounded-2xl flex items-start gap-3">
-                    <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
-                    <p className="text-[11px] text-blue-700 font-medium leading-relaxed">
+                <div className="bg-purple-50 border border-purple-100 p-4 rounded-2xl flex items-start gap-3">
+                    <Info className="h-5 w-5 text-purple-500 shrink-0 mt-0.5" />
+                    <p className="text-[11px] text-purple-700 font-medium leading-relaxed">
                         You will be redirected to Khalti&apos;s secure payment page. After completion,
                         you&apos;ll be brought back here automatically.
                     </p>

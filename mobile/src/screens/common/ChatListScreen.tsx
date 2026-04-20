@@ -20,7 +20,7 @@ const ChatListScreen = ({ navigation }: any) => {
 
   const fetchRooms = async () => {
     try {
-      const response = await api.get('/chat/rooms/');
+      const response = await api.get('chat/rooms/');
       setRooms(response.data);
     } catch (error) {
       console.error('Failed to fetch chat rooms:', error);

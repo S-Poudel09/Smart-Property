@@ -70,7 +70,7 @@ const AddListingScreen = ({ navigation }: any) => {
         status: 'submitted' // Initial state
       };
       
-      const response = await api.post('/properties/', payload);
+      const response = await api.post('properties/', payload);
       Alert.alert(
         'Success', 
         'Property listing submitted for review.',

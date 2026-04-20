@@ -45,7 +45,7 @@ const PropertyListScreen = ({ navigation }: any) => {
 
   const fetchProperties = async () => {
     try {
-      const response = await api.get('/properties/');
+      const response = await api.get('properties/');
       setProperties(response.data);
       applyFiltersAndSort(response.data);
     } catch (error) {

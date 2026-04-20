@@ -95,7 +95,7 @@ const PropertyDetailScreen = ({ route, navigation }: any) => {
       return;
     }
     try {
-      const response = await api.get(`/properties/${id}/`);
+      const response = await api.get(`properties/${id}/`);
       setProperty(response.data);
     } catch (error) {
       console.error('Failed to fetch property details:', error);
@@ -129,7 +129,7 @@ const PropertyDetailScreen = ({ route, navigation }: any) => {
     }
 
     try {
-       const response = await api.post('/chat/rooms/get_or_create_room/', { 
+       const response = await api.post('chat/rooms/get_or_create_room/', { 
          property_id: propertyId,
          recipient_id: ownerId 
        });
@@ -164,7 +164,7 @@ const PropertyDetailScreen = ({ route, navigation }: any) => {
     try {
         setIsLoading(true);
 
-        const txResponse = await api.post('/transactions/', {
+        const txResponse = await api.post('transactions/', {
             property: property.PropertyID || property.id,
             seller: property.owner?.id || property.seller_id || property.OwnerID,
             buyer: user.id,
@@ -175,7 +175,7 @@ const PropertyDetailScreen = ({ route, navigation }: any) => {
         const transaction = txResponse.data;
         const transactionId = transaction.TransactionID || transaction.id;
 
-        const khaltiResponse = await api.post(`/transactions/${transactionId}/khalti-initiate/`, {
+        const khaltiResponse = await api.post(`transactions/${transactionId}/khalti-initiate/`, {
             return_url: `https://smartproperty.app/payment/callback/`, 
             website_url: `https://smartproperty.app`,
         });
@@ -253,7 +253,7 @@ const PropertyDetailScreen = ({ route, navigation }: any) => {
       { text: 'Cancel', style: 'cancel' },
       { text: 'Approve', onPress: async () => {
         try {
-          await api.post(`/properties/${property.id}/approve/`);
+          await api.post(`properties/${property.id}/approve/`);
           Alert.alert('Success', 'Property published to registry.');
           fetchPropertyDetail();
         } catch (error) {
@@ -268,7 +268,7 @@ const PropertyDetailScreen = ({ route, navigation }: any) => {
       { text: 'Cancel', style: 'cancel' },
       { text: 'Reject', style: 'destructive', onPress: async (reason: string | undefined) => {
         try {
-          await api.post(`/properties/${property.id}/reject/`, { rejection_reason: reason });
+          await api.post(`properties/${property.id}/reject/`, { rejection_reason: reason });
           Alert.alert('Success', 'Property rejected.');
           fetchPropertyDetail();
         } catch (error) {

@@ -12,7 +12,7 @@ export const Breadcrumbs = () => {
 
     return (
         <nav className="flex items-center space-x-2 text-xs font-bold uppercase tracking-widest text-gray-400 mb-6 bg-white w-fit px-4 py-2 rounded-full border border-gray-100 shadow-sm">
-            <Link href="/" className="hover:text-blue-600 transition-colors flex items-center gap-1">
+            <Link href="/" className="hover:text-purple-600 transition-colors flex items-center gap-1">
                 <Home className="h-3.5 w-3.5" />
             </Link>
 
@@ -25,7 +25,7 @@ export const Breadcrumbs = () => {
                     <div key={path} className="flex items-center space-x-2">
                         <ChevronRight className="h-3 w-3 text-gray-300" />
                         {isLast ? (
-                            <span className="text-blue-600 truncate max-w-[120px]">{label}</span>
+                            <span className="text-purple-600 truncate max-w-[120px]">{label}</span>
                         ) : (
                             <Link href={href} className="hover:text-gray-600 transition-colors">
                                 {label}

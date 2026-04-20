@@ -19,7 +19,7 @@ const MyListingsScreen = ({ navigation }: any) => {
 
   const fetchMyProperties = async () => {
     try {
-      const response = await api.get('/properties/?seller=me');
+      const response = await api.get('properties/?seller=me');
       setProperties(response.data);
     } catch (error) {
       console.error('Failed to fetch my properties:', error);

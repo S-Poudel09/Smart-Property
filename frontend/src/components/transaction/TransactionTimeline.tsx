@@ -39,7 +39,7 @@ export const TransactionTimeline = ({ status, className }: TransactionTimelinePr
                 {/* Connector Line */}
                 <div className="absolute top-5 left-0 h-0.5 w-full bg-gray-200 -z-10" />
                 <div
-                    className="absolute top-5 left-0 h-0.5 bg-blue-600 transition-all duration-500 -z-10"
+                    className="absolute top-5 left-0 h-0.5 bg-purple-600 transition-all duration-500 -z-10"
                     style={{ width: `${(activeIndex / (steps.length - 1)) * 100}%` }}
                 />
 
@@ -52,15 +52,15 @@ export const TransactionTimeline = ({ status, className }: TransactionTimelinePr
                         <div key={step.id} className="flex flex-col items-center gap-3 bg-white px-2">
                             <div className={cn(
                                 "flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all duration-300",
-                                isCurrent ? "border-blue-600 bg-blue-600 text-white scale-110 shadow-lg" :
-                                    isActive ? "border-blue-600 bg-blue-50 text-blue-600" :
+                                isCurrent ? "border-purple-600 bg-purple-600 text-white scale-110 shadow-lg" :
+                                    isActive ? "border-purple-600 bg-purple-50 text-purple-600" :
                                         "border-gray-200 bg-white text-gray-400"
                             )}>
                                 <Icon className="h-5 w-5" />
                             </div>
                             <span className={cn(
                                 "text-[10px] font-bold uppercase tracking-wider text-center max-w-[80px]",
-                                isCurrent ? "text-blue-600" : isActive ? "text-gray-900" : "text-gray-400"
+                                isCurrent ? "text-purple-600" : isActive ? "text-gray-900" : "text-gray-400"
                             )}>
                                 {step.label}
                             </span>

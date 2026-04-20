@@ -35,7 +35,7 @@ export default function VirtualTour({ tourUrl, title }: VirtualTourProps) {
 
             {/* Initial Placeholder if needed */}
             <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-black/40 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="h-16 w-16 rounded-full bg-blue-600 flex items-center justify-center mb-4">
+                <div className="h-16 w-16 rounded-full bg-purple-600 flex items-center justify-center mb-4">
                     <Play className="h-8 w-8 fill-current" />
                 </div>
                 <p className="font-bold text-lg">Interactive 360° Tour</p>

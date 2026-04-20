@@ -30,7 +30,7 @@ const LoginScreen = ({ navigation }: any) => {
 
     setIsLoading(true);
     try {
-      const response = await api.post('/auth/login/', { email, password });
+      const response = await api.post('auth/login/', { email, password });
       
       if (response.data.requires_otp) {
         navigation.navigate('OTP', { email: response.data.email, flow: 'login' });

@@ -56,7 +56,7 @@ export default function ForgotPasswordPage() {
         <div className="min-h-screen bg-slate-50/50 flex flex-col items-center justify-center p-6 relative overflow-hidden">
             {/* Subtle background blur elements */}
             <div className="absolute top-1/4 -left-20 w-96 h-96 bg-indigo-500/5 rounded-full blur-[100px] pointer-events-none" />
-            <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-blue-500/5 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-purple-500/5 rounded-full blur-[100px] pointer-events-none" />
 
             <motion.div 
                 initial={{ opacity: 0, scale: 0.95 }}

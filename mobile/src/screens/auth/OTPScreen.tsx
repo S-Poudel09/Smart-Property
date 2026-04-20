@@ -30,11 +30,11 @@ const OTPScreen = ({ navigation, route }: any) => {
     setIsLoading(true);
     try {
       if (flow === 'login') {
-        const response = await api.post('/auth/admin-login-verify/', { email, otp_code: otpCode });
+        const response = await api.post('auth/admin-login-verify/', { email, otp_code: otpCode });
         const { access, user } = response.data;
         await login(access, user);
       } else {
-        await api.post('/auth/verify-otp/', { email, otp_code: otpCode });
+        await api.post('auth/verify-otp/', { email, otp_code: otpCode });
         Alert.alert(
           'Success', 
           'Email verified successfully. You can now log in.',
@@ -52,7 +52,7 @@ const OTPScreen = ({ navigation, route }: any) => {
 
   const handleResend = async () => {
     try {
-      const endpoint = flow === 'login' ? '/auth/admin-login-resend/' : '/auth/resend-otp/';
+      const endpoint = flow === 'login' ? 'auth/admin-login-resend/' : 'auth/resend-otp/';
       await api.post(endpoint, { email });
       Alert.alert('Code Resent', 'A new verification code has been sent to your email.');
     } catch (error: any) {

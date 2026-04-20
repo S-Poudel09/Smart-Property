@@ -96,7 +96,7 @@ export default function SellerDashboard() {
     if (loading) return <div className="h-[60vh] flex justify-center items-center"><Loader size="lg" /></div>;
 
     const summaryCards = [
-        { label: 'Active Inventory', value: stats!.total_listings, icon: Home, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100', trend: 'Properties listed' },
+        { label: 'Active Inventory', value: stats!.total_listings, icon: Home, color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-100', trend: 'Properties listed' },
         { label: 'Settled Revenue', value: formatNPR(stats!.total_revenue), icon: DollarSign, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100', trend: 'Total earnings' },
         { label: 'Review Queue', value: stats!.pending_reviews, icon: Clock, color: 'text-amber-500', bg: 'bg-amber-50', border: 'border-amber-100', trend: 'Awaiting site visit' },
         { label: 'Closed Deals', value: stats!.completed_sales, icon: CheckCircle, color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100', trend: 'Successful sales' },
@@ -272,7 +272,7 @@ export default function SellerDashboard() {
                         <div className="space-y-3">
                             {[
                                 { link: '/dashboard/seller/listings', label: 'Inventory Matrix', icon: Briefcase, color: 'bg-indigo-50 text-indigo-600' },
-                                { link: '/dashboard/seller/transactions', label: 'Settlement Ledger', icon: DollarSign, color: 'bg-blue-50 text-blue-600' },
+                                { link: '/dashboard/seller/transactions', label: 'Settlement Ledger', icon: DollarSign, color: 'bg-purple-50 text-purple-600' },
                                 { link: '/dashboard/profile', label: 'Node Verification', icon: ShieldCheck, color: 'bg-violet-50 text-violet-600' },
                             ].map((item, i) => (
                                 <Link key={i} href={item.link} className="flex items-center gap-4 p-5 rounded-2xl bg-slate-50 border border-transparent hover:bg-white hover:border-slate-100 hover:shadow-xl hover:shadow-slate-900/5 transition-all group">

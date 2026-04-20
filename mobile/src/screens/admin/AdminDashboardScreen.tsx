@@ -34,9 +34,9 @@ const AdminDashboardScreen = ({ navigation }: any) => {
   const fetchStats = async () => {
     try {
       const [userCountRes, propCountRes, systemAnalyticsRes] = await Promise.all([
-        api.get('/users/count/'),
-        api.get('/properties/'),
-        api.get('/admin/analytics/')
+        api.get('users/count/'),
+        api.get('properties/'),
+        api.get('admin/analytics/')
       ]);
 
       const properties = propCountRes.data;

@@ -39,7 +39,7 @@ const AdminRegistryScreen = ({ route, navigation }: any) => {
 
   const fetchProperties = async () => {
     try {
-      const response = await api.get('/properties/');
+      const response = await api.get('properties/');
       setAllProperties(response.data);
       filterList(response.data, activeTab);
     } catch (error) {

@@ -40,7 +40,7 @@ const SellerDashboardScreen = ({ navigation }: any) => {
 
   const fetchDashboardData = async () => {
     try {
-      const propRes = await api.get('/properties/?seller=me');
+      const propRes = await api.get('properties/?seller=me');
       const properties = propRes.data;
       
       const counts = {

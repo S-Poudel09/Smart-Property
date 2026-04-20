@@ -43,7 +43,7 @@ export default function BuyerTransactionDetailPage({ params }: { params: Promise
     if (isLoading) {
         return (
             <div className="flex h-[60vh] items-center justify-center">
-                <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+                <div className="h-12 w-12 animate-spin rounded-full border-4 border-purple-600 border-t-transparent"></div>
             </div>
         );
     }
@@ -53,7 +53,7 @@ export default function BuyerTransactionDetailPage({ params }: { params: Promise
             <Container className="py-20">
                 <div className="text-center">
                     <h2 className="text-2xl font-bold text-gray-900">Transaction Not Found</h2>
-                    <Link href="/dashboard/buyer/transactions" className="mt-4 inline-block text-blue-600 hover:underline">
+                    <Link href="/dashboard/buyer/transactions" className="mt-4 inline-block text-purple-600 hover:underline">
                         Back to My Transactions
                     </Link>
                 </div>
@@ -65,7 +65,7 @@ export default function BuyerTransactionDetailPage({ params }: { params: Promise
         <ProtectedRoute allowedRoles={['buyer']}>
             <div className="min-h-screen bg-gray-50 py-12">
                 <Container>
-                    <Link href="/dashboard/buyer/transactions" className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-blue-600 transition-colors">
+                    <Link href="/dashboard/buyer/transactions" className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-purple-600 transition-colors">
                         <ArrowLeft className="h-4 w-4" />
                         Back to My Transactions
                     </Link>
@@ -108,7 +108,7 @@ export default function BuyerTransactionDetailPage({ params }: { params: Promise
                                     
                                     <div className="space-y-6">
                                         <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm flex flex-col items-center text-center">
-                                            <div className="h-14 w-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6">
+                                            <div className="h-14 w-14 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mb-6">
                                                 <FileText className="h-7 w-7" />
                                             </div>
                                             <h4 className="font-bold text-gray-900 mb-2">Manual Bank Deposit</h4>

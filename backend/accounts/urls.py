@@ -15,7 +15,7 @@ from .views import (
     VerifyOTPView, PasswordResetRequestView, PasswordResetConfirmView,
     KYCUploadView, AdminKYCVerifyView, ResendOTPView,
     AdminLoginVerifyOTPView, AdminResendLoginOTPView, SendTestEmailView,
-    UserCountView
+    UserCountView, Toggle2FAView
 )
 
 from rest_framework.routers import DefaultRouter
@@ -41,4 +41,5 @@ urlpatterns = [
     path('kyc/verify/<int:user_id>/', AdminKYCVerifyView.as_view(), name='admin-kyc-verify'),
     path('password-reset/', PasswordResetRequestView.as_view(), name='password-reset-request'),
     path('password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
+    path('2fa/toggle/', Toggle2FAView.as_view(), name='toggle-2fa'),
 ] + router.urls

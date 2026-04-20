@@ -25,8 +25,8 @@ export const PaymentProofUploader = ({ onUpload, isLoading }: PaymentProofUpload
     };
 
     return (
-        <div className="rounded-2xl border-2 border-dashed border-blue-100 bg-blue-50/30 p-8 text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+        <div className="rounded-2xl border-2 border-dashed border-purple-100 bg-purple-50/30 p-8 text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-purple-600">
                 <Upload className="h-6 w-6" />
             </div>
             <h3 className="mb-2 text-lg font-bold text-gray-900">Upload Payment Proof</h3>
@@ -47,7 +47,7 @@ export const PaymentProofUploader = ({ onUpload, isLoading }: PaymentProofUpload
                     <Button
                         onClick={handleUpload}
                         isLoading={isLoading}
-                        className="gap-2 bg-blue-600 hover:bg-blue-700"
+                        className="gap-2 bg-purple-600 hover:bg-purple-700"
                     >
                         <CheckCircle2 className="h-4 w-4" />
                         Submit Proof

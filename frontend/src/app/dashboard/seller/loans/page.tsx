@@ -52,7 +52,7 @@ export default function SellerLoansPage() {
                                             <tr key={loan.id} className="hover:bg-gray-50 transition-colors">
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="h-10 w-10 min-w-[40px] rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+                                                        <div className="h-10 w-10 min-w-[40px] rounded-xl bg-purple-50 flex items-center justify-center text-purple-600">
                                                             <Building2 className="h-5 w-5" />
                                                         </div>
                                                         <div className="text-sm font-bold text-gray-900">{prop?.title}</div>

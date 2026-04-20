@@ -17,7 +17,7 @@ export const ListingTable = ({ listings, onDelete, onSubmit }: ListingTableProps
     if (listings.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-white p-12 text-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-blue-600 mb-4">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-purple-50 text-purple-600 mb-4">
                     <CheckCircle2 className="h-8 w-8" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900">No listings yet</h3>
@@ -55,7 +55,7 @@ export const ListingTable = ({ listings, onDelete, onSubmit }: ListingTableProps
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 text-gray-600">{p.city}</td>
-                                <td className="px-6 py-4 font-bold text-blue-600">
+                                <td className="px-6 py-4 font-bold text-purple-600">
                                     {formatNPR(p.price)}
                                     {p.type === 'rent' && <span className="text-xs font-normal">/mo</span>}
                                 </td>
@@ -89,7 +89,7 @@ export const ListingTable = ({ listings, onDelete, onSubmit }: ListingTableProps
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    className="h-8 w-8 p-0 text-blue-600 hover:bg-blue-50"
+                                                    className="h-8 w-8 p-0 text-purple-600 hover:bg-purple-50"
                                                     onClick={() => onSubmit(p.id)}
                                                     title="Submit for Approval"
                                                 >

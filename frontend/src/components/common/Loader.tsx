@@ -13,7 +13,7 @@ const Loader = ({ size = 'md', className }: LoaderProps) => {
     return (
         <div className={`flex items-center justify-center ${className}`}>
             <div
-                className={`${sizeClasses[size]} animate-spin rounded-full border-2 border-blue-600 border-t-transparent`}
+                className={`${sizeClasses[size]} animate-spin rounded-full border-2 border-purple-600 border-t-transparent`}
             ></div>
         </div>
     );

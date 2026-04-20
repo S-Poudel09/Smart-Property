@@ -35,7 +35,7 @@ const ProfileScreen = ({ navigation }: any) => {
             if (user?.role === 'buyer') {
                 const [favs, trans] = await Promise.all([
                     Storage.getItemAsync('favorite_properties'),
-                    api.get('/transactions/')
+                    api.get('transactions/')
                 ]);
                 setStats({
                     saved: favs ? JSON.parse(favs).length : 0,
@@ -44,8 +44,8 @@ const ProfileScreen = ({ navigation }: any) => {
                 });
             } else if (user?.role === 'seller') {
                 const [props, trans] = await Promise.all([
-                    api.get('/properties/?seller=me'),
-                    api.get('/transactions/')
+                    api.get('properties/?seller=me'),
+                    api.get('transactions/')
                 ]);
                 setStats({
                     saved: 0,

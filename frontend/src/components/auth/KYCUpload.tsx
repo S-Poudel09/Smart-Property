@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { FileUploader, FilePreview } from '@/components/common/FileUploader';
-import { Button } from '@/components/common/Button';
 import { toast } from 'react-hot-toast';
 import api from '@/lib/api/http';
 import { motion } from 'framer-motion';
@@ -104,16 +103,16 @@ export default function KYCUpload({ currentStatus, onSuccess }: KYCUploadProps) 
                             { id: 'passport', label: 'Passport' },
                             { id: 'license', label: 'License' }
                         ].map((type) => (
-                            <button
-                                key={type.id}
-                                type="button"
-                                onClick={() => setDocType(type.id as any)}
-                                className={`h-16 rounded-2xl border-2 px-6 text-[10px] font-black uppercase tracking-widest transition-all ${
-                                    docType === type.id 
-                                        ? 'border-primary bg-primary text-accent shadow-xl shadow-primary/20' 
-                                        : 'border-accent/10 bg-white text-gray-400 hover:border-accent hover:text-primary'
-                                }`}
-                            >
+<button
+    key={type.id}
+    type="button"
+    onClick={() => setDocType(type.id as any)}
+    className={`h-16 rounded-2xl border-2 px-6 text-[10px] font-black uppercase tracking-widest transition-all document-type-btn ${
+        docType === type.id 
+            ? 'border-primary bg-primary text-accent shadow-xl shadow-primary/20' 
+            : 'border-accent/10 bg-white text-gray-400 hover:border-accent hover:text-primary'
+    }`}
+>
                                 {type.label}
                             </button>
                         ))}
@@ -129,13 +128,14 @@ export default function KYCUpload({ currentStatus, onSuccess }: KYCUploadProps) 
                     />
                 </div>
 
-                <Button 
-                    className="w-full h-16 rounded-full bg-primary text-accent font-black uppercase tracking-widest text-[10px] shadow-2xl shadow-primary/20 hover:bg-accent hover:text-primary transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
+                <button 
+                    id="seal-submit-decree"
+                    className="seal-submit-btn"
                     onClick={handleSubmit} 
                     disabled={isLoading || !docType || files.length === 0}
                 >
                     {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Seal & Submit Decree'}
-                </Button>
+                </button>
             </div>
         </div>
     );

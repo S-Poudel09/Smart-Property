@@ -11,7 +11,7 @@ interface ChatHeaderProps {
 export const ChatHeader = ({ title, subtitle }: ChatHeaderProps) => {
     return (
         <div className="flex items-center gap-4 border-b bg-white p-4">
-            <div className="h-12 w-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 flex-shrink-0">
+            <div className="h-12 w-12 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 flex-shrink-0">
                 <Building2 className="h-6 w-6" />
             </div>
             <div className="flex-1 overflow-hidden">

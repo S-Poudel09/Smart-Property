@@ -20,7 +20,7 @@ const MapExplorerScreen = ({ navigation }: any) => {
 
     const fetchProperties = async () => {
         try {
-            const response = await api.get('/properties/');
+            const response = await api.get('properties/');
             const data = response.data;
             setProperties(data);
             

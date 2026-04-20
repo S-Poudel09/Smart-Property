@@ -19,7 +19,7 @@ const SellerAnalyticsScreen = () => {
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const response = await api.get('/properties/?seller=me');
+        const response = await api.get('properties/?seller=me');
         const properties = response.data;
         
         const totalViews = properties.reduce((acc: number, p: any) => acc + (p.view_count || 0), 0);
