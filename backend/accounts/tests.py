@@ -624,3 +624,42 @@ class SecurityAndPermissionTests(APITestCase):
         # Admin should be allowed
         self.assertEqual(response_admin.status_code, status.HTTP_200_OK)
         self.assertIn("count", response_admin.data)
+
+class AdminModuleTests(APITestCase):
+
+    # Setup URL before each test
+    def setUp(self):
+        self.user_count_url = reverse("user-count")
+        self.admin_users_url = reverse("admin-users-list")
+
+    # Test admin dashboard / user count
+    def test_admin_user_count(self):
+        # Create admin user
+        admin_user = User.objects.create_user(
+            username="admincount@example.com",
+            email="admincount@example.com",
+            password="StrongPass123",
+            full_name="Admin Count",
+            role="admin",
+            is_verified=True,
+        )
+
+        # Create another user
+        User.objects.create_user(
+            username="buyercount@example.com",
+            email="buyercount@example.com",
+            password="StrongPass123",
+            full_name="Buyer Count",
+            role="buyer",
+            is_verified=True,
+        )
+
+        # Authenticate admin
+        self.client.force_authenticate(user=admin_user)
+
+        # Send GET request
+        response = self.client.get(self.user_count_url)
+
+        # Check response
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("count", response.data)
