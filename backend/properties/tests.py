@@ -281,3 +281,34 @@ class PropertyViewSetTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         property_obj = Property.objects.first()
         self.assertEqual(property_obj.property_type, "hostel")
+
+            # Test commercial listing support
+    def test_commercial_property_creation(self):
+        # Create seller user
+        seller = User.objects.create_user(
+            username="seller7@example.com",
+            email="seller7@example.com",
+            password="StrongPass123",
+            full_name="Seller Seven",
+            role="seller",
+            is_verified=True,
+        )
+
+        # Authenticate seller
+        self.client.force_authenticate(user=seller)
+
+        payload = {
+            "title": "Commercial Building in New Road",
+            "description": "Prime business location.",
+            "location": "Kathmandu",
+            "price": "9500000.00",
+            "property_type": "commercial",
+            "listing_type": "sale"
+        }
+
+        response = self.client.post(self.list_url, payload, format="json")
+
+        # Check commercial property created
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        property_obj = Property.objects.first()
+        self.assertEqual(property_obj.property_type, "commercial")
