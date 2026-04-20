@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse  # Resolve URL names
 from rest_framework import status
 from rest_framework.test import APITestCase  # API test client
+from accounts.models import OTP
 
 User = get_user_model()
 
@@ -272,4 +273,147 @@ class LoginViewTests(APITestCase):
         self.assertIn("requires_otp", response.data)
         self.assertTrue(response.data["requires_otp"])
         self.assertEqual(response.data["email"], "princesspoudel38@gmail.com")
+        self.assertIn("message", response.data)
+
+
+from django.utils import timezone
+from datetime import timedelta
+
+
+class VerifyOTPViewTests(APITestCase):
+    # Runs before each test
+    def setUp(self):
+        self.verify_url = reverse("verify_otp")
+        self.resend_url = reverse("resend_otp")
+
+    # Test OTP verification with correct OTP
+    def test_verify_otp_with_correct_code(self):
+        # Create unverified user
+        user = User.objects.create_user(
+            username="otpuser@example.com",
+            email="otpuser@example.com",
+            password="StrongPass123",
+            full_name="OTP User",
+            role="buyer",
+            is_verified=False,
+        )
+
+        # Create valid OTP
+        OTP.objects.create(
+            user=user,
+            otp_code="123456",
+            expires_at=timezone.now() + timedelta(minutes=10)
+        )
+
+        payload = {
+            "email": "otpuser@example.com",
+            "otp_code": "123456"
+        }
+
+        # Send POST request
+        response = self.client.post(self.verify_url, payload, format="json")
+
+        # Check success response
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("message", response.data)
+
+        # Refresh user and check verified status
+        user.refresh_from_db()
+        self.assertTrue(user.is_verified)
+
+    # Test OTP verification with invalid OTP
+    def test_verify_otp_with_invalid_code(self):
+        # Create unverified user
+        user = User.objects.create_user(
+            username="otpuser@example.com",
+            email="otpuser@example.com",
+            password="StrongPass123",
+            full_name="OTP User",
+            role="buyer",
+            is_verified=False,
+        )
+
+        # Create valid OTP
+        OTP.objects.create(
+            user=user,
+            otp_code="123456",
+            expires_at=timezone.now() + timedelta(minutes=10)
+        )
+
+        payload = {
+            "email": "otpuser@example.com",
+            "otp_code": "999999"
+        }
+
+        # Send POST request
+        response = self.client.post(self.verify_url, payload, format="json")
+
+        # Check invalid OTP response
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", response.data)
+
+        # User should still remain unverified
+        user.refresh_from_db()
+        self.assertFalse(user.is_verified)
+
+    # Test OTP verification with expired OTP
+    def test_verify_otp_with_expired_code(self):
+        # Create unverified user
+        user = User.objects.create_user(
+            username="otpuser@example.com",
+            email="otpuser@example.com",
+            password="StrongPass123",
+            full_name="OTP User",
+            role="buyer",
+            is_verified=False,
+        )
+
+        # Create expired OTP
+        OTP.objects.create(
+            user=user,
+            otp_code="123456",
+            expires_at=timezone.now() - timedelta(minutes=1)
+        )
+
+        payload = {
+            "email": "otpuser@example.com",
+            "otp_code": "123456"
+        }
+
+        # Send POST request
+        response = self.client.post(self.verify_url, payload, format="json")
+
+        # Check expired OTP response
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", response.data)
+
+        # User should still remain unverified
+        user.refresh_from_db()
+        self.assertFalse(user.is_verified)
+
+    # Test resend OTP with valid email
+    @patch("accounts.views.generate_and_send_otp")
+    def test_resend_otp_with_valid_email(self, mock_generate_and_send_otp):
+        # Mock OTP sending
+        mock_generate_and_send_otp.return_value = (True, "Imperial Dispatch successful.")
+
+        # Create unverified user
+        User.objects.create_user(
+            username="otpuser@example.com",
+            email="otpuser@example.com",
+            password="StrongPass123",
+            full_name="OTP User",
+            role="buyer",
+            is_verified=False,
+        )
+
+        payload = {
+            "email": "otpuser@example.com"
+        }
+
+        # Send POST request
+        response = self.client.post(self.resend_url, payload, format="json")
+
+        # Check resend response
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("message", response.data)
