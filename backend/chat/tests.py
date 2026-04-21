@@ -109,3 +109,41 @@ class ChatModuleTests(APITestCase):
         message = Message.objects.first()
         self.assertEqual(message.sender, buyer)
         self.assertEqual(message.text, "Hello seller")
+
+            # Test retrieve chat messages
+    def test_retrieve_chat_messages(self):
+        # Create buyer and seller
+        buyer = User.objects.create_user(
+            username="buyerretrieve@example.com",
+            email="buyerretrieve@example.com",
+            password="StrongPass123",
+            full_name="Buyer Retrieve",
+            role="buyer",
+            is_verified=True,
+        )
+
+        seller = User.objects.create_user(
+            username="sellerretrieve@example.com",
+            email="sellerretrieve@example.com",
+            password="StrongPass123",
+            full_name="Seller Retrieve",
+            role="seller",
+            is_verified=True,
+        )
+
+        # Create room and messages
+        room = ChatRoom.objects.create()
+        room.participants.add(buyer, seller)
+
+        Message.objects.create(room=room, sender=buyer, text="Hello")
+        Message.objects.create(room=room, sender=seller, text="Hi")
+
+        # Authenticate buyer
+        self.client.force_authenticate(user=buyer)
+
+        room_messages_url = reverse("message-room-messages", kwargs={"room_id": room.id})
+        response = self.client.get(room_messages_url)
+
+        # Check response
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
