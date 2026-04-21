@@ -183,3 +183,4 @@ class LoanViewSetTests(APITestCase):
         self.assertIn("LoanStatus", response.data)
         self.assertEqual(response.data["LoanStatus"], "SUBMITTED")
         
+        

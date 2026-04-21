@@ -482,3 +482,4 @@ class PropertyViewSetTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Property.objects.count(), 1)
         self.assertEqual(PropertyDocument.objects.count(), 1)
+        
