@@ -65,3 +65,47 @@ class ChatModuleTests(APITestCase):
         # Check response
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(ChatRoom.objects.count(), 1)
+
+            # Test send message
+    def test_send_message(self):
+        # Create buyer and seller
+        buyer = User.objects.create_user(
+            username="buyersend@example.com",
+            email="buyersend@example.com",
+            password="StrongPass123",
+            full_name="Buyer Send",
+            role="buyer",
+            is_verified=True,
+        )
+
+        seller = User.objects.create_user(
+            username="sellersend@example.com",
+            email="sellersend@example.com",
+            password="StrongPass123",
+            full_name="Seller Send",
+            role="seller",
+            is_verified=True,
+        )
+
+        # Create chat room
+        room = ChatRoom.objects.create()
+        room.participants.add(buyer, seller)
+
+        # Authenticate buyer
+        self.client.force_authenticate(user=buyer)
+
+        payload = {
+            "RoomID": str(room.id),
+            "MessageText": "Hello seller"
+        }
+
+        # Send POST request
+        response = self.client.post(self.message_list_url, payload, format="json")
+
+        # Check response
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Message.objects.count(), 1)
+
+        message = Message.objects.first()
+        self.assertEqual(message.sender, buyer)
+        self.assertEqual(message.text, "Hello seller")
