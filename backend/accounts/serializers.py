@@ -29,6 +29,33 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ("id", "name", "email", "role", "kyc_status", "identity_document", "document_type", "is_2fa_enabled", "is_verified")
 
+# Used by admin to create new users with any role, including admin.
+# Properly hashes the password and marks the account as verified.
+class AdminCreateUserSerializer(serializers.Serializer):
+    full_name = serializers.CharField(max_length=255)
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True, min_length=6)
+    role = serializers.ChoiceField(choices=['buyer', 'seller', 'admin'])
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("An account with this email already exists.")
+        return value
+
+    def create(self, validated_data):
+        email = validated_data['email']
+        user = User.objects.create_user(
+            username=email,
+            email=email,
+            password=validated_data['password'],
+            full_name=validated_data['full_name'],
+            role=validated_data['role'],
+        )
+        # Admin-created accounts are pre-verified
+        user.is_verified = True
+        user.save(update_fields=['is_verified'])
+        return user
+
 # Handles public user registration with validation rules for email uniqueness,
 # role restrictions, and user creation.
 class RegisterSerializer(serializers.ModelSerializer):

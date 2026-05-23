@@ -65,6 +65,8 @@ function AddListingContent() {
         area_ropani: '',
         area_anna: '',
         virtual_tour_url: '',
+        tour_360_url: '',
+        model_3d_url: '',
         boundary_coordinates: ''
     });
 
@@ -320,6 +322,31 @@ function AddListingContent() {
                                     <InputField label="Tactical Address / Tol" name="address" required value={form.address} onChange={handleChange} error={fieldErrors.address} />
                                 </div>
                             </section>
+
+                            <section>
+                                <div className="flex items-center gap-4 mb-10 pt-10 border-t border-slate-100">
+                                    <div className="h-2 w-10 bg-indigo-500 rounded-full"></div>
+                                    <h2 className="text-2xl font-black text-slate-900 font-outfit tracking-tighter">Interactive & 3D Simulation</h2>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <InputField 
+                                        label="3D Model Link (GLB / GLTF URL)" 
+                                        name="model_3d_url" 
+                                        placeholder="e.g. /models/house.glb or an external model URL"
+                                        value={form.model_3d_url}
+                                        onChange={handleChange}
+                                        error={fieldErrors.model_3d_url}
+                                    />
+                                    <InputField 
+                                        label="360° Virtual Tour Link (Matterport / Pannellum URL)" 
+                                        name="tour_360_url" 
+                                        placeholder="e.g. https://my.matterport.com/show/?m=..."
+                                        value={form.tour_360_url}
+                                        onChange={handleChange}
+                                        error={fieldErrors.tour_360_url}
+                                    />
+                                </div>
+                            </section>
                         </div>
                     ) : (
                         <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-700">
@@ -330,6 +357,7 @@ function AddListingContent() {
                                 </div>
                                 <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200/50">
                                     <FileUploader
+                                        id="property-images"
                                         label="Strategic Asset Documentation (Images)"
                                         accept="image/*"
                                         multiple
@@ -352,6 +380,7 @@ function AddListingContent() {
                                 </div>
                                 <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200/50">
                                     <FileUploader
+                                        id="property-documents"
                                         label="Asset Decree / Title Deed (PDF/JPG)"
                                         accept=".pdf,.jpg,.jpeg,.png"
                                         multiple

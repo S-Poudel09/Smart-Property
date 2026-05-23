@@ -14,3 +14,23 @@ export const updateUserRole = async (id: number | string, role: string): Promise
     const response = await api.patch(`auth/admin/users/${id}/`, { role });
     return response.data;
 };
+
+export interface CreateUserPayload {
+    full_name: string;
+    email: string;
+    password: string;
+    role: 'buyer' | 'seller' | 'admin';
+}
+
+export const createUser = async (payload: CreateUserPayload): Promise<User> => {
+    // Use admin viewset which allows all roles including admin
+    const response = await api.post('auth/admin/users/', {
+        username: payload.email,
+        email: payload.email,
+        full_name: payload.full_name,
+        password: payload.password,
+        role: payload.role,
+        is_verified: true,
+    });
+    return response.data;
+};

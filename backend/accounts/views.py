@@ -39,7 +39,7 @@ from .serializers import (
     RegisterSerializer, LoginSerializer, UserSerializer, 
     VerifyOTPSerializer, PasswordResetRequestSerializer, 
     PasswordResetConfirmSerializer, KYCSubmissionSerializer,
-    AdminKYCVerifySerializer
+    AdminKYCVerifySerializer, AdminCreateUserSerializer
 )
 from .permissions import IsAdminUser
 from .models import User, OTP
@@ -364,7 +364,7 @@ class UserProfileView(APIView):
     def put(self, request):
         user = request.user
         user.full_name = request.data.get('full_name', user.full_name)
-        user.phone = request.data.get('phone', user.phone)
+        # user.phone = request.data.get('phone', user.phone)
         user.save()
         return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
 
@@ -404,10 +404,35 @@ class SendTestEmailView(APIView):
 class UserManagementViewSet(viewsets.ModelViewSet):
     """
     Admin-only management of system users.
+    GET/PATCH/DELETE use UserSerializer.
+    POST (create) uses AdminCreateUserSerializer for proper password hashing.
     """
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return AdminCreateUserSerializer
+        return UserSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = AdminCreateUserSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            # Log the action
+            try:
+                from analytics.utils import log_activity
+                log_activity(
+                    request.user.email,
+                    'admin_create_user',
+                    details={'created_user': user.email, 'role': user.role},
+                    status='success'
+                )
+            except Exception:
+                pass
+            return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # Initiates a password reset flow by generating a tokenized reset link and emailing it to the user.
 class PasswordResetRequestView(APIView):

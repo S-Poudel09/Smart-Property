@@ -51,6 +51,8 @@ const listingSchema = z.object({
     food_included: z.boolean().optional(),
     has_wifi: z.boolean().optional(),
     has_laundry: z.boolean().optional(),
+    model_3d_url: z.string().optional().or(z.literal('')),
+    tour_360_url: z.string().optional().or(z.literal('')),
 });
 
 type ListingFormValues = z.infer<typeof listingSchema>;
@@ -130,6 +132,10 @@ export default function EditListingPage() {
                     food_included: !!(data.food_included || data.foodIncluded),
                     has_wifi: !!(data.has_wifi || data.hasWifi),
                     has_laundry: !!(data.has_laundry || data.hasLaundry),
+                    // @ts-ignore
+                    model_3d_url: data.modelUrl || data.model_3d_url || '',
+                    // @ts-ignore
+                    tour_360_url: data.virtualTourUrl || data.tour_360_url || '',
                 });
 
                 if (data.images) {
@@ -175,6 +181,11 @@ export default function EditListingPage() {
         submissionData.append('address', data.address);
         submissionData.append('city', data.city);
         submissionData.append('location', `${data.address}, ${data.city}`);
+        
+        // @ts-ignore
+        if (data.model_3d_url) submissionData.append('model_3d_url', data.model_3d_url);
+        // @ts-ignore
+        if (data.tour_360_url) submissionData.append('tour_360_url', data.tour_360_url);
 
         // Hostel Support Transmission Segment
         if (data.category === 'hostel') {
@@ -358,6 +369,16 @@ export default function EditListingPage() {
                                      </h2>
                                      <Input label="Tactical Address" {...register('address')} error={errors.address?.message} />
                                      <Input label="Central Hub (City)" {...register('city')} error={errors.city?.message} />
+                                     
+                                     <div className="pt-10 border-t border-slate-100 space-y-8 md:col-span-2">
+                                         <h3 className="text-sm font-black uppercase tracking-widest text-indigo-600 italic">3D & Interactive Portals</h3>
+                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                             {/* @ts-ignore */}
+                                             <Input label="3D Model Link (GLB / GLTF URL)" {...register('model_3d_url')} error={errors.model_3d_url?.message} />
+                                             {/* @ts-ignore */}
+                                             <Input label="360° Tour Link (Matterport / Pannellum URL)" {...register('tour_360_url')} error={errors.tour_360_url?.message} />
+                                         </div>
+                                     </div>
                                 </div>
                             )}
 
@@ -367,10 +388,10 @@ export default function EditListingPage() {
                                         <div className="h-2 w-10 bg-violet-600 rounded-full" /> Resource Injection
                                     </h2>
                                     <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100">
-                                        <FileUploader label="Optical Samples (New Images)" accept="image/*" multiple onFilesChange={setImages} />
+                                        <FileUploader id="edit-images" label="Optical Samples (New Images)" accept="image/*" multiple onFilesChange={setImages} />
                                     </div>
                                     <div className="bg-indigo-50/50 p-8 rounded-[2.5rem] border border-indigo-100">
-                                        <FileUploader label="Regulatory Credentials (New Documents)" accept=".pdf,.jpg,.jpeg,.png" multiple onFilesChange={setDocuments} />
+                                        <FileUploader id="edit-documents" label="Regulatory Credentials (New Documents)" accept=".pdf,.jpg,.jpeg,.png" multiple onFilesChange={setDocuments} />
                                     </div>
                                 </div>
                             )}

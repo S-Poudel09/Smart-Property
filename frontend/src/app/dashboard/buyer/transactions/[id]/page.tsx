@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Container from '@/components/layout/Container';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { getUser } from '@/lib/auth/getUser';
-import { getTransactionById, uploadPaymentProof, confirmTransaction, Transaction } from '@/lib/api/transactions';
+import { getTransactionById, uploadPaymentProof, confirmTransaction, downloadDeed, Transaction } from '@/lib/api/transactions';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { Button } from '@/components/common/Button';
 import { KhaltiPaymentDemo } from '@/components/transaction/KhaltiPaymentDemo';
@@ -32,6 +32,18 @@ export default function BuyerTransactionDetailPage({ params }: { params: Promise
             toast.error('Transaction records out of sync');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleDownloadDeed = async () => {
+        setIsActionLoading(true);
+        try {
+            await downloadDeed(id);
+            toast.success('Imperial Decree downloaded successfully');
+        } catch (e) {
+            toast.error('Failed to fetch legal document');
+        } finally {
+            setIsActionLoading(false);
         }
     };
 
@@ -199,7 +211,13 @@ export default function BuyerTransactionDetailPage({ params }: { params: Promise
                                         <p className="text-gray-600 font-medium max-w-md">
                                             Verification complete. Detailed ownership documents have been generated. You can now access your property keys via the Seller.
                                         </p>
-                                        <Button className="mt-6 font-bold uppercase tracking-widest text-[10px] h-11 px-8 rounded-xl shadow-lg shadow-primary/20">Download Deed of Sale</Button>
+                                        <Button 
+                                            onClick={handleDownloadDeed}
+                                            disabled={isActionLoading}
+                                            className="mt-6 font-bold uppercase tracking-widest text-[10px] h-11 px-8 rounded-xl shadow-lg shadow-primary/20"
+                                        >
+                                            {isActionLoading ? 'Preparing Document...' : 'Download Deed of Sale'}
+                                        </Button>
                                     </div>
                                 </div>
                             )}

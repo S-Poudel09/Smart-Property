@@ -233,9 +233,7 @@ export default function PropertiesPage() {
                                 <Search className="h-16 w-16 text-slate-100 mx-auto mb-8 group-hover:scale-110 transition-transform duration-700" />
                                 <h3 className="text-2xl font-black text-slate-900 font-outfit uppercase tracking-tighter italic mb-4">Zero Matching Nodes</h3>
                                 <p className="text-slate-400 font-medium italic mb-12 max-w-sm mx-auto">"Our neural scan found no assets matching your current filtering parameters."</p>
-                                <button onClick={handleReset} className="h-14 px-12 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-slate-900 transition-all shadow-xl shadow-indigo-600/20 active:scale-95 relative z-10">
-                                    Reset Filters
-                                </button>
+                                
                             </div>
                         )}
 

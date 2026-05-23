@@ -9,21 +9,33 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { Button } from '@/components/common/Button';
 import Container from '@/components/layout/Container';
 import { toast } from 'react-hot-toast';
-import { Check, X, Eye, FileText, Image as ImageIcon, ExternalLink, AlertCircle, History } from 'lucide-react';
+import { Check, X, Eye, FileText, Image as ImageIcon, ExternalLink, AlertCircle, History, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import api from '@/lib/api/http';
 
 export default function AdminPropertiesPage() {
     const [properties, setProperties] = useState<Property[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
 
-    const loadProperties = async () => {
+    const [view, setView] = useState<'submitted' | 'approved'>('submitted');
+
+    const loadProperties = async (desiredView = view) => {
         try {
             const data = await getProperties();
-            setProperties(data.filter(p => p.status?.toLowerCase() === 'submitted'));
+            if (desiredView === 'submitted') {
+                setProperties(data.filter(p => p.status?.toLowerCase() === 'submitted'));
+            } else {
+                setProperties(
+                    data.filter(p => {
+                        const s = p.status?.toLowerCase();
+                        return s === 'approved' || s === 'published';
+                    })
+                );
+            }
         } catch (e) {
-            toast.error("Failed to load properties");
+            toast.error('Failed to load properties');
         } finally {
             setLoading(false);
         }
@@ -32,6 +44,12 @@ export default function AdminPropertiesPage() {
     useEffect(() => {
         loadProperties();
     }, []);
+
+    // Refresh when view changes
+    useEffect(() => {
+        setLoading(true);
+        loadProperties(view);
+    }, [view]);
 
     const handleApprove = async (id: string) => {
         try {
@@ -58,6 +76,18 @@ export default function AdminPropertiesPage() {
         }
     };
 
+    const handleAdminDelete = async (id: string) => {
+        if (!window.confirm("Are you sure you want to permanently delete this listing?")) return;
+        try {
+            await api.delete(`/properties/${id}/`);
+            toast.success("Property deleted");
+            loadProperties();
+            setSelectedProperty(null);
+        } catch (e) {
+            toast.error("Failed to delete property");
+        }
+    };
+
     if (loading) return <div className="p-12 flex justify-center bg-background min-h-screen"><Loader size="lg" /></div>;
 
     const pendingCount = properties.length;
@@ -70,23 +100,37 @@ export default function AdminPropertiesPage() {
                         <h1 className="text-2xl font-bold text-foreground">Property Review Queue</h1>
                         <p className="text-gray-500 mt-1">Review and approve new property listings</p>
                     </div>
-                    
-                    <div className="flex gap-3">
+
+                    <div className="flex gap-3 items-center">
                         <Link href="/dashboard/admin/properties/archives">
                             <Button variant="outline" className="flex items-center gap-2">
                                 <History className="h-4 w-4" />
                                 View History
                             </Button>
                         </Link>
-                        <div className={`px-4 py-2 rounded-lg flex items-center gap-2 border text-sm font-medium ${
-                            pendingCount > 0 ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                        }`}>
+                        {/* View toggle */}
+                        <Button
+                            variant={view === 'submitted' ? 'primary' : 'outline'}
+                            onClick={() => setView('submitted')}
+                            className="h-9"
+                        >
+                            Submitted
+                        </Button>
+                        <Button
+                            variant={view === 'submitted' ? 'primary' : 'outline'}
+                            onClick={() => setView('approved')}
+                            className="h-9"
+                        >
+                            Approved / Published
+                        </Button>
+                        <div className={`px-4 py-2 rounded-lg flex items-center gap-2 border text-sm font-medium ${pendingCount > 0 ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                            }`}>
                             <AlertCircle className="h-4 w-4" />
                             <span>{pendingCount} Pending</span>
                         </div>
                     </div>
                 </div>
-                
+
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Properties List */}
                     <div className={`${selectedProperty ? 'lg:col-span-2' : 'lg:col-span-3'} space-y-4`}>
@@ -108,8 +152,8 @@ export default function AdminPropertiesPage() {
                                     </thead>
                                     <tbody className="divide-y divide-border">
                                         {properties.map((property) => (
-                                            <tr 
-                                                key={property.id} 
+                                            <tr
+                                                key={property.id}
                                                 onClick={() => setSelectedProperty(property)}
                                                 className={`cursor-pointer transition-colors ${selectedProperty?.id === property.id ? 'bg-primary/5' : 'hover:bg-gray-50'}`}
                                             >
@@ -126,10 +170,31 @@ export default function AdminPropertiesPage() {
                                                 <td className="p-4">
                                                     <StatusBadge status={property.status} />
                                                 </td>
-                                                <td className="p-4 text-right">
-                                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full">
+                                                <td className="p-4 flex space-x-2">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-8 w-8 p-0 rounded-full"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setSelectedProperty(property);
+                                                        }}
+                                                    >
                                                         <Eye className="w-4 h-4" />
                                                     </Button>
+                                                    {['approved', 'published'].includes(property.status?.toLowerCase() ?? '') && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-8 w-8 p-0 rounded-full text-red-600"
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
+                                                                await handleAdminDelete(property.id);
+                                                            }}
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </Button>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}
@@ -142,7 +207,7 @@ export default function AdminPropertiesPage() {
                     {/* Property Detail Sidebar */}
                     <AnimatePresence>
                         {selectedProperty && (
-                            <motion.div 
+                            <motion.div
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: 20 }}
@@ -154,8 +219,8 @@ export default function AdminPropertiesPage() {
                                             <h2 className="text-lg font-bold text-gray-900">Review Property</h2>
                                             <p className="text-xs text-gray-500 mt-1">Verify details and documents</p>
                                         </div>
-                                        <button 
-                                            onClick={() => setSelectedProperty(null)} 
+                                        <button
+                                            onClick={() => setSelectedProperty(null)}
                                             className="p-1 rounded-full hover:bg-gray-100 text-gray-400 transition-colors"
                                         >
                                             <X className="w-5 h-5" />
@@ -206,8 +271,8 @@ export default function AdminPropertiesPage() {
                                                                 <span className="text-xs font-medium text-gray-700">Property Deed</span>
                                                             </div>
                                                             {!doc.is_verified ? (
-                                                                <Button 
-                                                                    size="sm" 
+                                                                <Button
+                                                                    size="sm"
                                                                     variant="outline"
                                                                     className="h-7 px-3 text-[10px]"
                                                                     onClick={async (e) => {
@@ -251,15 +316,15 @@ export default function AdminPropertiesPage() {
 
                                         {selectedProperty.status?.toLowerCase() === 'submitted' && (
                                             <div className="pt-6 border-t border-gray-100 flex flex-col gap-3">
-                                                <Button 
-                                                    className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg shadow-indigo-200 flex items-center justify-center gap-2" 
+                                                <Button
+                                                    className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg shadow-indigo-200 flex items-center justify-center gap-2"
                                                     onClick={() => handleApprove(selectedProperty.id)}
                                                 >
                                                     <Check className="w-5 h-5" /> Approve & Publish
                                                 </Button>
-                                                <Button 
-                                                    className="w-full h-12 rounded-xl" 
-                                                    variant="outline" 
+                                                <Button
+                                                    className="w-full h-12 rounded-xl"
+                                                    variant="outline"
                                                     onClick={() => handleReject(selectedProperty.id)}
                                                 >
                                                     <X className="w-5 h-5" /> Reject Listing

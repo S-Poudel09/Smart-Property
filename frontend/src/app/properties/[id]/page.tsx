@@ -191,6 +191,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
                 onClose={() => setIsThreeDOpen(false)} 
                 propertyName={property.title} 
                 url={property.virtualTourUrl}
+                modelUrl={property.modelUrl}
                 propertyType={property.propertyType || (property as any).property_type || ''}
                 // @ts-ignore
                 image={property.images?.[0]?.image || property.images?.[0] || ''}
@@ -407,6 +408,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
                                 <div className="rounded-[2.5rem] overflow-hidden border border-white/5 h-[600px] shadow-3xl bg-black/50 relative group">
                                     <ThreeDInline 
                                         url={property.virtualTourUrl} 
+                                        modelUrl={property.modelUrl}
                                         propertyName={property.title} 
                                         propertyType={property.propertyType || (property as any).property_type || ''}
                                         image={typeof property.images?.[0] === 'string' ? property.images?.[0] : (property.images?.[0] as any)?.image || ''}

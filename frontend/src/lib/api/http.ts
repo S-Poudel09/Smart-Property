@@ -31,14 +31,20 @@ api.interceptors.response.use(
         const config = error.config;
 
         if (status === 401) {
+            // Public property GET requests should not trigger logout
+            const isPublicGet = config?.method?.toLowerCase() === 'get' && config?.url?.includes('/properties/');
+            if (isPublicGet) {
+                // Let caller handle error without logout
+                return Promise.reject(error);
+            }
             // Check if this is a payment initiation request
             const isPaymentRequest = config?.url?.includes('khalti');
-            
+
             if (!isPaymentRequest) {
                 // Token expired or invalid
                 console.warn('Unauthorized access - potential token expiry. Clearing session.');
                 clearAuthFromStorage();
-                
+
                 if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth/')) {
                     window.location.href = '/auth/login?expired=true';
                 }

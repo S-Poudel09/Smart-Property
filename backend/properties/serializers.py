@@ -63,7 +63,7 @@ class PropertySerializer(serializers.ModelSerializer):
             'listing_type', 'beds', 'baths', 'area_sqft', 'area_ropani', 'area_anna', 
             'city', 'ward', 'district', 'municipality', 'status', 'is_verified',
             'property_images', 'property_documents', 'uploaded_images', 'uploaded_documents',
-            'boundary_coordinates', 'virtual_tour_url',
+            'boundary_coordinates', 'virtual_tour_url', 'model_3d_url', 'tour_360_url',
             'stories', 'mainroad', 'guestroom', 'basement', 'hotwaterheating',
             'airconditioning', 'parking_spaces', 'prefarea', 'furnishing_status',
             'hostel_gender', 'room_type', 'food_included', 'has_wifi', 'has_laundry',
@@ -94,6 +94,9 @@ class PropertySerializer(serializers.ModelSerializer):
         return property_obj
 
     def validate_price(self, value):
+        # Allow empty or None values for partial updates
+        if value in [None, '', []]:
+            return value
         if value <= 0:
             raise serializers.ValidationError("Price must be a positive value.")
         return value

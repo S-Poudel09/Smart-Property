@@ -79,6 +79,8 @@ class Property(models.Model):
     # GIS and Interactive Features
     boundary_coordinates = models.JSONField(null=True, blank=True, help_text="Polygon coordinates for property boundaries")
     virtual_tour_url = models.URLField(null=True, blank=True, help_text="360-degree virtual tour link")
+    model_3d_url = models.URLField(blank=True, null=True, help_text="3D model GLB/GLTF link")
+    tour_360_url = models.URLField(blank=True, null=True, help_text="Alternative 360-degree virtual tour link")
     
     # Hostel Specific Fields
     HOSTEL_GENDER_CHOICES = [

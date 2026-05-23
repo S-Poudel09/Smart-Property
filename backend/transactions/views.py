@@ -403,3 +403,86 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 {'error': f'Internal verification error: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    @action(detail=True, methods=['get'], url_path='download-deed')
+    def download_deed(self, request, pk=None):
+        """
+        Generates and serves a formal Deed of Sale / Ownership Transfer Decree
+        for a completed transaction in text format for this professional demo.
+        """
+        try:
+            transaction = self.get_object()
+        except Exception:
+            return Response({"error": "Transaction not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if transaction.status != 'COMPLETED':
+            return Response({"error": "Imperial Decree is only available for fully settled acquisitions."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check permissions: only buyer, seller or admin can download
+        if request.user != transaction.buyer and request.user != transaction.seller and request.user.role != 'admin':
+            return Response({"error": "Unauthorized access to Imperial Scroll."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Document Generation Matrix
+        content = f"""
+================================================================================
+                    SMART PROPERTY - IMPERIAL REGISTRY
+               DEED OF SALE / PROPERTY TRANSFER DECREE
+================================================================================
+
+TRANSACTION IDENTIFIER: {str(transaction.id).upper()}
+ACQUISITION TIMESTAMP: {transaction.updated_at.strftime('%Y-%m-%d %H:%M:%S')}
+SETTLEMENT METHOD: {transaction.payment_method.upper() if transaction.payment_method else 'SYSTEM LEDGER'}
+
+--------------------------------------------------------------------------------
+PART I: PROPERTY PARAMETERS
+--------------------------------------------------------------------------------
+ASSET DESIGNATION: {transaction.property.title}
+TACTICAL LOCATION: {transaction.property.location}
+SPATIAL VOLUME: {transaction.property.area_sqft} SQ. FT.
+STRUCTURAL CLASS: {transaction.property.get_property_type_display()}
+
+--------------------------------------------------------------------------------
+PART II: THE PARTIES
+--------------------------------------------------------------------------------
+SELLER PRINCIPAL: {transaction.seller.full_name if transaction.seller else 'System Registry'}
+SELLER EMAIL: {transaction.seller.email if transaction.seller else 'registry@smartproperty.com'}
+
+BUYER ACQUISITOR: {transaction.buyer.full_name}
+BUYER EMAIL: {transaction.buyer.email}
+
+--------------------------------------------------------------------------------
+PART III: FINANCIAL SETTLEMENT
+--------------------------------------------------------------------------------
+TOTAL ACQUISITION VALUATION: NPR {transaction.total_amount:,.2f}
+TOTAL AMOUNT DISPATCHED: NPR {transaction.amount_paid:,.2f}
+INTERNAL LEDGER STATUS: FULLY VERIFIED & SETTLED
+
+--------------------------------------------------------------------------------
+PART IV: LEGAL DECREE
+--------------------------------------------------------------------------------
+BY VIRTUE OF THIS DIGITAL INSTRUMENT, AND UPON FULL VERIFICATION OF THE FUNDS 
+IN THE SMART PROPERTY IMPERIAL LEDGER, THE OWNERSHIP OF THE AFOREMENTIONED 
+ASSET IS HEREBY TRANSFERRED FROM THE SELLER TO THE BUYER.
+
+THIS DOCUMENT SERVES AS A BINDING PROOF OF TRANSACTION WITHIN THE SMART PROPERTY 
+ECOSYSTEM AND SHOULD BE PRESENTED AT THE CENTRAL LAND REGISTRY (MALPOT) 
+FOR PHYSICAL DEED FORMALIZATION.
+
+--------------------------------------------------------------------------------
+        (C) SMART PROPERTY TECH - NEXUS PORTAL - DIGITAL DEED V1.0
+================================================================================
+        """
+        
+        from django.http import HttpResponse
+        response = HttpResponse(content, content_type='text/plain; charset=utf-8')
+        filename = f"Deed_of_Sale_{str(transaction.id)[:8]}.txt"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        # Log download activity
+        try:
+            from analytics.utils import log_activity
+            log_activity(request.user.email, 'download_deed', details={'transaction_id': str(transaction.id)}, status='success')
+        except Exception:
+            pass
+            
+        return response

@@ -13,6 +13,7 @@ export interface FilePreview {
 }
 
 interface FileUploaderProps {
+    id?: string;
     label: string;
     accept: string;
     multiple?: boolean;
@@ -20,8 +21,9 @@ interface FileUploaderProps {
     existingFiles?: FilePreview[];
 }
 
-export const FileUploader = ({ label, accept, multiple = false, onFilesChange, existingFiles = [] }: FileUploaderProps) => {
+export const FileUploader = ({ id, label, accept, multiple = false, onFilesChange, existingFiles = [] }: FileUploaderProps) => {
     const [previews, setPreviews] = useState<FilePreview[]>(existingFiles);
+    const generatedId = id || label.replace(/\s+/g, '-').toLowerCase() + '-upload';
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
@@ -52,7 +54,7 @@ export const FileUploader = ({ label, accept, multiple = false, onFilesChange, e
 
 <div className="flex items-center justify-center w-full">
     <label 
-        htmlFor="file-upload"
+        htmlFor={generatedId}
         className="upload-btn group"
     >
         <div className="flex flex-col items-center justify-center py-2">
@@ -63,7 +65,7 @@ export const FileUploader = ({ label, accept, multiple = false, onFilesChange, e
             <p className="text-[10px] text-white/60 font-medium uppercase tracking-[0.2em] mt-1">({accept.split(',').join(' ')})</p>
         </div>
         <input
-            id="file-upload"
+            id={generatedId}
             type="file"
             className="hidden"
             accept={accept}

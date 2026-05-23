@@ -36,6 +36,7 @@ export const PaymentProofUploader = ({ onUpload, isLoading }: PaymentProofUpload
 
             <div className="max-w-sm mx-auto">
                 <FileUploader
+                    id="payment-proof"
                     label=""
                     accept="image/*,.pdf"
                     onFilesChange={(files) => setFile(files[0] || null)}

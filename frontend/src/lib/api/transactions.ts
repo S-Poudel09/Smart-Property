@@ -151,3 +151,19 @@ export const createPurchaseRequest = async (propertyId: string, sellerId: string
     });
     return response.data;
 };
+
+export const downloadDeed = async (transactionId: string) => {
+    const response = await api.get(`transactions/${transactionId}/download-deed/`, {
+        responseType: 'blob'
+    });
+    
+    if (typeof window !== 'undefined') {
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `Deed_of_Sale_${transactionId.slice(0, 8)}.txt`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+};

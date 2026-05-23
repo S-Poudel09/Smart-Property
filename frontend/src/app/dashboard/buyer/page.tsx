@@ -101,6 +101,11 @@ export default function BuyerDashboard() {
                         <Search className="h-4 w-4 text-indigo-400 group-hover:text-white transition-colors" /> Scan properties
                     </button>
                 </Link>
+                <Link href="/dashboard/buyer/requests">
+                    <button className="flex items-center gap-2.5 h-14 px-8 bg-indigo-600 text-white text-sm font-black uppercase tracking-widest rounded-2xl hover:bg-indigo-800 transition-all shadow-xl hover:shadow-indigo-900/20 ml-4">
+                        My Service Requests
+                    </button>
+                </Link>
             </header>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

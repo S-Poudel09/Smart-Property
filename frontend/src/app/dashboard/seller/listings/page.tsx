@@ -8,7 +8,7 @@ import { EmptyState } from '@/components/common/EmptyState';
 import { Loader } from '@/components/common/Loader';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { Button } from '@/components/common/Button';
-import { getUser } from '@/lib/auth/getUser';
+
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
 import { Plus, Eye, Edit, Trash2, Search, Filter, Send, MoreVertical, LayoutGrid, List } from 'lucide-react';
@@ -20,7 +20,7 @@ export default function SellerListingsPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
-
+    const [currentUser, setCurrentUser] = useState<any>(null);
     const loadProperties = async () => {
         try {
             setLoading(true);
@@ -35,6 +35,7 @@ export default function SellerListingsPage() {
 
     useEffect(() => {
         loadProperties();
+        // Removed user role fetch; seller listings page no longer checks admin role
     }, []);
 
     const handleSubmitForReview = async (id: string) => {
@@ -177,12 +178,14 @@ export default function SellerListingsPage() {
                                                     >
                                                         <Edit className="w-4 h-4" />
                                                     </button>
-                                                    <button 
-                                                        className="h-8 w-8 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all flex items-center justify-center"
-                                                        onClick={() => handleDelete(property.id)}
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
+                                                    { (property.status !== 'approved' && property.status !== 'published') ? (
+                                                        <button 
+                                                            className="h-8 w-8 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all flex items-center justify-center"
+                                                            onClick={() => handleDelete(property.id)}
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    ) : null }
                                                 </div>
                                             </td>
                                         </motion.tr>

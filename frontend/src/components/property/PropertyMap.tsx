@@ -13,6 +13,16 @@ import { formatNPR } from '@/lib/utils/currency';
 // Track if Leaflet icons have been configured to avoid repeated mutation
 let leafletIconsInitialized = false;
 
+// Helper to validate latitude/longitude pair
+function isValidLatLng(coord: [number, number] | undefined): boolean {
+  if (!coord) return false;
+  const [lat, lng] = coord;
+  // Basic range checks for latitude and longitude
+  const latValid = typeof lat === 'number' && !isNaN(lat) && lat >= -90 && lat <= 90;
+  const lngValid = typeof lng === 'number' && !isNaN(lng) && lng >= -180 && lng <= 180;
+  return latValid && lngValid;
+}
+
 interface PropertyMapProps {
     center?: [number, number];
     zoom?: number;
@@ -40,17 +50,27 @@ function ChangeView({ center, zoom }: { center: [number, number], zoom: number }
     return null;
 }
 
-export default function PropertyMap({ 
-    center, 
-    zoom = 15, 
-    boundary, 
-    title, 
-    properties = [], 
+export default function PropertyMap({
+    center,
+    zoom = 15,
+    boundary,
+    title,
+    properties = [],
     onMarkerClick,
-    height = "500px" 
+    height = "500px"
 }: PropertyMapProps) {
     const [mounted, setMounted] = useState(false);
     const [mapLayer, setMapLayer] = useState<'street' | 'satellite'>('satellite');
+    const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
+
+    // Cleanup map on unmount to avoid reused container errors
+    useEffect(() => {
+        return () => {
+            if (mapInstance) {
+                mapInstance.remove();
+            }
+        };
+    }, [mapInstance]);
 
     useEffect(() => {
         setMounted(true);
@@ -86,10 +106,30 @@ export default function PropertyMap({
         targetLng = Number(properties[0].lng);
     }
 
+    // Detect swapped coordinates (lat out of range, lng within range)
+    if (Math.abs(targetLat) > 90 && Math.abs(targetLng) <= 90) {
+        console.warn('PropertyMap: Detected swapped latitude/longitude, correcting order');
+        const tmp = targetLat;
+        targetLat = targetLng;
+        targetLng = tmp;
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+        console.log('PropertyMap center calculated:', targetLat, targetLng);
+    }
+
     const safeCenter: [number, number] = [
-        isNaN(targetLat) ? 27.7172 : targetLat, 
+        isNaN(targetLat) ? 27.7172 : targetLat,
         isNaN(targetLng) ? 85.3240 : targetLng
     ];
+
+    if (!isValidLatLng(safeCenter)) {
+        return (
+            <div style={{ height }} className="w-full flex items-center justify-center bg-gray-100 border border-slate-200 rounded-[2.5rem]">
+                <p className="text-sm text-slate-600">Location data unavailable</p>
+            </div>
+        );
+    }
 
     return (
         <div className={`w-full rounded-[2.5rem] overflow-hidden border border-slate-200 shadow-inner relative z-0 group`} style={{ height }}>
@@ -139,7 +179,15 @@ export default function PropertyMap({
                 {properties.map((prop) => (
                     <Marker 
                         key={prop.id} 
-                        position={[Number(prop.lat), Number(prop.lng)]}
+                        position={(() => {
+            const lat = Number(prop.lat);
+            const lng = Number(prop.lng);
+            // If latitude out of bounds but longitude within, assume swapped
+            if (Math.abs(lat) > 90 && Math.abs(lng) <= 90) {
+                return [lng, lat];
+            }
+            return [lat, lng];
+        })() }
                         eventHandlers={{
                             click: () => onMarkerClick?.(prop)
                         }}
